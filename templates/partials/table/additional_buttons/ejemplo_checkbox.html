@@ -1,0 +1,69 @@
+{% if can_access('/ordenes_de_compra/aprobar') %}
+    <div class="flex justify-end" id="revision_sat" style="display:none">
+        <a href="{{ url_for('ordenes_de_compra.aprobar',ids=selectedIds) }}" 
+        class="btn border text-primary border-transparent rounded-md transition-all duration-300 hover:text-white hover:bg-primary bg-primary/10">
+            Aprobar
+        </a>
+    </div>
+{% endif %}
+
+<script>
+    let selectedIds = [];
+    document.addEventListener('DOMContentLoaded', () => {
+
+        const aprobar = document.getElementById('aprobar');    
+
+        const btnAprobar = aprobar.querySelector('a');
+
+        function updateLinks() {
+            const idsParam = selectedIds.join(',');
+            btnAprobar.href = `/ordenes_de_compra/aprobar?ids=${idsParam}`;
+        }
+
+        function showButtons() {
+            if (selectedIds.length > 0) {
+                revision_sat.style.display = 'block';
+                aprobar.style.display = 'block';
+            } else {
+                revision_sat.style.display = 'none';
+                aprobar.style.display = 'none';
+            }
+            updateLinks();
+        }                
+        // Function to handle checkbox change event
+        function handleCheckboxChange(id) {
+            const index = selectedIds.indexOf(id);
+            if (index === -1) {
+                selectedIds.push(id);
+            } else {
+                selectedIds.splice(index, 1);
+            }
+            showButtons();
+        }
+        // Function to handle "Select All" checkbox click
+        function toggleAllCheckboxes(event) {
+            const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach((checkbox) => {
+                checkbox.checked = event.target.checked;
+                if(checkbox.checked){
+                    if(checkbox.value!=="on"){
+                        selectedIds.push(checkbox.value);
+                    }else{
+                        selectedIds = [];
+                    }
+                }else{
+                    selectedIds = [];
+                }
+            });
+            showButtons();
+        }
+        // Expose the handleCheckboxChange function for use in the HTML
+        window.handleCheckboxChange = handleCheckboxChange;
+        window.toggleAllCheckboxes = toggleAllCheckboxes;
+    });    
+    document.addEventListener('DOMContentLoaded', () => {
+
+
+
+    });        
+</script>

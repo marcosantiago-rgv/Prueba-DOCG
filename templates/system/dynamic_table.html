@@ -1,0 +1,134 @@
+<!-- templates/dynamic_table.htmla -->
+
+{% extends './partials/system/layout1.html' %}
+
+{% block content %}
+{% include "./partials/system/alerts.html" %}
+<!-- Breadcrumb -->
+{% include 'partials/table/breadcrumbs.html' %}
+{% import 'variables.html' as vars %}
+<!-- Elemento oculto para pasar data al JS: nombre de tabla y columnas -->
+{% if report %}
+    <div id="table-data" data-table="/report_queries/{{ table_name }}/data" data-columns='{{ columns|tojson }}' hidden></div>
+{% else %}
+    <div id="table-data" data-table="/dynamic/{{ table_name }}/data" data-columns='{{ columns|tojson }}' hidden></div>
+{% endif %}
+<div class="flex flex-col h-[calc(100vh-188px)] sm:h-[calc(100vh-204px)]"  x-data="calendarComponent()" x-init="init()">
+    <div class="grid grid-cols-1 gap-5">
+        {% if table_name not in vars.no_tabs and not report %}
+            {% include 'partials/table/dynamic_tabs.html' %}
+            {% set height=470 %}
+        {% else %}
+            {% set height=400 %}
+        {% endif %}
+        <div class="sticky top-0 bg-white dark:bg-dark dark:border-gray/20 border-2 border-lightgray/10 p-5 rounded-lg">
+            <div class="overflow-auto space-y-4" x-data="tabla" x-init="initData(); initDatePicker(); $watch('searchInput', value => { search(value) });selectedIds = [];document.querySelectorAll('input[type=checkbox]').forEach(cb => cb.checked = false);">
+                {% include 'partials/table/table_title.html' %}                
+                <div id="table_view" class="flex-1 overflow-y-auto table-scroll-horizontal" style="max-height: calc(100vh - {{height}}px)">
+                        <table class="w-full table-hover table-striped">
+                            {% include 'partials/table/table_head.html' %}
+                            <tbody>
+                                <!-- Se recorre la lista de registros obtenidos dinámicamente -->
+                                <template x-for="(record, index) in items" :key="index">
+                                    <tr class="cursor-pointer hover:bg-gray-100" 
+                                    {% if not report %}
+                                    @click="openActions('{{ table_name }}', record.id,record.estatus)"
+                                    {% endif %}>
+                                        {% if checkbox %}
+                                            <td>
+                                                <input type="checkbox" class="form-checkbox" :value="record.id" @change.stop="handleCheckboxChange(record.id)" @click.stop  />
+                                            </td>
+                                        {% endif %}
+                                        <!-- Se recorre el array de columnas que se pasó desde el servidor -->
+                                        <template x-for="(col, i) in columns" :key="i">
+                                            <td style="white-space: normal">
+                                                <!-- If the column is 'estatus', show a badge -->
+                                                <template x-if="col.includes('estatus')">
+                                                    <div 
+                                                        class="inline-flex items-center rounded-full text-xs justify-center px-2.5 py-1.5"
+                                                        :class="{
+                                                            'bg-purple text-white':purple_badge_values.includes(record[col]),
+                                                            'bg-success text-white':success_badge_values.includes(record[col]),
+                                                            'bg-danger text-white':danger_badge_values.includes(record[col]),
+                                                            'bg-warning':warning_badge_values.includes(record[col]),
+                                                            'bg-primary text-white':primary_badge_values.includes(record[col]),
+                                                            'bg-gray/10':gray_badge_values.includes(record[col]),
+                                                            'bg-a text-white': !record[col]
+                                                        }"
+                                                        x-text="record[col] || '-'">
+                                                    </div>
+                                                </template>
+
+                                                <!-- Otherwise, use your normal text logic -->
+                                                <template x-if="!col.toLowerCase().includes('estatus')">
+                                                    <span 
+                                                        x-text="record[col] 
+                                                            ? (money_format_columns.includes(col)
+                                                                ? money_format(record[col]) 
+                                                            : percentage_format_columns.includes(col)
+                                                                ? record[col] + '%'
+                                                            : record[col])
+                                                            : '-'">
+                                                    </span>
+                                                </template>
+                                            </td>
+                                        </template>
+                                        {% include 'partials/table/buttons/' ~ table_name ~ '.html' ignore missing %}
+                                    </tr>
+                                </template>
+                                <!-- Si no hay registros, se muestra un mensaje -->
+                                <tr x-show="isEmpty()">
+                                    <td :colspan="columns.length" class="text-center text-gray-500">
+                                        No se encontraron registros
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <br>
+                        {% include 'partials/table/pagination.html' %}
+                </div>
+                <div id="calendar_wrapper" style="display:none">
+                    <div id="calendar_view"></div>
+                </div>
+            </div>
+        </div>
+        {% include 'partials/table/modals/dynamic_modal.html' %}
+    </div>
+</div>
+{% include "./partials/system/loader.html" %}
+<!-- Incluir archivos JS centralizados -->
+
+<script src="/static/js/system/table/reload_table.js"></script>
+<script src="/static/js/system/table/data-search.js"></script>
+<script src="/static/js/system/table/data_table.js"></script>
+<script src="/static/js/system/table/loader.js"></script>
+<script src="/static/js/system/table/dynamic_table_init.js"></script>
+<script src="/static/js/system/table/format_functions.js"></script>
+<script src="/static/js/system/table/generate_files.js"></script>
+<script src="/static/js/system/table/download_file.js"></script>
+<script src="/static/js/system/table/calendar.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>  
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/locales/es.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/main.min.css">
+<script>
+    
+        const table_name = {{ table_name | tojson }};
+        const percentage_format_columns = {{ vars.percentage_format_columns | tojson }};
+        const money_format_columns = {{ vars.money_format_columns | tojson }};
+        const purple_badge_values = {{ vars.purple_badge_values | tojson }};
+        const primary_badge_values = {{ vars.primary_badge_values | tojson }};
+        const success_badge_values = {{ vars.success_badge_values | tojson }};
+        const warning_badge_values = {{ vars.warning_badge_values | tojson }};
+        const danger_badge_values = {{ vars.danger_badge_values | tojson }};
+        const gray_badge_values = {{ vars.gray_badge_values | tojson }};
+        const calendar_titles = {{ vars.calendar_titles | tojson }}; 
+        const title_formats = {{ title_formats | tojson }}; 
+
+</script>
+{% if javascript %}
+    <script src="{{ url_for('static', filename='js/table_logic/%s.js' % table_name) }}"></script>
+{% endif %}
+{% endblock content %}
