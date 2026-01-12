@@ -151,8 +151,8 @@ agregar_acceso_admin()
 
 crear_rutas_base('productos')
 crear_rutas_base('proveedores')
-crear_rutas_base('ordenes_de_compra')
 crear_rutas_base('productos_en_ordenes_de_compra')
+crear_rutas_base('ordenes_de_compra')
 
 
 actions = {'aprobar', 'cancelar', 'recibir', 'confirmar', 'cerrar'}

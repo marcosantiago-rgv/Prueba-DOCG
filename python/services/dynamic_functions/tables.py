@@ -1,7 +1,7 @@
 from python.models.modelos import *
 from sqlalchemy import func
 from python.services.system.helper_functions import *
-from flask import  jsonify
+from flask import jsonify
 from datetime import timedelta
 from python.services.dynamic_functions.input_tables import *
 from python.services.dynamic_functions.double_tables import *
@@ -11,24 +11,26 @@ def get_joins():
     joins = {
         "id_usuario": (Usuarios, Usuarios.id, Usuarios.nombre),
         "id_rol": (Roles, Roles.id, Roles.nombre),
-        "id_categoria_de_reporte":(CategoriasDeReportes, CategoriasDeReportes.id, CategoriasDeReportes.nombre),
+        "id_categoria_de_reporte": (CategoriasDeReportes, CategoriasDeReportes.id, CategoriasDeReportes.nombre),
 
-        "id_producto":(Productos, Productos.id, Productos.nombre),
-        "id_proveedor":(Proveedores, Proveedores.id, Proveedores.nombre),
-        "id_orden_de_compra":(OrdenesDeCompra, OrdenesDeCompra.id, OrdenesDeCompra.id_visualizacion),
+        "id_producto": (Productos, Productos.id, Productos.nombre),
+        "id_proveedor": (Proveedores, Proveedores.id, Proveedores.nombre),
+        # "id_ubicacion": (Ubicaciones, Ubicaciones.id, Ubicaciones.nombre),
+        "id_orden_de_compra": (OrdenesDeCompra, OrdenesDeCompra.id, OrdenesDeCompra.id_visualizacion),
     }
     return joins
 
-def get_columns(table_name,section):
-    columns={
+
+def get_columns(table_name, section):
+    columns = {
         "logs_auditoria": {
-            "main_page": ["tabla", "id_registro",'usuario','accion','datos_anteriores','datos_nuevos','fecha'],
-            "modal": ["tabla", "id_registro",'usuario','accion','datos_anteriores','datos_nuevos','fecha'],
+            "main_page": ["tabla", "id_registro", 'usuario', 'accion', 'datos_anteriores', 'datos_nuevos', 'fecha'],
+            "modal": ["tabla", "id_registro", 'usuario', 'accion', 'datos_anteriores', 'datos_nuevos', 'fecha'],
             "pdf": []
         },
         "rutas": {
-            "main_page": ['categoria', "nombre",'ruta'],
-            "modal": ["id", 'categoria',"nombre",'ruta', "fecha_de_creacion", "fecha_de_actualizacion"],
+            "main_page": ['categoria', "nombre", 'ruta'],
+            "modal": ["id", 'categoria', "nombre", 'ruta', "fecha_de_creacion", "fecha_de_actualizacion"],
             "pdf": []
         },
         "roles": {
@@ -37,7 +39,7 @@ def get_columns(table_name,section):
             "pdf": []
         },
         "usuarios": {
-            "main_page": ["id_visualizacion", "nombre", "correo_electronico",'intentos_de_inicio_de_sesion','ultima_sesion','ultimo_cambio_de_contrasena', "estatus"],
+            "main_page": ["id_visualizacion", "nombre", "correo_electronico", 'intentos_de_inicio_de_sesion', 'ultima_sesion', 'ultimo_cambio_de_contrasena', "estatus"],
             "modal": ["id", "id_visualizacion", "nombre", "correo_electronico", "contrasena_api", "estatus", "fecha_de_creacion", "fecha_de_actualizacion"],
             "pdf": []
         },
@@ -56,10 +58,10 @@ def get_columns(table_name,section):
             "modal": ["id", "id", "tabla_origen", "nombre", "ruta_s3", "en_servidor", "fecha_de_creacion"],
             "pdf": []
         },
-        
+
         "productos": {
-            "main_page": ["id_visualizacion", "nombre", "unidad_de_medida", "estatus","id_usuario_correo_electronico"],
-            "modal": ["id", "id_visualizacion", "nombre", "unidad_de_medida", "numero_de_usos", "codigo_de_barras", "descripcion","id_archivo_imagen", "estatus", "id_usuario_correo_electronico", "fecha_de_creacion", "fecha_de_actualizacion"],
+            "main_page": ["id_visualizacion", "nombre", "unidad_de_medida", "estatus", "id_usuario_correo_electronico"],
+            "modal": ["id", "id_visualizacion", "nombre", "unidad_de_medida", "numero_de_usos", "codigo_de_barras", "descripcion", "id_archivo_imagen", "estatus", "id_usuario_correo_electronico", "fecha_de_creacion", "fecha_de_actualizacion"],
             "pdf": ["id_visualizacion", "nombre", "unidad_de_medida", "codigo_de_barras", "descripcion", "estatus", "id_usuario_correo_electronico", "fecha_de_creacion", "fecha_de_actualizacion"]
         },
         "proveedores": {
@@ -73,93 +75,110 @@ def get_columns(table_name,section):
             "pdf": ["id_visualizacion", "id_proveedor_nombre", "fecha_orden", "fecha_entrega_estimada", "fecha_entrega_real", "subtotal", "descuentos", "importe_total", "notas", "estatus", "id_usuario_correo_electronico", "fecha_de_creacion", "fecha_de_actualizacion"]
         },
         "productos_en_ordenes_de_compra": {
-            "main_page": ["id_orden_de_compra_id_visualizacion", "id_producto_nombre", "cantidad_ordenada", "cantidad_recibida", "precio_unitario", "subtotal", "descuento_porcentaje","importe_total", "fecha_entrega_estimada", "notas", "estatus"],
-            "modal": ["id", "id_orden_de_compra_id_visualizacion", "id_producto_nombre", "cantidad_ordenada", "cantidad_recibida", "precio_unitario", "subtotal", "descuento_porcentaje","importe_total", "fecha_entrega_estimada", "notas","archivo_cotizacion", "estatus", "id_usuario_correo_electronico", "fecha_de_creacion", "fecha_de_actualizacion"],
-            "pdf": [ "id_orden_de_compra", "id_producto_nombre", "cantidad_ordenada", "cantidad_recibida", "precio_unitario", "subtotal", "descuento_porcentaje","importe_total", "fecha_entrega_estimada", "notas", "estatus", "id_usuario_correo_electronico", "fecha_de_creacion", "fecha_de_actualizacion"]
+            "main_page": ["id_orden_de_compra_id_visualizacion", "id_producto_nombre", "cantidad_ordenada", "cantidad_recibida", "precio_unitario", "subtotal", "descuento_porcentaje", "importe_total", "fecha_entrega_estimada", "notas", "estatus"],
+            "modal": ["id", "id_orden_de_compra_id_visualizacion", "id_producto_nombre", "cantidad_ordenada", "cantidad_recibida", "precio_unitario", "subtotal", "descuento_porcentaje", "importe_total", "fecha_entrega_estimada", "notas", "archivo_cotizacion", "estatus", "id_usuario_correo_electronico", "fecha_de_creacion", "fecha_de_actualizacion"],
+            "pdf": ["id_orden_de_compra", "id_producto_nombre", "cantidad_ordenada", "cantidad_recibida", "precio_unitario", "subtotal", "descuento_porcentaje", "importe_total", "fecha_entrega_estimada", "notas", "estatus", "id_usuario_correo_electronico", "fecha_de_creacion", "fecha_de_actualizacion"]
         },
         "entrega_de_productos_en_ordenes_de_compra": {
             "main_page": ["cantidad_recibida", "fecha_entrega"],
             "modal": ["id", "cantidad_recibida", "fecha_entrega" "id_usuario_correo_electronico", "fecha_de_creacion", "fecha_de_actualizacion"],
-            "pdf": [ "cantidad_recibida", "fecha_entrega" "id_usuario_correo_electronico", "fecha_de_creacion", "fecha_de_actualizacion"]
+            "pdf": ["cantidad_recibida", "fecha_entrega" "id_usuario_correo_electronico", "fecha_de_creacion", "fecha_de_actualizacion"]
         },
-        "inventario": {
-            "main_page": ["id_producto_nombre", "cantidad"],
-            "modal": ["id", "id_producto_nombre", "cantidad", "id_usuario_correo_electronico", "fecha_de_creacion", "fecha_de_actualizacion"],
-            "pdf": [ "id_producto_nombre", "cantidad","id_usuario_correo_electronico", "fecha_de_creacion", "fecha_de_actualizacion"]
-        },        
-        
+        # "inventario": {
+        #     "main_page": ["id_producto_nombre", "cantidad"],
+        #     "modal": ["id", "id_producto_nombre", "cantidad", "id_usuario_correo_electronico", "fecha_de_creacion", "fecha_de_actualizacion"],
+        #     "pdf": ["id_producto_nombre", "cantidad", "id_usuario_correo_electronico", "fecha_de_creacion", "fecha_de_actualizacion"]
+        # },
+        # "ubicaciones": {
+        #     "main_page": ["id_visualizacion", "nombre", "estatus"],
+        #     "modal": ["id", "nombre", "estatus", "id_usuario_correo_electronico", "fecha_de_creacion", "fecha_de_actualizacion"],
+        #     "pdf": ["nombre", "estatus", "id_usuario_correo_electronico", "fecha_de_creacion", "fecha_de_actualizacion"]
+        # },
+
+
     }
-    columns=columns.get(table_name).get(section)
+    columns = columns.get(table_name).get(section)
     return columns
+
 
 def get_table_buttons():
     buttons = {
-        "reportes":1,
-        "inventario":1
+        "reportes": 1,
+        "ordenes_de_compra": 1
     }
     return buttons
 
+
 def get_estatus_options(table_name):
     options = {
-        'ordenes_de_compra': ["En revisión","Aprobada",'Recibida parcial',"Recibida",'Finalizada',"Cancelada"],
-        "productos_en_ordenes_de_compra": ['Pendiente','Recibido parcial','Recibido']
+        'ordenes_de_compra': ["En revisión", "Aprobada", 'Recibida parcial', "Recibida", 'Finalizada', "Cancelada"],
+        "productos_en_ordenes_de_compra": ['Pendiente', 'Recibido parcial', 'Recibido']
     }
-    options=options.get(table_name, ["Activo", "Inactivo"])
+    options = options.get(table_name, ["Activo", "Inactivo"])
     return options
 
+
 def get_open_status(table_name):
-    status={
-        "ordenes_de_compra": ['En revisión','Aprobada','Recibida parcial','Recibida'],
-        "productos_en_ordenes_de_compra": ['Pendiente','Recibida parcial','Recibida']
+    status = {
+        "ordenes_de_compra": ['En revisión', 'Aprobada', 'Recibida parcial', 'Recibida'],
+        "productos_en_ordenes_de_compra": ['Pendiente', 'Recibida parcial']
     }
-    status=status.get(table_name,'')
+    status = status.get(table_name, '')
     return status
+
 
 def get_breadcrumbs(table_name):
     # [modulo,active_menu]
-    breadcrumbs={
-        "usuarios":['Permisos','permisos'],
-        "roles":['Permisos','permisos'],
-        "logs_auditoria":['Auditoría','auditoria'],
-        "reportes":['Reportes','reportes'],
-        "archivos":[session['tabla_origen'].replace('_',' ').capitalize(),session['tabla_origen']],
+    breadcrumbs = {
+        "usuarios": ['Permisos', 'permisos'],
+        "roles": ['Permisos', 'permisos'],
+        "logs_auditoria": ['Auditoría', 'auditoria'],
+        "reportes": ['Reportes', 'reportes'],
+        "archivos": [session['tabla_origen'].replace('_', ' ').capitalize(), session['tabla_origen']],
 
-        "productos":['Cátalogos','catalogos'],
+        "productos": ['Cátalogos', 'catalogos'],
+        "ubicaciones": ['Cátalogos', 'catalogos'],
+        "proveedores": ['Cátalogos', 'catalogos'],
 
-        "proveedores":['Cátalogos','catalogos'],
-        "ordenes_de_compra":['Compras','compras'],
-        "productos_en_ordenes_de_compra":['Compras','compras'],
+        "ordenes_de_compra": ['Compras', 'ordenes_de_compras'],
+        "productos_en_ordenes_de_compra": ['Compras', 'ordenes_de_compras'],
+        "entrega_de_productos_en_ordenes_de_compra": ['Compras', 'ordenes_de_compras'],
 
-        "inventario":['Compras','compras']
+        # "inventario": ['Compras', 'compras']
     }
-    breadcrumbs=breadcrumbs.get(table_name,['Bases de datos','bases_de_datos'])
-    return breadcrumbs[0],breadcrumbs[1]
+    breadcrumbs = breadcrumbs.get(
+        table_name, ['Bases de datos', 'bases_de_datos'])
+    return breadcrumbs[0], breadcrumbs[1]
+
 
 def get_table_relationships(table_name):
-    relationships={
-        "ordenes_de_compra":["productos_en_ordenes_de_compra"],
-        "productos_en_ordenes_de_compra":["entrega_de_productos_en_ordenes_de_compra"],
+    relationships = {
+        "ordenes_de_compra": ["productos_en_ordenes_de_compra"],
+        "productos_en_ordenes_de_compra": ["entrega_de_productos_en_ordenes_de_compra"],
     }
-    relationships=relationships.get(table_name,'')
+    relationships = relationships.get(table_name, '')
     return relationships
 
+
 def get_calendar_date_variable(table_name):
-    date_variable={
-        "ordenes_de_compra":"fecha_orden"
+    date_variable = {
+        "ordenes_de_compra": "fecha_orden"
     }
-    date_variable=date_variable.get(table_name,'')
+    date_variable = date_variable.get(table_name, '')
     return date_variable
+
 
 def get_variable_tabs(table_name):
     tabs = {
         "gastos": "estatus"
     }
-    tabs=tabs.get(table_name,'estatus')
+    tabs = tabs.get(table_name, 'estatus')
     return tabs
 
-def get_data_tabs(table_name,parent_table,id_parent_record):
-    column_tabs=get_variable_tabs(table_name)
-    tabs=get_estatus_options(table_name)
+
+def get_data_tabs(table_name, parent_table, id_parent_record):
+    column_tabs = get_variable_tabs(table_name)
+    tabs = get_estatus_options(table_name)
     model = get_model_by_name(table_name)
     column = getattr(model, column_tabs, None)
     count_col = func.count().label("count")
@@ -182,13 +201,15 @@ def get_data_tabs(table_name,parent_table,id_parent_record):
     ]
     return results
 
+
 def get_date_fields():
-    date_fields=["fecha_orden"]
+    date_fields = ["fecha_orden"]
     return date_fields
+
 
 def get_checkbox(table_name):
     checkbox = {
-        'table_name':True,
+        'ordenes_de_compra': True,
     }
-    checkbox=checkbox.get(table_name, False)
+    checkbox = checkbox.get(table_name, False)
     return checkbox
