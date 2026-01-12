@@ -147,14 +147,17 @@ def agregar_acceso_admin():
 crear_admin()
 rutas_inciales()
 agregar_acceso_admin()
+actions = {'inicio'}
+crear_ruta('dashboards', actions)
 
+'''
 
 crear_rutas_base('productos')
 crear_rutas_base('proveedores')
 crear_rutas_base('productos_en_ordenes_de_compra')
 crear_rutas_base('ordenes_de_compra')
 
-
+'''
 actions = {'aprobar', 'cancelar', 'recibir', 'confirmar', 'cerrar'}
 crear_ruta('ordenes_de_compra', actions)
 '''
