@@ -65,12 +65,3 @@ class EntregaDeProductosEnOrdenesDeCompra(db.Model, BaseMixin, AuditMixin):
 
     producto_en_orden_de_compra = db.relationship(
         "ProductosEnOrdenesDeCompra", backref="entrega_de_productos_en_ordenes_de_compra", lazy=True)
-
-
-# class Inventario(db.Model,BaseMixin,AuditMixin):
-
-#     id_producto = db.Column(db.UUID, db.ForeignKey("productos.id"), nullable=False)
-
-#     cantidad = db.Column(db.Float, nullable=False, default=0)
-
-#     producto = db.relationship("Productos", backref="inventario", lazy=True)
