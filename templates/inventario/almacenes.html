@@ -1,0 +1,18 @@
+{% extends 'partials/system/layout1.html' %}
+{% block content %}
+<h2>Almacenes</h2>
+<a href="{{ url_for('inventario.nuevo_almacen') }}" class="btn btn-primary mb-4">Agregar almacén</a>
+<br>
+<table>
+    <tr>
+        <th>Nombre</th>
+        <th>Ubicación</th>
+    </tr>
+    {% for a in almacenes %}
+    <tr>
+        <td>{{ a.nombre }}</td>
+        <td>{{ a.ubicacion }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}

@@ -42,6 +42,38 @@
                 </li>
                 {% if can_access('/dashboards/reportes/view') %}
                 <li class="menu nav-item">
+                    <a href="javascript:;" class="nav-link group items-center justify-between"
+                        :class="{'active' : activeMenu === 'inventario'}"
+                        @click="activeMenu === 'inventario' ? activeMenu = null : activeMenu = 'inventario'">
+                        <div class="flex items-center">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor"
+                                    stroke-width="1.5" />
+                                <path d="M3 9H21" stroke="currentColor" stroke-width="1.5" />
+                                <path d="M9 21V9" stroke="currentColor" stroke-width="1.5" />
+                            </svg>
+                            <span class="pl-1.5">Inventario</span>
+                        </div>
+                        <div class="w-4 h-4 flex items-center justify-center dropdown-icon"
+                            :class="{'!rotate-180' : activeMenu === 'inventario'}">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-6 h-6">
+                                <path
+                                    d="M11.9997 13.1714L16.9495 8.22168L18.3637 9.63589L11.9997 15.9999L5.63574 9.63589L7.04996 8.22168L11.9997 13.1714Z"
+                                    fill="currentColor"></path>
+                            </svg>
+                        </div>
+                    </a>
+                    <ul x-cloak x-show="activeMenu === 'inventario'" x-collapse class="sub-menu flex flex-col gap-1">
+                        <li><a :class="{'active': activeItem === 'productos'}"
+                                href="/inventario/productos">Productos</a></li>
+                        <li><a :class="{'active': activeItem === 'almacenes'}"
+                                href="/inventario/almacenes">Almacenes</a></li>
+                        <li><a :class="{'active': activeItem === 'existencias'}"
+                                href="/inventario/existencias">Existencias</a></li>
+                    </ul>
+                </li>
+                <li class="menu nav-item">
                     <a href="/dynamic/reportes/view" class="nav-link group"
                         :class="{'active' : activeMenu === 'reportes'}">
                         <div class="flex items-center">
