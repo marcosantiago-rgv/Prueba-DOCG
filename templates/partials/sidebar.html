@@ -63,6 +63,33 @@
                     </a>
                 </li>
                 {% endif %}
+                <li class="menu nav-item">
+                    <a href="javaScript:;" class="nav-link group items-center justify-between"
+                        :class="{'active' : activeMenu === 'finanzas'}"
+                        @click="activeMenu === 'finanzas' ? activeMenu = null : activeMenu = 'finanzas'">
+                        <div class="flex items-center">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 6V18M15 9.5C15 8.11929 13.6569 7 12 7C10.3431 7 9 8.11929 9 9.5C9 10.8807 10.3431 12 12 12C13.6569 12 15 13.1193 15 14.5C15 15.8807 13.6569 17 12 17C10.3431 17 9 15.8807 9 14.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                <path d="M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z" stroke="currentColor" stroke-width="1.5"/>
+                            </svg>
+                            <span class="pl-1.5">Finanzas</span>
+                        </div>
+                        <div class="w-4 h-4 flex items-center justify-center dropdown-icon"
+                            :class="{'!rotate-180' : activeMenu === 'finanzas'}">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-6 h-6">
+                                <path d="M11.9997 13.1714L16.9495 8.22168L18.3637 9.63589L11.9997 15.9999L5.63574 9.63589L7.04996 8.22168L11.9997 13.1714Z" fill="currentColor"></path>
+                            </svg>
+                        </div>
+                    </a>
+                    <ul x-cloak x-show="activeMenu === 'finanzas'" x-collapse class="sub-menu flex flex-col gap-1">
+                        <li>
+                            <a :class="{'active': activeItem === 'gastos'}" href="/dynamic/gasto/view">Gastos</a>
+                            <a :class="{'active': activeItem === 'categorias_gasto'}" href="/dynamic/categoria_gasto/view">Categorías de Gasto</a>
+                            <a :class="{'active': activeItem === 'pagos'}" href="/dynamic/pago/view">Pagos Realizados</a>
+                            <a :class="{'active': activeItem === 'cuentas_banco'}" href="/dynamic/cuenta_banco/view">Cuentas Bancarias</a>
+                        </li>
+                    </ul>
+                </li>
                 {% if can_access('/dynamic/proveedores/view') or can_access('/dynamic/productos/view') %}
                 <li class="menu nav-item">
                     <a href="javaScript:;" class="nav-link group items-center justify-between"

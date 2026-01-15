@@ -35,7 +35,10 @@ TITLE_FORMATS = {
     "region":'región',
     "cotizacion":'cotización',
     "accion":"acción",
-
+    "gasto":"gastos",
+    "pago":"pagos",
+    "categoria_gasto": "Categorías de Gastos",
+    "cuenta_banco":"Cuentas bancarias",
     "id_orden_de_compra_id_visualizacion": "ID Compra",       
     "id_proveedor_nombre": "ID Proveedor",       
 }

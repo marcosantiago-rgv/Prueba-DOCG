@@ -31,6 +31,14 @@ class Proveedores(db.Model,BaseMixin,AuditMixin):
     telefono_contacto = db.Column(db.String(50))
     email_contacto = db.Column(db.String(255))
     condiciones_pago = db.Column(db.String(100)) 
+    dias_de_entrega = db.Column(db.ARRAY(db.String(100))) 
+
 
     sitio_web = db.Column(db.String(255))
+    estatus = db.Column(db.String(255),default="Activo")
+
+class Ubicaciones(db.Model,BaseMixin,AuditMixin):
+    nombre = db.Column(db.String(255), nullable=False)
+    direccion = db.Column(db.String(255), nullable=False)
+   
     estatus = db.Column(db.String(255),default="Activo")
