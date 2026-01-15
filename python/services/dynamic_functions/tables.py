@@ -17,6 +17,9 @@ def get_joins():
         "id_proveedor": (Proveedores, Proveedores.id, Proveedores.nombre),
         # "id_ubicacion": (Ubicaciones, Ubicaciones.id, Ubicaciones.nombre),
         "id_orden_de_compra": (OrdenesDeCompra, OrdenesDeCompra.id, OrdenesDeCompra.id_visualizacion),
+        "id_gasto": (Gasto, Gasto.id, Gasto.descripcion),
+        "id_categoria": (CategoriaGasto, CategoriaGasto.id, CategoriaGasto.nombre),
+        "id_cuenta": (CuentaBanco, CuentaBanco.id, CuentaBanco.nombre),
     }
     return joins
 
@@ -65,7 +68,7 @@ def get_columns(table_name, section):
             "pdf": ["id_visualizacion", "nombre", "unidad_de_medida", "codigo_de_barras", "descripcion", "estatus", "id_usuario_correo_electronico", "fecha_de_creacion", "fecha_de_actualizacion"]
         },
         "proveedores": {
-            "main_page": ["id_visualizacion", "nombre", "razon_social", "persona_contacto", "telefono_contacto", "email_contacto", "estatus"],
+            "main_page": ["id_visualizacion", "nombre", "razon_social", "persona_contacto", "telefono_contacto", "email_contacto", "estatus", "dias_de_entrega"],
             "modal": ["id", "id_visualizacion", "nombre", "razon_social", "rfc", "direccion", "codigo_postal", "telefono", "email", "persona_contacto", "telefono_contacto", "email_contacto", "condiciones_pago", "sitio_web", "estatus", "id_usuario_correo_electronico", "fecha_de_creacion", "fecha_de_actualizacion"],
             "pdf": ["id_visualizacion", "nombre", "razon_social", "rfc", "direccion", "codigo_postal", "telefono", "email", "persona_contacto", "telefono_contacto", "email_contacto", "condiciones_pago", "sitio_web", "estatus", "id_usuario_correo_electronico", "fecha_de_creacion", "fecha_de_actualizacion"]
         },
@@ -84,17 +87,36 @@ def get_columns(table_name, section):
             "modal": ["id", "cantidad_recibida", "fecha_entrega" "id_usuario_correo_electronico", "fecha_de_creacion", "fecha_de_actualizacion"],
             "pdf": ["cantidad_recibida", "fecha_entrega" "id_usuario_correo_electronico", "fecha_de_creacion", "fecha_de_actualizacion"]
         },
-        # "inventario": {
-        #     "main_page": ["id_producto_nombre", "cantidad"],
-        #     "modal": ["id", "id_producto_nombre", "cantidad", "id_usuario_correo_electronico", "fecha_de_creacion", "fecha_de_actualizacion"],
-        #     "pdf": ["id_producto_nombre", "cantidad", "id_usuario_correo_electronico", "fecha_de_creacion", "fecha_de_actualizacion"]
-        # },
-        # "ubicaciones": {
-        #     "main_page": ["id_visualizacion", "nombre", "estatus"],
-        #     "modal": ["id", "nombre", "estatus", "id_usuario_correo_electronico", "fecha_de_creacion", "fecha_de_actualizacion"],
-        #     "pdf": ["nombre", "estatus", "id_usuario_correo_electronico", "fecha_de_creacion", "fecha_de_actualizacion"]
-        # },
-
+         "inventario": {
+            "main_page": ["id_producto_nombre", "cantidad"],
+            "modal": ["id", "id_producto_nombre", "cantidad", "id_usuario_correo_electronico", "fecha_de_creacion", "fecha_de_actualizacion"],
+            "pdf": ["id_producto_nombre", "cantidad", "id_usuario_correo_electronico", "fecha_de_creacion", "fecha_de_actualizacion"]
+         },
+        "ubicaciones": {
+            "main_page": ["id_visualizacion", "nombre", "estatus"],
+            "modal": ["id", "nombre", "estatus", "id_usuario_correo_electronico", "fecha_de_creacion", "fecha_de_actualizacion"],
+            "pdf": ["nombre", "estatus", "id_usuario_correo_electronico", "fecha_de_creacion", "fecha_de_actualizacion"]
+         },
+        "cuenta_banco": {
+            "main_page": ["id_visualizacion","nombre", "banco", "saldo_actual", "moneda", "estatus"],
+            "modal": ["id", "nombre", "banco", "tipo_cuenta", "numero_cuenta", "clabe", "saldo_actual", "moneda", "estatus", "fecha_de_creacion"],
+            "pdf": ["nombre", "banco", "saldo_actual", "moneda"]
+        },
+        "gasto": {
+            "main_page": ["id_visualizacion", "id_categoria_nombre", "descripcion", "monto", "fecha", "estatus"],
+            "modal": ["id_categoria", "descripcion", "monto", "fecha", "archivo_comprobante","estatus"], 
+            "pdf": ["id_visualizacion", "descripcion", "monto", "fecha"]
+        },
+        "categoria_gasto": {
+            "main_page": ["id_visualizacion","nombre", "descripcion", "estatus"],
+            "modal": ["id", "nombre", "descripcion", "estatus", "fecha_de_creacion"],
+            "pdf": ["nombre", "descripcion"]
+        },
+        "pago": {
+            "main_page": ["id_visualizacion", "id_gasto_descripcion", "id_cuenta_nombre", "monto_pagado", "fecha_pago", "estatus"],
+            "modal": ["id", "id_visualizacion", "id_gasto_descripcion", "id_cuenta_nombre", "monto_pagado", "fecha_pago", "referencia", "estatus", "notas"],
+            "pdf": ["id_visualizacion", "monto_pagado", "fecha_pago", "referencia"]
+        }
 
     }
     columns = columns.get(table_name).get(section)
@@ -112,7 +134,9 @@ def get_table_buttons():
 def get_estatus_options(table_name):
     options = {
         'ordenes_de_compra': ["En revisión", "Aprobada", 'Recibida parcial', "Recibida", 'Finalizada', "Cancelada"],
-        "productos_en_ordenes_de_compra": ['Pendiente', 'Recibido parcial', 'Recibido']
+        "productos_en_ordenes_de_compra": ['Pendiente', 'Recibido parcial', 'Recibido'],
+        'gasto': ["Pendiente", "Pagado parcial", "Pagado", "Cancelado"],
+        'pago': ["Completado", "Pendiente", "Rechazado"]
     }
     options = options.get(table_name, ["Activo", "Inactivo"])
     return options
@@ -139,10 +163,16 @@ def get_breadcrumbs(table_name):
         "productos": ['Cátalogos', 'catalogos'],
         "ubicaciones": ['Cátalogos', 'catalogos'],
         "proveedores": ['Cátalogos', 'catalogos'],
+        "ubicaciones":['Cátalogos','catalogos'],
+
 
         "ordenes_de_compra": ['Compras', 'ordenes_de_compras'],
         "productos_en_ordenes_de_compra": ['Compras', 'ordenes_de_compras'],
         "entrega_de_productos_en_ordenes_de_compra": ['Compras', 'ordenes_de_compras'],
+        "cuenta_banco": ['Finanzas', 'finanzas'],
+        "gasto": ['Finanzas', 'finanzas'],
+        "pago": ['Finanzas', 'finanzas'],
+        "categoria_gasto": ['Finanzas', 'finanzas']
 
         # "inventario": ['Compras', 'compras']
     }
@@ -170,7 +200,7 @@ def get_calendar_date_variable(table_name):
 
 def get_variable_tabs(table_name):
     tabs = {
-        "gastos": "estatus"
+        "gasto": "estatus"
     }
     tabs = tabs.get(table_name, 'estatus')
     return tabs
@@ -203,13 +233,14 @@ def get_data_tabs(table_name, parent_table, id_parent_record):
 
 
 def get_date_fields():
-    date_fields = ["fecha_orden"]
+    date_fields = ["fecha_orden", "fecha_gasto", "fecha_pago", "fecha"]
     return date_fields
 
 
 def get_checkbox(table_name):
     checkbox = {
         'ordenes_de_compra': True,
+        #'gasto': True
     }
     checkbox = checkbox.get(table_name, False)
     return checkbox

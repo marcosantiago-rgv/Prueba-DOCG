@@ -11,6 +11,8 @@ class OrdenesDeCompra(db.Model, BaseMixin, AuditMixin):
 
     id_proveedor = db.Column(db.UUID, db.ForeignKey(
         "proveedores.id"), nullable=False)
+    id_ubicacion = db.Column(db.UUID, db.ForeignKey("ubicaciones.id"), nullable=False)
+
 
     fecha_orden = db.Column(db.Date, nullable=False)
     fecha_entrega_estimada = db.Column(db.Date)
@@ -27,6 +29,8 @@ class OrdenesDeCompra(db.Model, BaseMixin, AuditMixin):
 
     proveedor = db.relationship(
         "Proveedores", backref="ordenes_de_compra", lazy=True)
+    ubicacion = db.relationship("Ubicaciones", backref="ordenes_de_compra", lazy=True)
+
 
 
 class ProductosEnOrdenesDeCompra(db.Model, BaseMixin, AuditMixin):

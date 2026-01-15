@@ -14,8 +14,16 @@ def get_foreign_options():
 
         "id_producto": Productos.query.filter_by(estatus="Activo"),
         "id_proveedor": Proveedores.query.filter_by(estatus="Activo"),
+        "id_ubicacion":Ubicaciones.query.filter_by(estatus="Activo"),
         "unidad_de_medida": {"Pieza", "KG"},
+        "dias_de_entrega":["Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Domingo"],
+        "id_categoria": CategoriaGasto.query.filter_by(estatus="Activo"),
 
+        "id_gasto": Gasto.query.filter(Gasto.estatus != "Pagado"), 
+        "id_cuenta": CuentaBanco.query.filter_by(estatus="Activo"),
+        
+        # Cambia la línea que falla por esta (sin el filtro de estatus_de_pago por ahora):
+        "id_orden_de_compra": OrdenesDeCompra.query.filter(OrdenesDeCompra.estatus != "Cancelado")
     }
     return foreign_options
 
@@ -24,6 +32,7 @@ def get_foreign_options():
 def get_form_options(table_name):
     options = {
         # "inventario": {"id_producto": Productos.query.filter(Productos.estatus == "Activo",Productos.categoria.has(CategoriasDeProductos.nombre.in_(["Producto terminado", "Producto intermedio"])))},
+        "dias_de_entrega": ["Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Domingo"]
     }
     options = options.get(table_name, {})
     return options
