@@ -3,42 +3,18 @@
 {% include 'partials/system/alerts.html' %}
 {% include 'partials/table/breadcrumbs.html' %}
 {% import 'variables.html' as vars %}
-<div class="flex flex-col h-[calc(100vh-188px)] sm:h-[calc(100vh-204px)]">
-    <div class="grid grid-cols-1 gap-5">
-        <div class="sticky top-0 bg-white dark:bg-dark dark:border-gray/20 border-2 border-lightgray/10 p-5 rounded-lg">
-            <div class="overflow-auto space-y-4">
-                <h1 class="text-2xl font-bold mb-4">Productos</h1>
-                <form method="post" class="mb-4 flex flex-col sm:flex-row gap-2">
-                    {{ csrf_token() }}
-                    <input type="text" name="nombre" placeholder="Nombre" required
-                        class="form-input px-4 py-2 rounded border">
-                    <input type="text" name="unidad" placeholder="Unidad" required
-                        class="form-input px-4 py-2 rounded border">
-                    <button type="submit" class="btn btn-primary">Agregar producto</button>
-                </form>
-                <div id="table_view" class="flex-1 overflow-y-auto table-scroll-horizontal"
-                    style="max-height: calc(100vh - 400px)">
-                    <table class="w-full table-hover table-striped">
-                        <thead>
-                            <tr>
-                                <th>Nombre</th>
-                                <th>Unidad de Medida</th>
-                                <!-- Agrega más columnas si es necesario -->
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for producto in productos %}
-                            <tr>
-                                <td>{{ producto.nombre }}</td>
-                                <td>{{ producto.unidad_de_medida }}</td>
-                                <!-- Agrega más celdas si es necesario -->
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+<h2>Inventario De Productos Dados De Alta</h2>
+<br>
+<table>
+    <tr>
+        <th>Nombre</th>
+        <th>Unidad de Medida</th>
+    </tr>
+    {% for a in productos %}
+    <tr>
+        <td>{{ a.nombre }}</td>
+        <td>{{ a.unidad_de_medida }}</td>
+    </tr>
+    {% endfor %}
+</table>
 {% endblock %}

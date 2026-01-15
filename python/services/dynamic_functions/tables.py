@@ -87,28 +87,28 @@ def get_columns(table_name, section):
             "modal": ["id", "cantidad_recibida", "fecha_entrega" "id_usuario_correo_electronico", "fecha_de_creacion", "fecha_de_actualizacion"],
             "pdf": ["cantidad_recibida", "fecha_entrega" "id_usuario_correo_electronico", "fecha_de_creacion", "fecha_de_actualizacion"]
         },
-         "inventario": {
+        "inventario": {
             "main_page": ["id_producto_nombre", "cantidad"],
             "modal": ["id", "id_producto_nombre", "cantidad", "id_usuario_correo_electronico", "fecha_de_creacion", "fecha_de_actualizacion"],
             "pdf": ["id_producto_nombre", "cantidad", "id_usuario_correo_electronico", "fecha_de_creacion", "fecha_de_actualizacion"]
-         },
+        },
         "ubicaciones": {
             "main_page": ["id_visualizacion", "nombre", "estatus"],
             "modal": ["id", "nombre", "estatus", "id_usuario_correo_electronico", "fecha_de_creacion", "fecha_de_actualizacion"],
             "pdf": ["nombre", "estatus", "id_usuario_correo_electronico", "fecha_de_creacion", "fecha_de_actualizacion"]
-         },
+        },
         "cuenta_banco": {
-            "main_page": ["id_visualizacion","nombre", "banco", "saldo_actual", "moneda", "estatus"],
+            "main_page": ["id_visualizacion", "nombre", "banco", "saldo_actual", "moneda", "estatus"],
             "modal": ["id", "nombre", "banco", "tipo_cuenta", "numero_cuenta", "clabe", "saldo_actual", "moneda", "estatus", "fecha_de_creacion"],
             "pdf": ["nombre", "banco", "saldo_actual", "moneda"]
         },
         "gasto": {
             "main_page": ["id_visualizacion", "id_categoria_nombre", "descripcion", "monto", "fecha", "estatus"],
-            "modal": ["id_categoria", "descripcion", "monto", "fecha", "archivo_comprobante","estatus"], 
+            "modal": ["id_categoria", "descripcion", "monto", "fecha", "archivo_comprobante", "estatus"],
             "pdf": ["id_visualizacion", "descripcion", "monto", "fecha"]
         },
         "categoria_gasto": {
-            "main_page": ["id_visualizacion","nombre", "descripcion", "estatus"],
+            "main_page": ["id_visualizacion", "nombre", "descripcion", "estatus"],
             "modal": ["id", "nombre", "descripcion", "estatus", "fecha_de_creacion"],
             "pdf": ["nombre", "descripcion"]
         },
@@ -116,7 +116,13 @@ def get_columns(table_name, section):
             "main_page": ["id_visualizacion", "id_gasto_descripcion", "id_cuenta_nombre", "monto_pagado", "fecha_pago", "estatus"],
             "modal": ["id", "id_visualizacion", "id_gasto_descripcion", "id_cuenta_nombre", "monto_pagado", "fecha_pago", "referencia", "estatus", "notas"],
             "pdf": ["id_visualizacion", "monto_pagado", "fecha_pago", "referencia"]
-        }
+        },
+        # almacen module for inventory
+        "almacen": {
+            "main_page": ["id_visualizacion", "nombre", "ubicacion", "estatus"],
+            "modal": ["id", "nombre", "ubicacion", "estatus", "fecha_de_creacion", "fecha_de_actualizacion"],
+            "pdf": ["id_visualizacion", "nombre", "ubicacion", "estatus", "fecha_de_creacion", "fecha_de_actualizacion"]
+        },
 
     }
     columns = columns.get(table_name).get(section)
@@ -163,7 +169,7 @@ def get_breadcrumbs(table_name):
         "productos": ['Cátalogos', 'catalogos'],
         "ubicaciones": ['Cátalogos', 'catalogos'],
         "proveedores": ['Cátalogos', 'catalogos'],
-        "ubicaciones":['Cátalogos','catalogos'],
+        "ubicaciones": ['Cátalogos', 'catalogos'],
 
 
         "ordenes_de_compra": ['Compras', 'ordenes_de_compras'],
@@ -172,9 +178,11 @@ def get_breadcrumbs(table_name):
         "cuenta_banco": ['Finanzas', 'finanzas'],
         "gasto": ['Finanzas', 'finanzas'],
         "pago": ['Finanzas', 'finanzas'],
-        "categoria_gasto": ['Finanzas', 'finanzas']
+        "categoria_gasto": ['Finanzas', 'finanzas'],
+        "inventario": ['Inventario', 'Inventario'],
+        # menu active for almacen inventory module for menu
+        "almacen": ['Inventario', 'inventario'],
 
-        # "inventario": ['Compras', 'compras']
     }
     breadcrumbs = breadcrumbs.get(
         table_name, ['Bases de datos', 'bases_de_datos'])
@@ -240,7 +248,7 @@ def get_date_fields():
 def get_checkbox(table_name):
     checkbox = {
         'ordenes_de_compra': True,
-        #'gasto': True
+        # 'gasto': True
     }
     checkbox = checkbox.get(table_name, False)
     return checkbox
