@@ -123,6 +123,12 @@ def get_columns(table_name, section):
             "modal": ["id", "nombre", "ubicacion", "estatus", "fecha_de_creacion", "fecha_de_actualizacion"],
             "pdf": ["id_visualizacion", "nombre", "ubicacion", "estatus", "fecha_de_creacion", "fecha_de_actualizacion"]
         },
+        "productos_inventario": {
+            "main_page": ["id_visualizacion", "nombre", "unidad_de_medida", "estatus", "id_usuario_correo_electronico"],
+            "modal": ["id", "id_visualizacion", "nombre", "unidad_de_medida", "numero_de_usos", "codigo_de_barras", "descripcion", "id_archivo_imagen", "estatus", "id_usuario_correo_electronico", "fecha_de_creacion", "fecha_de_actualizacion"],
+            "pdf": ["id_visualizacion", "nombre", "unidad_de_medida", "codigo_de_barras", "descripcion", "estatus", "id_usuario_correo_electronico", "fecha_de_creacion", "fecha_de_actualizacion"],
+            "no_add_button": True
+        },
 
     }
     columns = columns.get(table_name).get(section)
@@ -182,6 +188,7 @@ def get_breadcrumbs(table_name):
         "inventario": ['Inventario', 'Inventario'],
         # menu active for almacen inventory module for menu
         "almacen": ['Inventario', 'inventario'],
+        "productos_inventario": ['Inventario', 'inventario'],
 
     }
     breadcrumbs = breadcrumbs.get(

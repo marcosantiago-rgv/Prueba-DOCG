@@ -1,5 +1,9 @@
 <div class="flex justify-between items-center gap-3">
-    <h2 class="text-base font-semibold mb-4">{{ table_name|title_format }}</h2>
+    {% if get_table_title is defined %}
+        <h2 class="text-base font-semibold mb-4">{{ get_table_title(table_name) }}</h2>
+    {% else %}
+        <h2 class="text-base font-semibold mb-4">{{ table_name|title_format }}</h2>
+    {% endif %}
     <div class="flex space-x-2 items-center">
         {% include 'partials/table/additional_buttons/' ~ table_name ~ '.html'  ignore missing %}
         {% if date_variable!='' and  date_variable %}

@@ -32,6 +32,9 @@ def get_model_by_name(table_name):
     Retorna el modelo que corresponde al nombre de la tabla proporcionado.
     Si no se encuentra, retorna None.
     """
+    # Mapeo especial para productos_inventario
+    if table_name == "productos_inventario":
+        return get_model_by_name("productos")
     for model in get_all_models():
         if model.__tablename__ == table_name:
             return model
