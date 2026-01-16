@@ -14,8 +14,8 @@ from datetime import datetime
 import numpy as np
 import os
 
-# working_directory = r'Users\Marco Antonio/Documents/GitHub/Prueba-DOC/'
-working_directory = r'C:\Users\Marco Antonio\Documents\GitHub\Prueba-DOCG'
+working_directory='/Users/jisbe/OneDrive/Documents/REPO-EQMJ/Prueba-DOCG/'
+
 os.chdir(working_directory)
 
 

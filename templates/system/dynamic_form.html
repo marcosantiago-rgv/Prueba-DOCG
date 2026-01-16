@@ -88,11 +88,19 @@
                                                     data-filter="{{ option[form_filters[column]] }}"
                                                 {% endif %}
                                                 >
-                                                {% if vars[column] is defined %}
+                                               {% if vars[column] is defined %}
                                                     {{ vars[column](option) }}
                                                 {% else %}
-                                                    {{option.nombre or option.nombre_completo or option.nombre_empresa or option.id_visualizacion }}
-                                                {% endif %}
+                                                   {% if column == 'id_orden_de_compra' %}
+                                                        {{ option.proveedor.nombre if option.proveedor else 'Sin Proveedor' }}
+                                                        
+                                                    {% elif column == 'id_gasto' or column == 'gasto' %}
+                                                        {{ option.descripcion or option.nombre or option.id }}
+
+                                                    {% else %}
+                                                        {{ option.nombre or option.nombre_completo or option.razon_social or option.id }}
+                                                    {% endif %}
+                                                    {% endif %}
                                             </option>
                                         {% endif %}
                                     {% endfor %}

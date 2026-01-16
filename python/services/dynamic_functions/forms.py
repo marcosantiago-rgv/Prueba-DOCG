@@ -14,8 +14,16 @@ def get_foreign_options():
 
         "id_producto": Productos.query.filter_by(estatus="Activo"),
         "id_proveedor": Proveedores.query.filter_by(estatus="Activo"),
+        "id_ubicacion":Ubicaciones.query.filter_by(estatus="Activo"),
         "unidad_de_medida": {"Pieza", "KG"},
+        "dias_de_entrega":["Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Domingo"],
+        "id_categoria": CategoriaGasto.query.filter_by(estatus="Activo"),
 
+        "id_gasto": Gasto.query.filter(Gasto.estatus != "Pagado"), 
+        "id_cuenta": CuentaBanco.query.filter_by(estatus="Activo"),
+        
+        # Cambia la línea que falla por esta (sin el filtro de estatus_de_pago por ahora):
+        "id_orden_de_compra": OrdenesDeCompra.query.filter(OrdenesDeCompra.estatus != "Cancelado")
     }
     return foreign_options
 
@@ -24,6 +32,7 @@ def get_foreign_options():
 def get_form_options(table_name):
     options = {
         # "inventario": {"id_producto": Productos.query.filter(Productos.estatus == "Activo",Productos.categoria.has(CategoriasDeProductos.nombre.in_(["Producto terminado", "Producto intermedio"])))},
+        "dias_de_entrega": ["Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Domingo"]
     }
     options = options.get(table_name, {})
     return options
@@ -48,7 +57,8 @@ def get_ignored_columns(table_name):
     columns = {
         "usuarios": {'codigo_unico', 'contrasena', 'contrasena_api', 'intentos_de_inicio_de_sesion', 'ultima_sesion', 'ultimo_cambio_de_contrasena', 'codigo_unico_expira', 'codigo_unico_login'},
         "archivos": {'tabla_origen', 'id_registro', 'nombre', 'ruta_s3'},
-        "ordenes_de_compra": {'importe_total', 'subtotal', 'descuentos', 'fecha_entrega_real'}
+        "ordenes_de_compra": {'importe_total', 'subtotal', 'descuentos', 'fecha_entrega_real'},
+        "cuenta_banco": {'saldo_actual'}
     }
     columns = columns.get(table_name, columnas_generales) | columnas_generales
     return columns
@@ -61,6 +71,7 @@ def get_ignored_columns_edit(table_name, estatus):
         "usuarios": {'default': {'codigo_unico', 'contrasena', 'contrasena_api', 'intentos_de_inicio_de_sesion', 'ultima_sesion', 'ultimo_cambio_de_contrasena', 'codigo_unico_expira', 'codigo_unico_login'}},
         "archivos": {'default': {'tabla_origen', 'id_registro', 'nombre', 'ruta_s3'}},
         "ordenes_de_compra": {'default': {'importe_total', 'importe_pagado', 'subtotal', 'descuentos', 'estatus_de_pago', 'fecha_entrega_real'}},
+        "cuenta_banco": {'default': {'saldo_actual'}}
     }
     table_dict = tables.get(table_name, columnas_generales)
     if not estatus or estatus not in table_dict:
@@ -100,7 +111,9 @@ def get_url_after_add(table_name):
     return columns
 
 
-def get_non_edit_status():
+def get_non_edit_status(table_name=None):
+    if table_name in ['pago', 'gasto']:
+        return ['Cancelado', 'Pagado']
     status = ['Cancelado', 'Cancelada', 'Recibida', 'Finalizada', 'Entregada', 'Realizada', 'Realizado',
               'Pagado', 'Pagado parcial', 'Aprobada', 'Aprobado', 'Recibida parcial', 'Pagado parcial', 'En proceso']
     return status
