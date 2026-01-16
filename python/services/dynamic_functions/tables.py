@@ -98,25 +98,24 @@ def get_columns(table_name, section):
             "pdf": ["nombre", "estatus", "id_usuario_correo_electronico", "fecha_de_creacion", "fecha_de_actualizacion"]
          },
         "cuenta_banco": {
-            "main_page": ["id_visualizacion","nombre", "banco", "saldo_actual", "moneda", "estatus"],
-            "modal": ["id", "nombre", "banco", "tipo_cuenta", "numero_cuenta", "clabe", "saldo_actual", "moneda", "estatus", "fecha_de_creacion"],
+            "main_page": ["id_visualizacion","nombre", "banco", "saldo_inicial", "saldo_actual", "estatus"],
+            "modal": ["id", "id_visualizacion","nombre", "banco", "tipo_cuenta", "numero_cuenta", "clabe", "saldo_inicial",  "estatus", "fecha_de_creacion"],
             "pdf": ["nombre", "banco", "saldo_actual", "moneda"]
         },
         "gasto": {
             "main_page": ["id_visualizacion", "id_categoria_nombre", "descripcion", "monto", "fecha", "estatus"],
-            "modal": ["id_categoria", "descripcion", "monto", "fecha", "archivo_comprobante","estatus"], 
+            "modal": ["id","id_visualizacion","id_categoria_nombre", "descripcion", "monto", "fecha", "archivo_comprobante","estatus"], 
             "pdf": ["id_visualizacion", "descripcion", "monto", "fecha"]
         },
         "categoria_gasto": {
             "main_page": ["id_visualizacion","nombre", "descripcion", "estatus"],
-            "modal": ["id", "nombre", "descripcion", "estatus", "fecha_de_creacion"],
+            "modal": ["id", "id_visualizacion", "nombre", "descripcion", "estatus", "fecha_de_creacion"],
             "pdf": ["nombre", "descripcion"]
         },
         "pago": {
-            "main_page": ["id_visualizacion", "id_gasto_descripcion", "id_cuenta_nombre", "monto_pagado", "fecha_pago", "estatus"],
-            "modal": ["id", "id_visualizacion", "id_gasto_descripcion", "id_cuenta_nombre", "monto_pagado", "fecha_pago", "referencia", "estatus", "notas"],
-            "pdf": ["id_visualizacion", "monto_pagado", "fecha_pago", "referencia"]
-        }
+            "main_page": ["id_visualizacion", "id_gasto_descripcion", "id_cuenta_nombre", "monto", "fecha", "estatus"],
+            "modal": ["id", "id_visualizacion", "id_gasto_descripcion", "id_cuenta_nombre", "monto", "fecha", "referencia", "estatus"],
+        },
 
     }
     columns = columns.get(table_name).get(section)
@@ -135,8 +134,8 @@ def get_estatus_options(table_name):
     options = {
         'ordenes_de_compra': ["En revisión", "Aprobada", 'Recibida parcial', "Recibida", 'Finalizada', "Cancelada"],
         "productos_en_ordenes_de_compra": ['Pendiente', 'Recibido parcial', 'Recibido'],
-        'gasto': ["Pendiente", "Pagado parcial", "Pagado", "Cancelado"],
-        'pago': ["Completado", "Pendiente", "Rechazado"]
+        'gasto': ["En revisión", "Aprobado", "Pagado parcial", "Pagado", "Cancelado"],
+        'pago': ["En revisión", "Aprobado" ,"Pagado", "Cancelado"]
     }
     options = options.get(table_name, ["Activo", "Inactivo"])
     return options

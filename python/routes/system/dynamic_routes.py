@@ -18,8 +18,9 @@ from python.services.dynamic_functions.tables import *
 from python.services.system.boto3_s3 import S3Service
 from uuid import UUID
 import pandas as pd
-
+from python.models.modelos import MovimientoBancario 
 s3_service = S3Service()
+from python.services.finanzas_service import FinanzasService
 
 # Crear un Blueprint para rutas dinámicas basado en el nombre de la tabla
 dynamic_bp = Blueprint("dynamic", __name__, url_prefix="/dynamic")
@@ -112,6 +113,7 @@ def data(table_name):
     if not model:
         return jsonify({"error": f"La tabla '{table_name}' no existe."}), 404
 
+    
     # Obtener parámetros de consulta
     view = request.args.get("view", 50, type=int)
     search = request.args.get("search", "", type=str)
@@ -303,7 +305,7 @@ def form(table_name):
         if not record:
             flash(f"Registro con ID {record_id} no encontrado en '{table_name}'.", "danger")
             return redirect(request.referrer or url_for("dynamic.table_view", table_name=table_name))
-        if record.estatus in get_non_edit_status() or table_name in get_no_edit_access():
+        if record.estatus in get_non_edit_status(table_name) or table_name in get_no_edit_access():
             flash(f"Registro ya no se puede editar.", "info")
             return redirect(request.referrer or url_for("dynamic.table_view", table_name=table_name))
         javascript = os.path.exists(f'static/js/form_logic/edit/{table_name}.js')
@@ -388,6 +390,33 @@ def add(table_name):
             new_user_email(new_record.correo_electronico,contrasena)
         db.session.add(new_record)
         db.session.flush()
+        if table_name == 'pago':
+            if new_record.estatus == 'Pagado':
+                from python.models.modelos import MovimientoBancario, CuentaBanco 
+                
+                nuevo_movimiento = MovimientoBancario(
+                    id_cuenta=new_record.id_cuenta,
+                    tipo='Egreso',
+                    monto=new_record.monto,
+                    descripcion=f"Pago registrado: {new_record.id_visualizacion}",
+                    fecha=new_record.fecha,
+                    id_usuario=session['id_usuario']
+                )
+                db.session.add(nuevo_movimiento)
+                
+                db.session.flush() 
+
+                cuenta_afectada = CuentaBanco.query.get(new_record.id_cuenta)
+                if cuenta_afectada:
+                    nuevo_saldo_calculado = FinanzasService.obtener_saldo_calculado(
+                        cuenta_afectada.id, 
+                        cuenta_afectada.saldo_inicial
+                    )
+                    cuenta_afectada.saldo_actual = nuevo_saldo_calculado
+                    db.session.add(cuenta_afectada)
+            else:
+         
+                pass
         if table_name=='archivos':
             archivo = request.files.get("archivo")
             s3_service.upload_file(archivo, new_record.id,session['tabla_origen'])
@@ -546,6 +575,43 @@ def edit(table_name):
                         db.session.add(new_record)
                         setattr(record, archivo.name, f'{new_record.id}__{archivo.filename}')   
             db.session.flush()
+          
+            if table_name == 'pago':
+                from python.models.modelos import MovimientoBancario, CuentaBanco
+                
+                descripcion_busqueda = f"Pago registrado: {record.id_visualizacion}"
+                movimiento_existente = MovimientoBancario.query.filter_by(descripcion=descripcion_busqueda).first()
+
+                if record.estatus == 'Pagado':
+                    if movimiento_existente:
+                        movimiento_existente.monto = record.monto
+                        movimiento_existente.id_cuenta = record.id_cuenta
+                        movimiento_existente.fecha = record.fecha
+                        db.session.add(movimiento_existente)
+                    else:
+                        nuevo_mov = MovimientoBancario(
+                            id_cuenta=record.id_cuenta,
+                            tipo='Egreso',
+                            monto=record.monto,
+                            descripcion=descripcion_busqueda,
+                            fecha=record.fecha,
+                            id_usuario=session['id_usuario']
+                        )
+                        db.session.add(nuevo_mov)
+
+                else:
+                    if movimiento_existente:
+                        db.session.delete(movimiento_existente)
+                
+                db.session.flush()
+
+                cuenta = CuentaBanco.query.get(record.id_cuenta)
+                if cuenta:
+                    cuenta.saldo_actual = FinanzasService.obtener_saldo_calculado(
+                        cuenta.id, 
+                        cuenta.saldo_inicial or 0
+                    )
+                    db.session.add(cuenta)
             edit_on_success(table_name,record.id)
             db.session.commit()
             flash(f"Registro actualizado exitosamente en '{table_name.replace('_', ' ').capitalize()}'.", "success")
