@@ -13,6 +13,9 @@ def get_foreign_options():
         "id_categoria_de_reporte": CategoriasDeReportes.query.filter_by(estatus="Activo"),
 
         "id_producto": Productos.query.filter_by(estatus="Activo"),
+        "id_almacen": Almacen.query.filter_by(estatus="Activo"),
+        "id_almacen_origen": Almacen.query.filter_by(estatus="Activo"),
+        "id_almacen_destino": Almacen.query.filter_by(estatus="Activo"),
         "id_proveedor": Proveedores.query.filter_by(estatus="Activo"),
         "id_ubicacion": Ubicaciones.query.filter_by(estatus="Activo"),
         "unidad_de_medida": {"Pieza", "KG"},
@@ -62,6 +65,9 @@ def get_ignored_columns(table_name):
         "almacen": set(),
         "productos_inventario": set(),
 
+        # En alta de transferencia de inventario ocultamos el almacén de origen
+        "transferencia_inventario": {"id_almacen_origen"},
+
         "cuenta_banco": {'saldo_actual'}
 
     }
@@ -94,6 +100,7 @@ def get_non_mandatory_columns(table_name):
         "productos_inventario": {'marca', 'codigo_de_barras'} | columnas_generales,
         "proveedores": {'telefono', 'email', 'direccion', 'codigo_postal', 'pais', 'persona_contacto', 'telefono_contacto', 'email_contacto', 'condiciones_de_pago', 'rfc', 'razon_social', 'sitio_web', 'condiciones_pago'} | columnas_generales,
         "almacen": {'descripcion'} | columnas_generales,
+        "transferencia_inventario": set() | columnas_generales,
     }
     columns = columns.get(table_name)
     if columns == None:

@@ -45,7 +45,7 @@ TITLE_FORMATS = {
     "id_orden_de_compra_id_visualizacion": "ID Compra",
     "id_proveedor_nombre": "ID Proveedor",
     "almacen": "almacén",
-    "existencias": "Existenciass",
+    "existencias": "Existencias En Stock De Inventario",
 }
 
 # column names for data imports

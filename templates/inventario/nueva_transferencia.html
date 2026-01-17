@@ -2,6 +2,7 @@
 {% block content %}
 <h1 class="text-2xl font-bold mb-4">Nueva Transferencia de Inventario</h1>
 <form method="post" class="space-y-4">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <div>
         <label>Producto</label>
         <select name="producto" required class="form-input">
