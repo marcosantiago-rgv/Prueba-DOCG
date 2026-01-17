@@ -25,7 +25,7 @@
         <div class="h-[calc(100vh-93px)] overflow-y-auto overflow-x-hidden space-y-16 px-4 pt-2 pb-4">
             <ul class="relative flex flex-col gap-1 text-sm"
                 x-data="{ activeMenu: '{{activeMenu}}', activeItem: '{{activeItem}}' }">
-                <li class="menu nav-item">
+                <li class="menu nav-item" style="order: 1;">
                     <a href="/" class="nav-link group" :class="{'active' : activeMenu === 'inicio'}">
                         <div class="flex items-center">
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
@@ -46,7 +46,7 @@
                 <!-- inventario -->
                 {% if can_access('/dynamic/almacen/view') or can_access('/dynamic/existencias/view') or
                 can_access('/dynamic/productos_inventario/view') %}
-                <li class="menu nav-item">
+                <li class="menu nav-item" style="order: 6;">
                     <a href="javascript:;" class="nav-link group items-center justify-between"
                         :class="{'active' : activeMenu === 'inventario'}"
                         @click="activeMenu === 'inventario' ? activeMenu = null : activeMenu = 'inventario'">
@@ -121,7 +121,7 @@
 
 
 
-                <li class="menu nav-item">
+                <li class="menu nav-item" style="order: 2;">
                     <a href="/dynamic/reportes/view" class="nav-link group"
                         :class="{'active' : activeMenu === 'reportes'}">
                         <div class="flex items-center">
@@ -143,7 +143,7 @@
                     </a>
                 </li>
                 {% endif %}
-                <li class="menu nav-item">
+                <li class="menu nav-item" style="order: 3;">
                     <a href="javaScript:;" class="nav-link group items-center justify-between"
                         :class="{'active' : activeMenu === 'finanzas'}"
                         @click="activeMenu === 'finanzas' ? activeMenu = null : activeMenu = 'finanzas'">
@@ -184,7 +184,7 @@
 
                 <!-- catalogos -->
                 {% if can_access('/dynamic/proveedores/view') or can_access('/dynamic/productos/view') %}
-                <li class="menu nav-item">
+                <li class="menu nav-item" style="order: 4;">
                     <a href="javaScript:;" class="nav-link group items-center justify-between"
                         :class="{'active' : activeMenu === 'catalogos'}"
                         @click="activeMenu === 'catalogos' ? activeMenu = null : activeMenu = 'catalogos'">
@@ -232,7 +232,7 @@
 
 
 
-                <li class="menu nav-item">
+                <li class="menu nav-item" style="order: 5;">
                     <a href="/dynamic/ordenes_de_compra/view" class="nav-link group"
                         :class="{'active' : activeMenu === 'compras'}">
                         <div class="flex items-center">
@@ -254,7 +254,7 @@
                 </li>
                 {% endif %}
                 {% if can_access('/dynamic/usuarios/view') or can_access('/dynamic/roles/view')%}
-                <li class="menu nav-item">
+                <li class="menu nav-item" style="order: 7;">
                     <a href="javascript:;" class="nav-link group items-center justify-between"
                         :class="{'active' : activeMenu === 'permisos'}"
                         @click="activeMenu === 'permisos' ? activeMenu = null : activeMenu = 'permisos'">
@@ -298,7 +298,7 @@
 
 
                 {% if can_access('/dynamic/logs_auditoria/view') or can_access('/dynamic/roles/view')%}
-                <li class="menu nav-item">
+                <li class="menu nav-item" style="order: 8;">
                     <a href="/dynamic/logs_auditoria/view" class="nav-link group"
                         :class="{'active' : activeMenu === 'auditoria'}">
                         <div class="flex items-center">
@@ -326,7 +326,7 @@
                 </li>
                 {% endif %}
                 <!-- Lista dinámica de tablas DB -->
-                <li class="menu nav-item">
+                <li class="menu nav-item" style="order: 9;">
                     <a href="javascript:;" class="nav-link group items-center justify-between"
                         :class="{'active' : activeMenu === 'bases_de_datos'}"
                         @click="activeMenu === 'bases_de_datos' ? activeMenu = null : activeMenu = 'bases_de_datos'">

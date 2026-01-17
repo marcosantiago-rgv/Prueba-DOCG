@@ -67,7 +67,7 @@ def get_columns(table_name, section):
 
         "almacen": {
             # Lo que se muestra en la tabla principal
-            "main_page": ["nombre", "ubicacion", "descripcion", "estatus"],
+            "main_page": ["id_visualizacion", "nombre", "ubicacion", "descripcion", "estatus"],
             # Campos que se ven en el modal
             "modal": [
                 "id",

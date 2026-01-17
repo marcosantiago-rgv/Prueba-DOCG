@@ -317,7 +317,10 @@ def form(table_name):
             flash(
                 f"Registro con ID {record_id} no encontrado en '{table_name}'.", "danger")
             return redirect(request.referrer or url_for("dynamic.table_view", table_name=table_name))
-        if record.estatus in get_non_edit_status(table_name) or table_name in get_no_edit_access():
+        # Algunas tablas (como existencias) no tienen campo "estatus".
+        # Solo aplicamos la validación de no edición cuando el modelo lo tenga.
+        if ((hasattr(record, "estatus") and record.estatus in get_non_edit_status(table_name))
+                or table_name in get_no_edit_access()):
             flash(f"Registro ya no se puede editar.", "info")
             return redirect(request.referrer or url_for("dynamic.table_view", table_name=table_name))
         javascript = os.path.exists(
