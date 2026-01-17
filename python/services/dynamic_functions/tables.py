@@ -98,40 +98,35 @@ def get_columns(table_name, section):
             "pdf": ["nombre", "estatus", "id_usuario_correo_electronico", "fecha_de_creacion", "fecha_de_actualizacion"]
         },
         "cuenta_banco": {
-            "main_page": ["id_visualizacion", "nombre", "banco", "saldo_actual", "moneda", "estatus"],
-            "modal": ["id", "nombre", "banco", "tipo_cuenta", "numero_cuenta", "clabe", "saldo_actual", "moneda", "estatus", "fecha_de_creacion"],
+            "main_page": ["id_visualizacion", "nombre", "banco", "saldo_inicial", "saldo_actual", "estatus"],
+            "modal": ["id", "id_visualizacion", "nombre", "banco", "tipo_cuenta", "numero_cuenta", "clabe", "saldo_inicial",  "estatus", "fecha_de_creacion"],
             "pdf": ["nombre", "banco", "saldo_actual", "moneda"]
         },
         "gasto": {
             "main_page": ["id_visualizacion", "id_categoria_nombre", "descripcion", "monto", "fecha", "estatus"],
-            "modal": ["id_categoria", "descripcion", "monto", "fecha", "archivo_comprobante", "estatus"],
+            "modal": ["id", "id_visualizacion", "id_categoria_nombre", "descripcion", "monto", "fecha", "archivo_comprobante", "estatus"],
             "pdf": ["id_visualizacion", "descripcion", "monto", "fecha"]
         },
         "categoria_gasto": {
             "main_page": ["id_visualizacion", "nombre", "descripcion", "estatus"],
-            "modal": ["id", "nombre", "descripcion", "estatus", "fecha_de_creacion"],
+            "modal": ["id", "id_visualizacion", "nombre", "descripcion", "estatus", "fecha_de_creacion"],
             "pdf": ["nombre", "descripcion"]
         },
         "pago": {
-            "main_page": ["id_visualizacion", "id_gasto_descripcion", "id_cuenta_nombre", "monto_pagado", "fecha_pago", "estatus"],
-            "modal": ["id", "id_visualizacion", "id_gasto_descripcion", "id_cuenta_nombre", "monto_pagado", "fecha_pago", "referencia", "estatus", "notas"],
-            "pdf": ["id_visualizacion", "monto_pagado", "fecha_pago", "referencia"]
-        },
-        # almacen module for inventory
-        "almacen": {
-            "main_page": ["id_visualizacion", "nombre", "ubicacion", "estatus"],
-            "modal": ["id", "nombre", "ubicacion", "estatus", "fecha_de_creacion", "fecha_de_actualizacion"],
-            "pdf": ["id_visualizacion", "nombre", "ubicacion", "estatus", "fecha_de_creacion", "fecha_de_actualizacion"]
-        },
-        "productos_inventario": {
-            "main_page": ["id_visualizacion", "nombre", "unidad_de_medida", "estatus", "id_usuario_correo_electronico"],
-            "modal": ["id", "id_visualizacion", "nombre", "unidad_de_medida", "numero_de_usos", "codigo_de_barras", "descripcion", "id_archivo_imagen", "estatus", "id_usuario_correo_electronico", "fecha_de_creacion", "fecha_de_actualizacion"],
-            "pdf": ["id_visualizacion", "nombre", "unidad_de_medida", "codigo_de_barras", "descripcion", "estatus", "id_usuario_correo_electronico", "fecha_de_creacion", "fecha_de_actualizacion"],
-            "no_add_button": True
+            "main_page": ["id_visualizacion", "id_gasto_descripcion", "id_cuenta_nombre", "monto", "fecha", "estatus"],
+            "modal": ["id", "id_visualizacion", "id_gasto_descripcion", "id_cuenta_nombre", "monto", "fecha", "referencia", "estatus"],
         },
 
     }
-    columns = columns.get(table_name).get(section)
+    # Si la tabla no está configurada en "columns", regresa None para que la
+    # lógica que llama a esta función pueda usar un fallback genérico.
+    table_config = columns.get(table_name)
+    if not table_config:
+        return None
+
+    # Si la sección (main_page, modal, pdf, etc.) no existe para esa tabla,
+    # también regresamos None y dejamos que el caller decida el comportamiento.
+    columns = table_config.get(section)
     return columns
 
 
@@ -147,8 +142,8 @@ def get_estatus_options(table_name):
     options = {
         'ordenes_de_compra': ["En revisión", "Aprobada", 'Recibida parcial', "Recibida", 'Finalizada', "Cancelada"],
         "productos_en_ordenes_de_compra": ['Pendiente', 'Recibido parcial', 'Recibido'],
-        'gasto': ["Pendiente", "Pagado parcial", "Pagado", "Cancelado"],
-        'pago': ["Completado", "Pendiente", "Rechazado"]
+        'gasto': ["En revisión", "Aprobado", "Pagado parcial", "Pagado", "Cancelado"],
+        'pago': ["En revisión", "Aprobado", "Pagado", "Cancelado"]
     }
     options = options.get(table_name, ["Activo", "Inactivo"])
     return options
@@ -177,6 +172,11 @@ def get_breadcrumbs(table_name):
         "proveedores": ['Cátalogos', 'catalogos'],
         "ubicaciones": ['Cátalogos', 'catalogos'],
 
+        # Inventario
+        "almacen": ['Inventario', 'inventario'],
+        "existencias": ['Inventario', 'inventario'],
+        "productos_inventario": ['Inventario', 'inventario'],
+
 
         "ordenes_de_compra": ['Compras', 'ordenes_de_compras'],
         "productos_en_ordenes_de_compra": ['Compras', 'ordenes_de_compras'],
@@ -184,12 +184,9 @@ def get_breadcrumbs(table_name):
         "cuenta_banco": ['Finanzas', 'finanzas'],
         "gasto": ['Finanzas', 'finanzas'],
         "pago": ['Finanzas', 'finanzas'],
-        "categoria_gasto": ['Finanzas', 'finanzas'],
-        "inventario": ['Inventario', 'Inventario'],
-        # menu active for almacen inventory module for menu
-        "almacen": ['Inventario', 'inventario'],
-        "productos_inventario": ['Inventario', 'inventario'],
+        "categoria_gasto": ['Finanzas', 'finanzas']
 
+        # "inventario": ['Compras', 'compras']
     }
     breadcrumbs = breadcrumbs.get(
         table_name, ['Bases de datos', 'bases_de_datos'])
