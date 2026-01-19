@@ -107,11 +107,10 @@
 
     
         async function cargarKPIs() {
-        // 1. Obtener fechas de los inputs del dashboard
+        // Obtener fechas de los inputs del dashboard
         const inicio = document.getElementById('compras_diarias_inicio').value;
         const fin = document.getElementById('compras_diarias_fin').value;
         
-        // 2. Ruta a tu archivo resumen_financiero.sql
         const url = `/dashboard_queries/resumen_financiero?fecha_inicio=${inicio}&fecha_fin=${fin}`;
         
         try {
@@ -122,18 +121,15 @@
             if (data && data.length > 0) {
                 const res = data[0];
                 
-                // Convertimos los valores de la DB (columna 'monto') a números
                 const gastos = parseFloat(res.total_gastos || 0);
                 const pagos = parseFloat(res.total_pagos || 0);
                 const pendiente = gastos - pagos;
 
-                // Formateador de moneda MXN
                 const formatter = new Intl.NumberFormat('es-MX', {
                     style: 'currency',
                     currency: 'MXN'
                 });
 
-                // ESCRIBIR EN EL HTML (Esto quita el "Cargando...")
                 document.getElementById('kpi_total_gastos').innerText = formatter.format(gastos);
                 document.getElementById('kpi_total_pagos').innerText = formatter.format(pagos);
                 document.getElementById('kpi_pendiente').innerText = formatter.format(pendiente);
