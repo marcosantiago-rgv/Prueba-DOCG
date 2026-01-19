@@ -87,6 +87,21 @@ async function openActions(form, recordId,estatus) {
         const downloadButton = document.querySelector('button[data-action="descargar"]');
         const filesButton = document.querySelector('button[data-action="files"]');
 
+        const tablasProtegidas = ['cuenta_banco', 'categoria_gasto'];
+    
+        if (deleteButton) {
+            const esTablaProtegida = tablasProtegidas.includes(form.toLowerCase());
+            const tieneEstatusRestringido = ['pagado', 'activo', 'finalizada'].includes(estatus.toLowerCase());
+
+            if (esTablaProtegida || tieneEstatusRestringido) {
+                deleteButton.classList.add('hidden'); 
+                deleteButton.removeAttribute('onclick');
+            } else {
+                deleteButton.classList.remove('hidden'); 
+                deleteButton.setAttribute('onclick', `redirectActions('/dynamic/${form}/delete?id=${recordId}')`);
+            }
+        }
+
         if (updateButton) {
             updateButton.setAttribute('onclick', `redirectActions('/dynamic/${form}/form?id=${recordId}')`);
         }
@@ -116,101 +131,118 @@ function closeActions() {
         popupActions.classList.add('hidden');
         getRecordRunCount = 0;
 }
+
 async function get_record(form, recordId) {
+    try {
+        getRecordRunCount++;
+        const path = `/dynamic/${form}/data/${recordId}`;
+        const response = await fetch(path);
+        if (!response.ok) {
+            throw new Error(`Network response was not ok: ${response.statusText}`);
+        }
+        const data = await response.json();
+        const record = data[0]; // primer registro
+        const recordObj = Object.fromEntries(record);
+
+        const modal_content = document.getElementById('modal_content');
+        modal_content.innerHTML = '<tbody></tbody>';
+        const tbody_modal_content = modal_content.querySelector("tbody");
+        
         try {
-            getRecordRunCount++;
-            const path = `/dynamic/${form}/data/${recordId}`;
-            const response = await fetch(path);
-            if (!response.ok) {
-                throw new Error(`Network response was not ok: ${response.statusText}`);
-            }
-            const data = await response.json();
-            const record = data[0]; // first record
-            const recordObj = Object.fromEntries(record);
+            modal_content_relationship = document.getElementById('modal_content_relationship');
+            modal_content_relationship.innerHTML = '<tbody></tbody>';
+            tbody_modal_content_relationship = modal_content_relationship.querySelector("tbody");
+        } catch (error) {
+            // Error silencioso si no existe el contenedor de relaciones
+        }
 
-            const modal_content = document.getElementById('modal_content');
-            modal_content.innerHTML = '<tbody></tbody>';
-            const tbody_modal_content = modal_content.querySelector("tbody");
-            try {
-                modal_content_relationship = document.getElementById('modal_content_relationship');
-                modal_content_relationship.innerHTML = '<tbody></tbody>';
-                tbody_modal_content_relationship = modal_content_relationship.querySelector("tbody");
-            } catch (error) {
-                //console.error("Error accessing modal_content_relationship:", error);
-            }
-            document.getElementById("modal_title").textContent = `${titleFormat(form)}`;
-            const buttons = document.getElementById("buttons_modal_exits");
+        document.getElementById("modal_title").textContent = `${titleFormat(form)}`;
+        const buttons = document.getElementById("buttons_modal_exits");
 
-            if (getRecordRunCount === 1) {
-                // First time → show
-                buttons.classList.remove("hidden");
-            } else {
-                // Second time or more → hide
-                buttons.classList.add("hidden");
-            }
-            for (const [key, rawValue] of Object.entries(recordObj)) {
-                let value = rawValue;
-                if (money_format_columns.includes(key) && !isNaN(value)) {
+        if (getRecordRunCount === 1) {
+            buttons.classList.remove("hidden");
+        } else {
+            buttons.classList.add("hidden");
+        }
+
+        for (const [key, rawValue] of Object.entries(recordObj)) {
+            let value = rawValue;
+            
+            const excludeKeywords = ['telefono', 'cuenta', 'clabe'];
+            const isExcluded = excludeKeywords.some(word => key.toLowerCase().includes(word));
+
+            if (value !== null && value !== "" && !isExcluded) {
+                // Si la columna está marcada como moneda en el sistema
+                if (typeof money_format_columns !== 'undefined' && money_format_columns.includes(key) && !isNaN(value)) {
                     value = formatCurrency(value);
-                } else if (!isNaN(value)) {
+                } 
+                // Si es un número pero NO es un teléfono 
+                else if (!isNaN(value) && String(value).length < 10) {
                     value = formatNumber(value);
                 }
-                const tr = document.createElement('tr');
-
-
-                if(String(value).includes('/dynamic')){
-                    tr.innerHTML = `<td style="border-right: 1px solid #ccc; padding: 8px;">${titleFormat(key)}</td>
-                    <td style="text-align: center;">
-                        <button type="submit"
-                            @click.stop="window.location.href='${value}'"
-                            class="btn border text-primary border-transparent rounded-md transition-all duration-300 hover:text-white hover:bg-primary bg-primary/10">
-                            Ver
-                        </button>
-                    </td>`;
-                    tbody_modal_content_relationship.appendChild(tr);
-                } else if (!['id', 'id_proveedor', 'id_categoria_de_gasto', 'id_cuenta_de_banco'].includes(key)) {
-                    if(key.includes('archivo')){
-                        const [uuid, name] = value.split("__");
-                        tr.innerHTML = `
-                            <td style="white-space:normal;border-right:1px solid #ccc; padding:8px;">
-                                ${titleFormat(key)}
-                            </td>
-                            <td class="clickable-td"
-                                style="word-break:break-word; white-space:normal; overflow-wrap:anywhere; max-width:300px;">
-                                <a href="#"
-                                style="display:block; width:100%; height:100%; text-decoration:none; color:inherit;"
-                                onclick="downloadFile('${uuid}','view')">
-                                    ${name}
-                                </a>
-                            </td>
-                        `;
-                    }                    
-                    else if(value.includes('__')){
-                        const [before, id, table_name] = value.split("__");
-                        tr.innerHTML = `
-                            <td style="white-space:normal;border-right:1px solid #ccc; padding:8px;">
-                                ${titleFormat(key)}
-                            </td>
-                            <td class="clickable-td"
-                                style="word-break:break-word; white-space:normal; overflow-wrap:anywhere; max-width:300px;">
-                                <a href="#"
-                                style="display:block; width:100%; height:100%; text-decoration:none; color:inherit;"
-                                onclick="openActions('${table_name}', '${id}', '')">
-                                    ${before}
-                                </a>
-                            </td>
-                        `;
-                    }else{
-                        tr.innerHTML = `<td style="border-right: 1px solid #ccc; padding: 8px; ">${titleFormat(key)}</td><td style="word-break: break-word; white-space: normal; overflow-wrap: anywhere; max-width: 300px;">${value}</td>`;
-                    }
-                    tbody_modal_content.appendChild(tr);                    
-                }
             }
-            return recordObj;
-        } catch (error) {
-            console.error("Error fetching or processing data:", error);
-            return null; 
+
+            const tr = document.createElement('tr');
+
+            if(String(value).includes('/dynamic')){
+                tr.innerHTML = `<td style="border-right: 1px solid #ccc; padding: 8px;">${titleFormat(key)}</td>
+                <td style="text-align: center;">
+                    <button type="submit"
+                        @click.stop="window.location.href='${value}'"
+                        class="btn border text-primary border-transparent rounded-md transition-all duration-300 hover:text-white hover:bg-primary bg-primary/10">
+                        Ver
+                    </button>
+                </td>`;
+                tbody_modal_content_relationship.appendChild(tr);
+            } 
+            // Lista de IDs técnicos que no queremos mostrar en la modal
+            else if (!['id', 'id_proveedor', 'id_categoria_de_gasto', 'id_cuenta_de_banco'].includes(key)) {
+                
+                if(key.includes('archivo') && value && String(value).includes('__')){
+                    const [uuid, name] = value.split("__");
+                    tr.innerHTML = `
+                        <td style="white-space:normal;border-right:1px solid #ccc; padding:8px;">
+                            ${titleFormat(key)}
+                        </td>
+                        <td class="clickable-td"
+                            style="word-break:break-word; white-space:normal; overflow-wrap:anywhere; max-width:300px;">
+                            <a href="#"
+                            style="display:block; width:100%; height:100%; text-decoration:none; color:inherit;"
+                            onclick="downloadFile('${uuid}','view')">
+                                ${name}
+                            </a>
+                        </td>
+                    `;
+                }                    
+                else if(value && String(value).includes('__')){
+                    const [before, id, table_name] = value.split("__");
+                    tr.innerHTML = `
+                        <td style="white-space:normal;border-right:1px solid #ccc; padding:8px;">
+                            ${titleFormat(key)}
+                        </td>
+                        <td class="clickable-td"
+                            style="word-break:break-word; white-space:normal; overflow-wrap:anywhere; max-width:300px;">
+                            <a href="#"
+                            style="display:block; width:100%; height:100%; text-decoration:none; color:inherit;"
+                            onclick="openActions('${table_name}', '${id}', '')">
+                                ${before}
+                            </a>
+                        </td>
+                    `;
+                } else {
+                    tr.innerHTML = `
+                        <td style="border-right: 1px solid #ccc; padding: 8px;">${titleFormat(key)}</td>
+                        <td style="word-break: break-word; white-space: normal; overflow-wrap: anywhere; max-width: 300px;">${value}</td>
+                    `;
+                }
+                tbody_modal_content.appendChild(tr);                    
+            }
         }
+        return recordObj;
+    } catch (error) {
+        console.error("Error fetching or processing data:", error);
+        return null; 
+    }
 }
 
 document.addEventListener('keydown', function (event) {
