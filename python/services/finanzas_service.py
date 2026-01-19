@@ -21,5 +21,5 @@ class FinanzasService:
             MovimientoBancario.tipo == 'Egreso'
         ).scalar() or 0
 
-        # Retornar el cálculo final (Campo físico que verás en tu tabla)
+        # Retornar el cálculo final 
         return (saldo_inicial or 0) + ingresos - egresos
