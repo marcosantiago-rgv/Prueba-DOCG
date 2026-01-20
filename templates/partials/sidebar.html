@@ -143,6 +143,9 @@
                     </a>
                 </li>
                 {% endif %}
+
+                {% if can_access('/dynamic/gasto/view') or can_access('/dynamic/categoria_gasto/view') or
+                can_access('/dynamic/pago/view') or can_access('/dynamic/cuenta_banco/view') %}
                 <li class="menu nav-item" style="order: 3;">
                     <a href="javaScript:;" class="nav-link group items-center justify-between"
                         :class="{'active' : activeMenu === 'finanzas'}"
@@ -181,8 +184,7 @@
                     </ul>
                 </li>
 
-
-                <!-- catalogos -->
+                {% endif %}
                 {% if can_access('/dynamic/proveedores/view') or can_access('/dynamic/productos/view') %}
                 <li class="menu nav-item" style="order: 4;">
                     <a href="javaScript:;" class="nav-link group items-center justify-between"

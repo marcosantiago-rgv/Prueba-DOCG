@@ -4,4 +4,4 @@ SELECT
 FROM gasto
 WHERE estatus != 'Cancelado'
 GROUP BY fecha
-ORDER BY fecha;
+ORDER BY fecha
