@@ -8,6 +8,7 @@ Consulta de transferencias de inventario filtro mes actual.
 - Une las tablas usando los IDs correctos: 
   "id_producto", "id_almacen_origen", "id_almacen_destino".
 - Filtra solo las transferencias cuya fecha esté dentro del mes actual.
+- Solo considera transferencias con estatus 'Realizado' (excluye 'Aprobado' y 'En revisión').
 - Ordena los resultados por fecha descendente y luego por nombre del producto.
 */
 SELECT
@@ -23,4 +24,5 @@ JOIN almacen almacen_origen ON almacen_origen.id = transferencia_inventario.id_a
 JOIN almacen almacen_destino ON almacen_destino.id = transferencia_inventario.id_almacen_destino
 WHERE transferencia_inventario.fecha >= date_trunc('month', current_date)
   AND transferencia_inventario.fecha < (date_trunc('month', current_date) + interval '1 month')
+  AND transferencia_inventario.estatus = 'Realizado'
 ORDER BY transferencia_inventario.fecha DESC, producto.nombre
