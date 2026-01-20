@@ -33,7 +33,7 @@ async function destroyAllApexCharts() {
 }
 
 // funcion para hacer graficas con mas de una categoria
-function generar_grafica_categorias(nombre_grafica, tipo_grafica,x_key,y_key,z_key, path,options) {
+function generar_grafica_categorias(nombre_grafica, tipo_grafica, x_key, y_key, z_key, path, options) {
     fetch(path)
         .then(response => {
             if (!response.ok) throw new Error(`Network response was not ok: ${response.statusText}`);
@@ -60,7 +60,122 @@ function generar_grafica_categorias(nombre_grafica, tipo_grafica,x_key,y_key,z_k
             console.error("Error fetching or processing data:", error);
         });
 }
-function generar_grafica(nombre_grafica, tipo_grafica,dataXKey, dataYKey,path,options) {
+
+
+
+// funcion para hacer graficas Transferencias de inventario por producto (mes actual) Productos con mayor cantidad transferida
+
+function cargar_transferencias_inventario_productos() {
+    const path = '/report_queries/transferencias_inventario/data';
+    fetch(path)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Network response was not ok: ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            const rows = Array.isArray(data) ? data : (data.items || []);
+            if (!rows.length) {
+                console.warn('No hay datos de transferencias para la gráfica.');
+                return;
+            }
+
+            const totalesPorProducto = {};
+            rows.forEach(row => {
+                const prod = row.producto || 'Sin nombre';
+                const qty = Number(row.cantidad) || 0;
+                totalesPorProducto[prod] = (totalesPorProducto[prod] || 0) + qty;
+            });
+
+            const labels = Object.keys(totalesPorProducto);
+            const values = labels.map(label => totalesPorProducto[label]);
+
+            renderizar_pie(
+                '#grafica_transferencias_producto',
+                values,
+                labels,
+                {
+                    height: 320,
+                    tooltip: {
+                        y: {
+                            formatter: val => `${val.toLocaleString()} unidades`,
+                        },
+                        theme: 'dark',
+                    },
+                }
+            );
+        })
+        .catch(error => {
+            console.error('Error cargando transferencias de inventario:', error);
+        });
+}
+
+// funcion para hacer grafica de resumen de inventario (productos, almacenes, transferencias)
+// Espera que el endpoint devuelva una sola fila con
+// total_productos, total_almacenes, total_transferencias
+function cargar_total_inventario() {
+    const path = '/dashboard_queries/total_inventario';
+    const selector = '#grafica_total_inventario';
+    fetch(path)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Network response was not ok: ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            const rows = Array.isArray(data) ? data : (data.items || []);
+            if (!rows.length) {
+                console.warn('No hay datos para el resumen de inventario.');
+                return;
+            }
+
+            const row = rows[0];
+            const labels = [
+                'Productos activos',
+                'Almacenes activos',
+                'Transferencias mes actual',
+            ];
+            const values = [
+                Number(row.total_productos) || 0,
+                Number(row.total_almacenes) || 0,
+                Number(row.total_transferencias) || 0,
+            ];
+
+            renderizar_pie(
+                selector,
+                values,
+                labels,
+                {
+                    height: 320,
+                    tooltip: {
+                        y: {
+                            formatter: val => `${val.toLocaleString()} registros`,
+                        },
+                        theme: 'dark',
+                    },
+                }
+            );
+        })
+        .catch(error => {
+            console.error('Error cargando resumen de inventario:', error);
+        });
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+function generar_grafica(nombre_grafica, tipo_grafica, dataXKey, dataYKey, path, options) {
     fetch(path)
         .then(response => {
             if (!response.ok) {
@@ -75,13 +190,13 @@ function generar_grafica(nombre_grafica, tipo_grafica,dataXKey, dataYKey,path,op
             }
             const y = data.map(item => Number(item[dataYKey]));
             const x = data.map(item => item[dataXKey]);
-            if(tipo_grafica==='pie'){
-                renderizar_pie(nombre_grafica,y,x);
-            }else if(tipo_grafica==='avance'){
+            if (tipo_grafica === 'pie') {
+                renderizar_pie(nombre_grafica, y, x);
+            } else if (tipo_grafica === 'avance') {
                 y.push(1 - y[0]);  // Converts the result to a string before pushing
-                renderizar_avance(nombre_grafica, "bar", y, x, {valueType: valor_tipo});
-            }else{
-                renderizar_grafica(nombre_grafica, tipo_grafica, y, x,options);
+                renderizar_avance(nombre_grafica, "bar", y, x, { valueType: valor_tipo });
+            } else {
+                renderizar_grafica(nombre_grafica, tipo_grafica, y, x, options);
             }
         })
         .catch(error => {
@@ -124,7 +239,7 @@ function renderizar_grafica(selector, chartType, data_y, data_x, options = {}) {
     let isStacked;
     if (chartType === 'bar_stacked') {
         isStacked = true;
-        chartType='bar'
+        chartType = 'bar'
     } else {
         isStacked = false;
     }
@@ -134,10 +249,10 @@ function renderizar_grafica(selector, chartType, data_y, data_x, options = {}) {
     const totals = isStacked ? computeTotals(series) : [];
 
     const defaultOptions = {
-        series: 
+        series:
             Array.isArray(data_y) && data_y.length && typeof data_y[0] === "object" && "data" in data_y[0]
-            ? data_y
-            : [{ name: options.seriesName || "", data: data_y }],
+                ? data_y
+                : [{ name: options.seriesName || "", data: data_y }],
         chart: {
             height: options.height || 300,
             type: chartType || "bar",
@@ -145,9 +260,9 @@ function renderizar_grafica(selector, chartType, data_y, data_x, options = {}) {
             events: options.events || {},
             toolbar: { show: false },
             fontFamily: "Inter, sans-serif",
-            zoom: {enabled: false},        
+            zoom: { enabled: false },
             events: {
-                mounted: function(chartContext, config) {
+                mounted: function (chartContext, config) {
                     const el = chartContext.el;
                     // Let wheel/touch scroll events bubble up to the page
                     el.addEventListener('wheel', (e) => e.stopPropagation(), { capture: true });
@@ -159,7 +274,7 @@ function renderizar_grafica(selector, chartType, data_y, data_x, options = {}) {
             curve: 'smooth',
         },
         colors: options.colors || [
-            "#267DFF","#FF51A4","#FF7C51","#00D085","#FFC41F","#FF3232",
+            "#267DFF", "#FF51A4", "#FF7C51", "#00D085", "#FFC41F", "#FF3232",
         ],
         plotOptions: {
             bar: {
@@ -184,7 +299,7 @@ function renderizar_grafica(selector, chartType, data_y, data_x, options = {}) {
         dataLabels: {
             enabled: (isStacked && chartType === 'bar') ? true : false,
             formatter: (val, { seriesIndex, dataPointIndex }) => {
-                if ( isStacked) {
+                if (isStacked) {
                     const total = totals[dataPointIndex] || 0;
                     if (!total) return "0%";
                     const pct = (val / total) * 100;
@@ -277,18 +392,18 @@ function renderizar_pie(selector, data_y, data_x, options = {}) {
             type: "pie",
             width: "100%",  // 👈 make chart responsive
             toolbar: { show: false },
-            zoom: {enabled: false},        
+            zoom: { enabled: false },
             events: {
-                mounted: function(chartContext, config) {
+                mounted: function (chartContext, config) {
                     const el = chartContext.el;
                     // Let wheel/touch scroll events bubble up to the page
                     el.addEventListener('wheel', (e) => e.stopPropagation(), { capture: true });
                 }
-            },            
+            },
         },
         labels: data_x,
         colors: options.colors || [
-            "#267DFF","#FF51A4","#FF7C51","#00D085","#FFC41F","#FF3232",
+            "#267DFF", "#FF51A4", "#FF7C51", "#00D085", "#FFC41F", "#FF3232",
         ],
         dataLabels: {
             enabled: true,
