@@ -80,7 +80,15 @@ function titleFormat(value) {
 async function openActions(form, recordId,estatus) {
         showLoader();
         //document.getElementById('id_registro').textContent=recordId;
-        document.getElementById('estatus').textContent = estatus;
+
+        // Normaliza estatus para evitar errores en tablas que no lo tienen (ej. existencias)
+        const estatusTexto = (estatus ?? '').toString();
+        const estatusLower = estatusTexto.toLowerCase();
+
+        const estatusElement = document.getElementById('estatus');
+        if (estatusElement) {
+            estatusElement.textContent = estatusTexto;
+        }
 
         const updateButton = document.querySelector('button[data-action="actualizar"]');
         const deleteButton = document.querySelector('button[data-action="delete"]');
@@ -91,7 +99,7 @@ async function openActions(form, recordId,estatus) {
     
         if (deleteButton) {
             const esTablaProtegida = tablasProtegidas.includes(form.toLowerCase());
-            const tieneEstatusRestringido = ['pagado', 'activo', 'finalizada'].includes(estatus.toLowerCase());
+            const tieneEstatusRestringido = ['pagado', 'activo', 'finalizada'].includes(estatusLower);
 
             if (esTablaProtegida || tieneEstatusRestringido) {
                 deleteButton.classList.add('hidden'); 
