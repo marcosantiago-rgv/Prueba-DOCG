@@ -22,7 +22,6 @@ def get_foreign_options():
         "id_gasto": Gasto.query.filter(Gasto.estatus != "Pagado"), 
         "id_cuenta": CuentaBanco.query.filter_by(estatus="Activo"),
         
-        # Cambia la línea que falla por esta (sin el filtro de estatus_de_pago por ahora):
         "id_orden_de_compra": OrdenesDeCompra.query.filter(OrdenesDeCompra.estatus != "Cancelado")
     }
     return foreign_options

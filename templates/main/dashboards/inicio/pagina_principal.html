@@ -15,11 +15,11 @@
                         </span>
                             <p class="text-3xl font-bold text-slate-800 dark:text-white">Resumen Financiero</p>
                     </div>
-                   
+                  
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
 
                         <!-- Tarjeta 1: Total Pagado -->
-                        <div class="bg-white dark:bg-[#1b2e4b] rounded-xl p-5 shadow-md border-t-4 border-success border">
+                        <div class="dark:bg-[#1b2e4b] rounded-xl p-5 shadow-md border-t-4 border-success border">
                             <div class="flex items-start justify-between mb-4">
                                 <div class="flex items-center gap-3">
                                     <div class="p-2 bg-success/10 rounded-lg text-success">
@@ -35,7 +35,7 @@
                         </div>
                         
                         <!-- Tarjeta 2: Total Gastos -->
-                        <div class="bg-white dark:bg-[#1b2e4b] rounded-xl p-5 shadow-md border-t-4 border-primary border">
+                        <div class="dark:bg-[#1b2e4b] rounded-xl p-5 shadow-md border-t-4 border-primary border">
                             <div class="flex items-start justify-between mb-4">
                                 <div class="flex items-center gap-3">
                                     <div class="p-2 bg-primary/10 rounded-lg text-primary">
@@ -52,7 +52,7 @@
                         
 
                         <!-- Tarjeta 3: Por Pagar -->
-                        <div class="bg-white dark:bg-[#1b2e4b] rounded-xl p-5 shadow-md border-t-4 border-danger border">
+                        <div class="dark:bg-[#1b2e4b] rounded-xl p-5 shadow-md border-t-4 border-danger border">
                             <div class="flex items-start justify-between mb-4">
                                 <div class="flex items-center gap-3">
                                     <div class="p-2 bg-danger/10 rounded-lg text-danger">
@@ -74,11 +74,54 @@
             </div>
         </div>
         <div class="grid grid-cols-1 xl:grid-cols-1 gap-5">
+                <div class="bg-white dark:bg-dark dark:border-gray/20 border-2 border-lightgray/10 p-5 rounded-lg">
+
+                <div class="p-6 border-slate-100 dark:border-slate-700 flex justify-between items-center">
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-800 dark:text-white">Tendencia de Gastos Diarios</h3>
+                        <p class="text-sm text-slate-500">Visualización de egresos confirmados por fecha</p>
+                        <span class="text-lightgray text-sm">$MXN</span>       
+                    </div>
+                    <div class="text-primary">
+                        <i class="fas fa-chart-line text-xl"></i>
+                    </div>
+                    <div class="flex items-center gap-2">
+                            <input id="compras_diarias_inicio" value="{{fecha_inicio}}" type="date" class="form-input rounded-lg w-full" value="{{fecha_inicio}}" onchange="updateComprasDiarias()"> a
+                            <input id="compras_diarias_fin" value="{{fecha_fin}}" type="date" class="form-input rounded-lg w-full" value="{{fecha_fin}}" onchange="updateComprasDiarias()">
+                    </div>
+                </div>
+                <div class="p-6">
+                    <div id="grafica_gastos_diarios" class="w-full"></div>
+                </div>
+            </div>
+        </div>
+        <div class="grid grid-cols-1 xl:grid-cols-1 gap-5 mb-8">
+            <div class="bg-white dark:bg-dark dark:border-gray/20 border-2 border-lightgray/10 p-5 rounded-lg">
+                <div class="flex flex-col mb-4">
+                    <h2 class="font-semibold text-slate-800 dark:text-white">Distribución de Gastos</h2>
+                    <span class="text-sm text-slate-500">Por categoría de egreso</span>
+                </div>
+                <div id="grafica_gastos_categorias"></div>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-dark dark:border-gray/20 border-2 border-lightgray/10 p-5 rounded-lg">
+            <h2 class="font-semibold text-slate-800 dark:text-white">Egresos Mensuales</h2>
+            <p class="text-sm text-gray-500">Total pagado por mes</p>
+            <span class="text-lightgray text-sm">$MXN</span>       
+            <div id="grafica_pagos_mensuales"></div>
+        </div>
+        <div class="grid grid-cols-1 xl:grid-cols-1 gap-5">
             <div class="bg-white dark:bg-dark dark:border-gray/20 border-2 border-lightgray/10 p-5 rounded-lg">
                 <h2 class="mb-[30px] font-semibold">Compras mensuales por producto</h2>
                 <div id="grafica_ejemplo"></div>
             </div>
+             <div class="bg-white dark:bg-dark dark:border-gray/20 border-2 border-lightgray/10 p-5 rounded-lg">
+                <h2 class="mb-[30px] font-semibold">Detalle de compra</h2>
+                <div id="detalle_compras"></div>
+            </div>
         </div>
+      
         <div class="grid grid-cols-1 xl:grid-cols-1 gap-5">
             <div class="bg-white dark:bg-dark dark:border-gray/20 border-2 border-lightgray/10 p-5 rounded-lg">
                     <div class="flex justify-between items-center gap-3">
@@ -93,6 +136,7 @@
                     </div>
                     <div id="grafica_compras_diarias"></div>
             </div>
+           
         </div>        
     </div>
     {% include "./partials/system/loader.html" %}
@@ -151,9 +195,89 @@
                 `/dashboard_queries/compras_diarias?fecha_inicio=${compras_diarias_inicio}&fecha_fin=${compras_diarias_fin}`,{'valueType':'currency'}
             )
         }
+        function updateTendenciaGastos() {
+            const inicio = document.getElementById('compras_diarias_inicio').value;
+            const fin = document.getElementById('compras_diarias_fin').value;
+
+            generar_grafica(
+                "#grafica_gastos_diarios", 
+                "area",                    
+                "fecha",                  
+                "total_gastos",            
+                `/dashboard_queries/gastos_fechas?fecha_inicio=${inicio}&fecha_fin=${fin}`, 
+                {
+                    seriesName: "Gasto del día",
+                    valueType: "currency",
+                    colors: ["#FF3232"],   
+                    height: 350,
+                    grid: {
+                        padding: {
+                            left: 30 
+                        }
+                    }
+                }
+            );
+        }
+        function updateGastosCategorias() {
+            const inicio = document.getElementById('compras_diarias_inicio').value;
+            const fin = document.getElementById('compras_diarias_fin').value;
+
+            generar_grafica(
+                "#grafica_gastos_categorias",
+                "pie",
+                "categoria", 
+                "total",   
+                `/dashboard_queries/gastos_por_categoria?fecha_inicio=${inicio}&fecha_fin=${fin}`,
+                {
+                    height: 350,
+                    colors: ["#267DFF", "#FF51A4", "#FF7C51", "#00D085", "#FFC41F"],
+                    legend: { position: 'bottom' }
+                }
+            );
+        }
+        
+        function updatePagosMensuales() {
+   
+            generar_grafica_categorias(
+                "#grafica_pagos_mensuales", 
+                "bar_stacked",           
+                "mes",           
+                "total_pagado",  
+                "mes", 
+                "/dashboard_queries/pagos_por_mes", 
+                {
+                    height: 350,
+                    valueType: 'currency',
+                    colors: ["#267DFF"], 
+                    plotOptions: {
+                        bar: {
+                            borderRadius: 6,
+                            columnWidth: '30%', 
+                        }
+                    },
+                    dataLabels: {
+                        formatter: function (val) {
+                            return new Intl.NumberFormat('es-MX', { 
+                                style: 'currency', 
+                                currency: 'MXN',
+                                maximumFractionDigits: 0 
+                            }).format(val);
+                        },
+                    },
+                    legend: {
+                        show: false // Ocultamos la leyenda para que no se repita el nombre del mes
+                    }
+                }
+            );
+        }
+        updateTendenciaGastos()
         updateComprasDiarias()
-document.addEventListener('DOMContentLoaded', () => {
-    cargarKPIs(); 
+        updateGastosCategorias()
+        updatePagosMensuales()
+        document.addEventListener('DOMContentLoaded', () => {
+        cargarKPIs(); 
+        render_dynamic_table("detalle_compras", '/dashboard_queries/tables?path=compras')
+
 });
 </script>
 {% endblock content %}

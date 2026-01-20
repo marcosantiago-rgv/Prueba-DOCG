@@ -33,3 +33,19 @@ def sql_data(sql_name):
     data = [dict(row._mapping) for row in data]
     return jsonify(data)
 
+@dashboard_queries_bp.route('/tables', methods=["GET"])
+@login_required
+def tables_queries():
+    path=request.args.get("path", type=str)
+    path= f'./static/sql/dashboard_queries/{path}.sql'
+    base_query = open(path, "r", encoding="utf-8").read()
+
+    rows= db.session.execute(text(base_query)).mappings().all()
+    data = [dict(row) for row in rows]
+
+    columns = list(rows[0].keys()) if rows else []
+
+    return jsonify({
+        "columns" : columns,
+        "data" : data
+    })
