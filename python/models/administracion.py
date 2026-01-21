@@ -19,7 +19,6 @@ class OrdenesDeCompra(db.Model, BaseMixin, AuditMixin):
     subtotal = db.Column(db.Float, nullable=False, default=0.00)
     descuentos = db.Column(db.Float, default=0.00)
     importe_total = db.Column(db.Float, nullable=False, default=0.00)
-    archivo_cotizacion = db.Column(db.String(255))
     notas = db.Column(db.Text)
 
     # e.g., En revisión, Aprobada, Recibida,Cancelada
@@ -65,3 +64,16 @@ class EntregaDeProductosEnOrdenesDeCompra(db.Model, BaseMixin, AuditMixin):
 
     producto_en_orden_de_compra = db.relationship(
         "ProductosEnOrdenesDeCompra", backref="entrega_de_productos_en_ordenes_de_compra", lazy=True)
+
+    producto_en_orden_de_compra = db.relationship(
+        "ProductosEnOrdenesDeCompra", backref="entrega_de_productos_en_ordenes_de_compra", lazy=True)
+
+
+class Inventario(db.Model, BaseMixin, AuditMixin):
+
+    id_producto = db.Column(db.UUID, db.ForeignKey(
+        "productos.id"), nullable=False)
+
+    cantidad = db.Column(db.Float, nullable=False, default=0)
+
+    producto = db.relationship("Productos", backref="inventario", lazy=True)

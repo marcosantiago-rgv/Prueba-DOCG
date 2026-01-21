@@ -7,6 +7,7 @@ from flask import Blueprint, flash, jsonify, redirect, render_template, request,
 from python.models import db
 from python.models.modelos import *
 from python.services.system.helper_functions import *
+from python.services.system.template_formats import *
 from python.services.form_workflows.edit_on_success import *
 from python.services.form_workflows.on_success import *
 from python.services.system.authentication import *
@@ -33,6 +34,7 @@ dynamic_bp = Blueprint("dynamic", __name__, url_prefix="/dynamic")
 @login_required
 @roles_required()
 def table_view(table_name):
+    session.pop("return_url", None)
     parent_table=request.args.get("parent_table")
     id_parent_record=request.args.get("id_parent_record")
     """
@@ -48,41 +50,21 @@ def table_view(table_name):
     columns=get_columns(table_name,'main_page')
     if columns==None:
         columns = model.__table__.columns.keys()
-        # Get Many-to-Many relationships
-        many_to_many_columns = [
-            rel.key for rel in model.__mapper__.relationships.values()  if rel.secondary is not None and "archivos" not in rel.key.lower() and "rutas" not in rel.key.lower()
-        ]
-        # Combine both lists
-        columns = columns + many_to_many_columns
 
     # Datos para resaltar el menú activo en el sidebar
-    if parent_table:
-        parent_model = get_model_by_name(parent_table)
-        module,active_menu=get_breadcrumbs(parent_table)
-        parent_record=parent_model.query.get(id_parent_record)
-        parent_record_name = getattr(parent_record, "nombre", None) or getattr(parent_record, "nombre_completo", None) or getattr(parent_record, "id_visualizacion", None)
-        if module==parent_table.replace('_', ' ').capitalize():
-            breadcrumbs=[{"name":parent_table.replace('_', ' ').capitalize(),"url":f"/dynamic/{parent_table}/view"},{"name":parent_record_name,"url":""},{"name":table_name.replace('_', ' ').capitalize(),"url":""}]
-        else:
-            breadcrumbs=[{"name":module,"url":""},{"name":parent_table.replace('_', ' ').capitalize(),"url":f"/dynamic/{parent_table}/view"},{"name":parent_record_name,"url":""},{"name":table_name.replace('_', ' ').capitalize(),"url":""}]
-        context = {
-                "activeMenu": active_menu, 
-                "activeItem": parent_table,
-                "breadcrumbs": breadcrumbs
-            }
+    module,active_menu=get_breadcrumbs(table_name)
+    if module==table_name.replace('_', ' ').capitalize():
+        breadcrumbs=[{"name":table_name.replace('_', ' ').capitalize(),"url":""}]
     else:
-        module,active_menu=get_breadcrumbs(table_name)
-        if module==table_name.replace('_', ' ').capitalize():
-            breadcrumbs=[{"name":table_name.replace('_', ' ').capitalize(),"url":""}]
-        else:
-            breadcrumbs=[{"name":module,"url":""},{"name":table_name.replace('_', ' ').capitalize(),"url":""}]
-        context = {
-                "activeMenu": active_menu, 
-                "activeItem": table_name,
-                "breadcrumbs": breadcrumbs
-            }
+        breadcrumbs=[{"name":module,"url":""},{"name":table_name.replace('_', ' ').capitalize(),"url":""}]
+    context = {
+            "activeMenu": active_menu, 
+            "activeItem": table_name,
+            "breadcrumbs": breadcrumbs
+        }
     number_buttons=get_table_buttons().get(table_name,0)
     date_variable=get_calendar_date_variable(table_name)
+    javascript = os.path.exists(f'static/js/table_logic/{table_name}.js')
     relationships=get_table_relationships(table_name)
     data_tabs=get_data_tabs(table_name,parent_table,id_parent_record)
     checkbox=get_checkbox(table_name)
@@ -98,11 +80,12 @@ def table_view(table_name):
         relationships=relationships,
         checkbox=checkbox,
         title_formats=TITLE_FORMATS,
+        javascript=javascript,
         html='table',
         **context
     )
 
-@dynamic_bp.route("/<table_name>/data", methods=["GET"])
+@dynamic_bp.route("/<table_name>/data", methods=["GET"], strict_slashes=False)
 @login_required
 @roles_required()
 def data(table_name):
@@ -123,6 +106,72 @@ def data(table_name):
     categories=request.args.get("categories", "", type=str)
 
     query = model.query
+
+    mapper = inspect(model)
+    m2m_search_columns = [] 
+    for rel in mapper.relationships:
+        if rel.secondary is None:
+            continue  # only many-to-many
+
+        related_model = rel.mapper.class_
+        secondary = rel.secondary
+
+        # --- Detect FK columns ---
+        base_pk = model.__mapper__.primary_key[0]
+        related_pk = related_model.__mapper__.primary_key[0]
+
+        base_fk_col = None
+        related_fk_col = None
+
+        for col in secondary.c:
+            for fk in col.foreign_keys:
+                if fk.column is base_pk:
+                    base_fk_col = col
+                elif fk.column is related_pk:
+                    related_fk_col = col
+
+        if base_fk_col is None or related_fk_col is None:
+            continue  # safety
+
+        # --- Choose display column dynamically ---
+        display_col_name = next(
+            (c.key for c in related_model.__table__.columns
+            if c.key in ("nombre", "name", "descripcion")),
+            related_pk.key
+        )
+
+        display_col = getattr(related_model, display_col_name)
+
+        # --- Build aggregation subquery ---
+        subq = (
+            db.session.query(
+                base_fk_col.label("parent_id"),
+                func.string_agg(
+                    func.cast(display_col, db.String),
+                    ", "
+                ).label(rel.key)
+            )
+            .outerjoin(
+                related_model,
+                related_pk == related_fk_col
+            )
+            .group_by(base_fk_col)
+            .subquery()
+        )
+
+        subq_alias = aliased(subq, name=f"{rel.key}_agg")
+
+        # --- Join subquery to main query ---
+        query = query.outerjoin(
+            subq_alias,
+            subq_alias.c.parent_id == base_pk
+        )
+
+        # --- Expose aggregated column ---
+        agg_col = subq_alias.c[rel.key]
+        query = query.add_columns(agg_col)
+        m2m_search_columns.append(agg_col)
+
 
     if session['nombre_rol']!='Administrador' and session['nombre_rol']!='Sistema':
         query=query.filter(model.id_usuario==session['id_usuario'])
@@ -153,10 +202,10 @@ def data(table_name):
     
     # Aplicar búsqueda
     if search:
-        query = search_table(query, model, search, aliased_name_columns)
+        query = search_table(query, model, search, aliased_name_columns,m2m_search_columns)
 
     if table_name=='archivos':
-        query=query.filter(Archivos.id_registro==session['id_registro_tabla_origen'])
+        query=query.filter(Archivos.id_registro==id_parent_record)
         
     if parent_table:
         for rel in model.__mapper__.relationships.values():
@@ -164,16 +213,16 @@ def data(table_name):
                 fk = f"id_{rel.key.lower()}"
                 query=query.filter(getattr(model, fk)==id_parent_record)
                 break
+    if not parent_table:
+        status_field = get_variable_tabs(table_name)
 
-    status_field = get_variable_tabs(table_name)
-
-    if status != 'todos':
-        query = query.filter(getattr(model, status_field) == status)
-    else:
-        open_status=get_open_status(table_name)
-        if open_status and hasattr(model,status_field):
-            query = query.filter(getattr(model, status_field).in_(open_status))
-    
+        if status != 'todos':
+            query = query.filter(getattr(model, status_field) == status)
+        else:
+            open_status=get_open_status(table_name)
+            if open_status and hasattr(model,status_field):
+                query = query.filter(getattr(model, status_field).in_(open_status))
+        
 
     fecha_fields = get_date_fields() 
 
@@ -247,7 +296,7 @@ def data(table_name):
 @login_required
 @roles_required()
 def form(table_name):
-    parent_table=request.args.get("parent_table")
+    parent_table=request.args.get("parent_table")        
     id_parent_record=request.args.get("id_parent_record")    
     model = get_model_by_name(table_name)
     if not model:
@@ -260,19 +309,18 @@ def form(table_name):
     form_options=get_form_options(table_name)
     foreign_options = {**foreign_options, **form_options}
     # Add Many-to-Many relationships
+    record_id = request.args.get("id")
+    if record_id!=None:
+        record = model.query.get(record_id)    
     many_to_many_data = {}
     for attr_name, attr in model.__mapper__.relationships.items():
         if attr.secondary is not None:  # Ensures it's Many-to-Many
             related_model = attr.mapper.class_
 
-            # Get selected values for the current record
-            selected_items = []
-
-            # Ensure selected_items is iterable
-            if isinstance(selected_items, list) or hasattr(selected_items, '__iter__'):
-                selected_ids = [item.id for item in selected_items]  
-            else:
-                selected_ids = [selected_items.id] if selected_items else []
+            selected_ids = []
+            if record_id!=None:
+                selected_items = getattr(record, attr_name, [])
+                selected_ids = [item.id for item in selected_items]
 
             # Get all available options
             all_options = related_model.query.all()
@@ -282,16 +330,12 @@ def form(table_name):
                 "selected": selected_ids,
                 "options": all_options
             }
-
     # Add Multiple choice fields
     multiple_choice_data=get_multiple_choice_data()
-
-    modulo,active_menu=get_breadcrumbs(table_name)
+    modulo,active_menu=get_breadcrumbs(parent_table) if parent_table else get_breadcrumbs(table_name)
     default_variable_values={}
     # edicion
-    record_id = request.args.get("id")
     if record_id!=None:
-        record = model.query.get(record_id)
         name = getattr(record, "nombre", None)
         flujo = request.args.get("accion", None, type=str)
         accion = (f"Editar registro: {name}" if name else "Editar registro: "+ str(record.id_visualizacion)) if flujo is None else (f"{flujo}: {name}" if name else f"{flujo}:"+ str(record.id_visualizacion))
@@ -303,7 +347,7 @@ def form(table_name):
         if not record:
             flash(f"Registro con ID {record_id} no encontrado en '{table_name}'.", "danger")
             return redirect(request.referrer or url_for("dynamic.table_view", table_name=table_name))
-        if record.estatus in get_non_edit_status() or table_name in get_no_edit_access():
+        if (record.estatus in get_non_edit_status(table_name) or table_name in get_no_edit_access()) and flujo==None:
             flash(f"Registro ya no se puede editar.", "info")
             return redirect(request.referrer or url_for("dynamic.table_view", table_name=table_name))
         javascript = os.path.exists(f'static/js/form_logic/edit/{table_name}.js')
@@ -316,14 +360,20 @@ def form(table_name):
         accion="Registrar"
         record=None
         javascript = os.path.exists(f'static/js/form_logic/add/{table_name}.js')
+    if parent_table:
+        breadcrumbs=[{"name":modulo,"url":""},{"name":parent_table.replace('_', ' ').capitalize(),"url":url_for("dynamic.table_view", table_name=parent_table)},{"name":table_name.replace('_', ' ').capitalize(),"url":url_for("dynamic.table_view", table_name=table_name)},{"name":accion,"url":""}]
+    else:
+        breadcrumbs=[{"name":modulo,"url":""},{"name":table_name.replace('_', ' ').capitalize(),"url":url_for("dynamic.table_view", table_name=table_name)},{"name":accion,"url":""}]
     context = {
         "activeMenu": active_menu,
-        "activeItem": table_name,
+        "activeItem": parent_table if parent_table else table_name,
         "foreign_options": foreign_options,
-        "breadcrumbs": [{"name":modulo,"url":""},{"name":table_name.replace('_', ' ').capitalize(),"url":url_for("dynamic.table_view", table_name=table_name)},{"name":accion,"url":""}]
+        "breadcrumbs": breadcrumbs
     }
     form_filters=get_form_filters(table_name)
-    parent_record=get_parent_record(table_name)
+    parent_record=get_parent_record(table_name,parent_table)
+    columns = list(many_to_many_data.keys()) + columns
+    required_fields = list(many_to_many_data.keys()) + required_fields
     return render_template(
         "system/dynamic_form.html",
         columns=columns,
@@ -355,7 +405,7 @@ def add(table_name):
         return redirect(url_for("dynamic.table_view", table_name=table_name))
     try:
         # Retrieve all form data (handling multi-select fields correctly)
-        model_columns = model.__table__.columns.keys()
+        model_columns = model.__table__.columns.keys() + model.__mapper__.relationships.keys()
         data = {key: request.form.getlist(key) for key in request.form.keys() if key in model_columns}
         data.pop('archivo', None)
         data = sanitize_data(model, data)
@@ -369,17 +419,16 @@ def add(table_name):
                 relationship_data[key] = value  # Store for later processing
             else:
                 # Normal field (use first value if it's a list with one element)
-                normal_data[key] = value[0] if isinstance(value, list) and len(value) == 1 else value
+                normal_data[key] = value
         # Create new record with only normal fields first
         new_record = model(**normal_data)
         new_record.id_usuario = Usuarios.query.get(session["id_usuario"]).id
         if hasattr(model, 'id_visualizacion'):
             new_record.id_visualizacion=get_id_visualizacion(table_name)
         if table_name=='archivos':
-            new_record.tabla_origen=session['tabla_origen']
-            new_record.id_registro=session['id_registro_tabla_origen']
+            new_record.tabla_origen=parent_table
+            new_record.id_registro=id_parent_record
             new_record.ruta_s3=''
-            new_record.nombre=''
         if table_name=='usuarios':
             alphabet = string.ascii_letters + string.digits
             contrasena = ''.join(secrets.choice(alphabet) for i in range(20))
@@ -390,35 +439,36 @@ def add(table_name):
         db.session.flush()
         if table_name=='archivos':
             archivo = request.files.get("archivo")
-            s3_service.upload_file(archivo, new_record.id,session['tabla_origen'])
-            new_record.ruta_s3=f"{session['tabla_origen']}/{ new_record.id}_{archivo.filename}"
-            new_record.nombre=archivo.filename
+            s3_service.upload_file(archivo, new_record.id,parent_table)
+            new_record.ruta_s3=f"{parent_table}/{ new_record.id}_{archivo.filename}"
+            new_record.nombre_del_archivo=archivo.filename
         # Process many-to-many relationships
         for key, value in relationship_data.items():
             related_model = getattr(model, key).property.mapper.class_
-            # Convert IDs to actual objects
-            selected_items = db.session.query(related_model).filter(related_model.id.in_([int(v) for v in value if v])).all()
-            # Assign relationship
-            getattr(new_record, key).extend(selected_items)
+            relationship_name=getattr(model, key).key
+            selected_ids = [UUID(v) for v in value if v] if value else []
+            selected_items = db.session.query(related_model).filter(related_model.id.in_(selected_ids)).all()
+            relationship = getattr(new_record, relationship_name)
+            relationship.clear()
+            relationship.extend(selected_items)              
         # archivos
-        archivos = [file for key, file in request.files.items() if key.startswith("id_archivo")]
-        if archivos:
+        archivos = [file for key, file in request.files.items()]
+        if archivos and table_name!='archivos':
             for archivo in archivos:
                 if archivo.filename:
                     # create file in archivos
                     new_file=Archivos(
-                        nombre_del_archivo=archivo.name,
+                        nombre_del_archivo=archivo.filename,
                         tabla_origen=table_name,
                         id_registro=new_record.id,
                         ruta_s3='',
-                        nombre='',
+                        nombre=archivo.name,
                         id_usuario=session['id_usuario']
-                    )      
+                    )
                     db.session.add(new_file)
                     db.session.flush()
                     s3_service.upload_file(archivo, new_file.id,table_name)
                     new_file.ruta_s3=f"{table_name}/{new_file.id}_{archivo.filename}"
-                    new_file.nombre=archivo.filename
                     db.session.add(new_file)
                     setattr(new_record, archivo.name, f'{new_file.id}__{archivo.filename}')       
         # Commit transaction
@@ -429,8 +479,10 @@ def add(table_name):
         db.session.rollback()
         flash(f"Error al crear el registro: {str(e)}", "danger")
         return(request.referrer or "/")
-    if table_name=='archivos':
-        return redirect(url_for("dynamic.table_view_files", table_name=session['tabla_origen'],id=session['id_registro_tabla_origen']))
+    return_url = session.get('return_url')
+    if return_url:
+        session.pop("return_url", None)
+        return redirect(return_url)
     else:
         url=get_url_after_add(table_name)
         if 'double_table_view' in url:
@@ -510,49 +562,62 @@ def edit(table_name):
                         # Check if the field is a relationship (Many-to-Many)
                         if isinstance(attr, InstrumentedAttribute) and hasattr(attr.property, 'mapper'):
                             related_model = attr.property.mapper.class_
+                            relationship_name=attr.key
                             # Convert selected IDs to integers
-                            selected_ids = [int(v) for v in value if v] if value else []
+                            selected_ids = [UUID(v) for v in value if v] if value else []
                             # Query related objects and update relationship
                             selected_items = db.session.query(related_model).filter(related_model.id.in_(selected_ids)).all()
-                            getattr(record, key).clear()  # Clear existing relationships
-                            getattr(record, key).extend(selected_items)  # Add new selections
-
+                            relationship = getattr(record, relationship_name)
+                            relationship.clear()
+                            relationship.extend(selected_items)                          
                         else:
                             # Assign normal fields
-                            setattr(record, key, value[0] if isinstance(value, list) and len(value) == 1 else value)
+                            setattr(record, key, value)
             # archivos
-            archivos = [file for key, file in request.files.items() if key.startswith("id_archivo")]
+            archivos = [file for key, file in request.files.items()]
             if archivos:
                 for archivo in archivos:
                     if archivo.filename:
-                        old_file=Archivos.query.filter_by(id_registro=record.id,nombre_del_archivo=archivo.name,tabla_origen=table_name).first()
+                        old_file=Archivos.query.filter_by(id_registro=record.id,nombre=archivo.name,tabla_origen=table_name).first()
                         if old_file:
                             s3_service.delete_file(old_file.ruta_s3)
                             db.session.delete(old_file)
                         # create file in archivos
                         new_record=Archivos(
-                            nombre_del_archivo=archivo.name,
+                            nombre_del_archivo=archivo.filename,
                             tabla_origen=table_name,
                             id_registro=record.id,
                             ruta_s3='',
-                            nombre='',
+                            nombre=archivo.name,
                             id_usuario=session['id_usuario']
                         )      
                         db.session.add(new_record)
                         db.session.flush()
                         s3_service.upload_file(archivo, new_record.id,table_name)
                         new_record.ruta_s3=f"{table_name}/{new_record.id}_{archivo.filename}"
-                        new_record.nombre=archivo.filename
                         db.session.add(new_record)
                         setattr(record, archivo.name, f'{new_record.id}__{archivo.filename}')   
+            state = inspect(record)
+            changed_fields = {
+                attr.key: {
+                    "old": attr.history.deleted[0] if attr.history.deleted else None,
+                    "new": attr.history.added[0] if attr.history.added else None
+                }
+                for attr in state.attrs if attr.history.has_changes()
+            }
             db.session.flush()
-            edit_on_success(table_name,record.id)
+            edit_on_success(table_name, record.id, changed_fields)            
             db.session.commit()
             flash(f"Registro actualizado exitosamente en '{table_name.replace('_', ' ').capitalize()}'.", "success")
         except Exception as e:
             db.session.rollback()
             flash(f"Error al actualizar el registro: {str(e)}", "danger")
-        return redirect(url_for("dynamic.table_view", table_name=table_name))
+        return_url = session.get('return_url')
+        if return_url:
+            session.pop("return_url", None)
+            return redirect(return_url)
+        else:
+            return redirect(url_for("dynamic.table_view", table_name=table_name))
 
 @dynamic_bp.route("/<table_name>/data/<id_record>", methods=["GET"])
 @login_required
@@ -563,6 +628,68 @@ def record_data(table_name,id_record):
         return jsonify({"error": f"La tabla '{table_name}' no existe."}), 404
     # Iniciar la consulta
     query = model.query
+    mapper = inspect(model)
+    for rel in mapper.relationships:
+        if rel.secondary is None:
+            continue  # only many-to-many
+
+        related_model = rel.mapper.class_
+        secondary = rel.secondary
+
+        # --- Detect FK columns ---
+        base_pk = model.__mapper__.primary_key[0]
+        related_pk = related_model.__mapper__.primary_key[0]
+
+        base_fk_col = None
+        related_fk_col = None
+
+        for col in secondary.c:
+            for fk in col.foreign_keys:
+                if fk.column is base_pk:
+                    base_fk_col = col
+                elif fk.column is related_pk:
+                    related_fk_col = col
+
+        if base_fk_col is None or related_fk_col is None:
+            continue  # safety
+
+        # --- Choose display column dynamically ---
+        display_col_name = next(
+            (c.key for c in related_model.__table__.columns
+            if c.key in ("nombre", "name", "descripcion")),
+            related_pk.key
+        )
+
+        display_col = getattr(related_model, display_col_name)
+
+        # --- Build aggregation subquery ---
+        subq = (
+            db.session.query(
+                base_fk_col.label("parent_id"),
+                func.string_agg(
+                    func.cast(display_col, db.String),
+                    ", "
+                ).label(rel.key)
+            )
+            .outerjoin(
+                related_model,
+                related_pk == related_fk_col
+            )
+            .group_by(base_fk_col)
+            .subquery()
+        )
+
+        subq_alias = aliased(subq, name=f"{rel.key}_agg")
+
+        # --- Join subquery to main query ---
+        query = query.outerjoin(
+            subq_alias,
+            subq_alias.c.parent_id == base_pk
+        )
+
+        # --- Expose aggregated column ---
+        agg_col = subq_alias.c[rel.key]
+        query = query.add_columns(agg_col)
     # Agregar joins condicionales
     joins = get_joins()
     filtered_joins = {field: val for field, val in joins.items() if field in model.__table__.columns}
@@ -589,11 +716,19 @@ def record_data(table_name,id_record):
     query=query.filter(model.id == id_record)
     records = query.all()
     columns_order= get_columns(table_name,'modal')
-    record = [record_to_ordered_list(model,joins,record,columns_order) for record in records]
+    record = [record_to_ordered_dict(model,record,columns_order) for record in records]
     relationships=get_table_relationships(table_name)
-    if relationships!='':
-        for i in relationships:
-            record[0].append((i,'/dynamic/'+i+'/view?parent_table='+table_name+'&id_parent_record='+id_record))
+    if relationships and record:
+        relationships_section = {
+            "section": "registros_relacionados",
+            "fields": [
+                {
+                    "key": 'detalle',
+                    "value": f"/dynamic/{table_name}/related/{id_record}/{relationships[0]}?parent_table={table_name}&id_parent_record={id_record}"
+                }
+            ]
+        } 
+        record[0].append(relationships_section)
     return jsonify(record)
 
 ###################
@@ -618,28 +753,8 @@ def double_table_view(table_name,id):
     foreign_options = get_foreign_options()
     form_options=get_form_options(table_name)
     foreign_options = {**foreign_options, **form_options}
-    details = []
-    
-    for detail in variables.get('details', []): 
-        value = getattr(record, detail)
-
-        # Handle related objects
-        if hasattr(value, "nombre"):
-            value = value.nombre
-        if hasattr(value, "nombre_completo"):
-            value = value.nombre_completo
-
-        # Format money fields
-        if any(word in detail.lower() for word in ["importe", "monto", "precio"]):
-            try:
-                # Safely cast to Decimal/float and format as money
-                value = f"${float(value):,.2f}"
-            except Exception:
-                # fallback if value is not numeric
-                value = str(value)
-
-        result = f"{detail.replace('_',' ').capitalize().replace('Id visualizacion','ID')}: {value}"
-        details.append(result)
+    details = []   
+    details = { detail:deep_getattr(record, detail) for detail in variables.get('details', [])}
 
     module,active_menu=get_breadcrumbs(table_name)
     context = {
@@ -759,7 +874,7 @@ def delete_double_table(main_table_name,table_name,id,id_main_record):
             flash(f"Error al eliminar el registro: {str(e)}", "danger")
         return jsonify({"status": status, "message": message})
 
-@dynamic_bp.route("/<string:table_name>/double_table/update/<string:column>/<id>/", methods=["POST"])
+@dynamic_bp.route("/<string:table_name>/double_table/update/<string:column>/<id>", methods=["POST"])
 @dynamic_bp.route("/<string:table_name>/double_table/update/<string:column>/<id>/<value>", methods=[ "POST"])
 @login_required
 @csrf.exempt
@@ -804,27 +919,9 @@ def table_view_input(main_table_name,id):
     foreign_options = get_foreign_options()
     form_options=get_form_options(table_name)
     foreign_options = {**foreign_options, **form_options}
-    details = []
-    for detail in variables.get('details', []): 
-        value = getattr(record, detail)
-
-        # Handle related objects
-        if hasattr(value, "nombre"):
-            value = value.nombre
-        if hasattr(value, "nombre_completo"):
-            value = value.nombre_completo
-
-        # Format money fields
-        if any(word in detail.lower() for word in ["importe", "monto", "precio"]):
-            try:
-                # Safely cast to Decimal/float and format as money
-                value = f"${float(value):,.2f}"
-            except Exception:
-                # fallback if value is not numeric
-                value = str(value)
-
-        result = f"{detail.replace('_',' ').capitalize().replace('Id visualizacion','ID')}: {value}"
-        details.append(result)
+    details = []   
+    details = { detail:deep_getattr(record, detail) for detail in variables.get('details', [])}
+    
     module,active_menu=get_breadcrumbs(table_name)
     context = {
                 "activeMenu": active_menu, 
@@ -909,45 +1006,6 @@ def double_table_view_confirm(table_name,id):
     url_confirm=variables.get('url_confirm')
     return redirect(url_for(url_confirm, id=id))
 
-###################
-# Files View
-###################
-
-@dynamic_bp.route("/<string:table_name>/files/<id>", methods=["GET"])
-@login_required
-@roles_required()
-def table_view_files(table_name,id):
-    model = get_model_by_name(table_name)
-    module,active_menu=get_breadcrumbs(table_name)
-    record=model.query.get(id)
-    try:
-        name=record.nombre 
-    except:
-        name=record.id_visualizacion
-    context = {
-            "activeMenu": active_menu, 
-            "activeItem": table_name,
-            "breadcrumbs": [{"name":module,"url":""},{"name":table_name.replace('_', ' ').capitalize(),"url":url_for("dynamic.table_view", table_name=table_name)},{"name":name,"url":""},{"name":"Archivos","url":""}]
-        }
-    # Obtener las columnas definidas en el modelo
-    columns = get_columns('archivos','main_page')
-    
-    session['tabla_origen']=table_name
-    session['id_registro_tabla_origen']=record.id
-    date_variable=''
-    buttons_modal_exits = os.path.exists(f'templates/partials/table/modals/archivos.html')
-    return render_template(
-        "system/dynamic_table.html",
-        buttons_modal_exits=buttons_modal_exits,
-        table_buttons=True,
-        number_buttons=1,
-        columns=columns,
-        id_registro_padre=record.id,
-        table_name='archivos',
-        title_formats=TITLE_FORMATS,
-        date_variable=date_variable,
-        **context
-    )
 
 ###################
 # Import data 
@@ -1027,7 +1085,7 @@ def import_data(table_name):
         return jsonify({'alert':'error','message': f"Error en la importación: {e}"})
 
 ###################
-# Upload specific files
+# Upload specific files (double table/input table)
 ###################
 
 @dynamic_bp.route("/upload_file/<string:table_name>/<id>/<column>", methods=["POST"])
@@ -1035,26 +1093,92 @@ def import_data(table_name):
 def upload_file(table_name,id,column):
     model=get_model_by_name(table_name)
     record=model.query.get(id)
-    old_file=Archivos.query.filter_by(id_registro=id,nombre_del_archivo=column,tabla_origen=table_name).first()
+    old_file=Archivos.query.filter_by(id_registro=id,nombre=column,tabla_origen=table_name).first()
     if old_file:
         s3_service.delete_file(old_file.ruta_s3)
         db.session.delete(old_file)
     # create file in archivos
+    archivo = request.files.get("archivo")
     new_record=Archivos(
-        nombre_del_archivo=column,
+        nombre_del_archivo=archivo.filename,
         tabla_origen=table_name,
         id_registro=id,
         ruta_s3='',
-        nombre='',
+        nombre=column,
         id_usuario=session['id_usuario']
     )
-    archivo = request.files.get("archivo")
     db.session.add(new_record)
     db.session.flush()
     s3_service.upload_file(archivo, new_record.id,table_name)
     new_record.ruta_s3=f"{table_name}/{new_record.id}_{archivo.filename}"
-    new_record.nombre=archivo.filename
     db.session.add(new_record)
     setattr(record, column, f'{new_record.id}__{archivo.filename}')
     db.session.commit()
     return jsonify({'alert':'success','message': f"El archivo se cargo exitosamente."})
+
+###################
+# Related tables view
+###################
+
+@dynamic_bp.route("/<parent_table>/related/<id>/<table_name>", methods=["GET"])
+@login_required
+def related(id,parent_table,table_name):
+    session['return_url'] = request.url
+    model=get_model_by_name(parent_table)
+    id_parent_record=id
+    record=model.query.get(id)
+    modulo,active_menu=get_breadcrumbs(parent_table)
+    parent_record_name = getattr(record, "nombre", None) or getattr(record, "nombre_completo", None) or getattr(record, "id_visualizacion", None)   
+    breadcrumbs=[{"name":modulo,"url":""},{"name":title_format(parent_table),"url":url_for("dynamic.table_view", table_name=parent_table)},{"name":parent_record_name,"url":""}]
+    context = {
+        "activeMenu": active_menu,
+        "activeItem": parent_table,
+        "breadcrumbs": breadcrumbs
+    }    
+    if table_name=='resumen':
+        variables=get_summary_data(parent_table)
+        primary = variables.get('primary') or []
+        primary_info = [ deep_getattr(record, detail) for detail in primary]
+        record_data = {}
+        data = variables.get('data', {})
+        for section, details in data.items():
+            record_data[section] = {
+                detail: deep_getattr(record, detail)
+                for detail in details
+            }
+        kpis=get_summary_kpis(parent_table,id_parent_record)
+        return render_template(
+            "system/dynamic_summary.html",
+            record=record,
+            title_formats=TITLE_FORMATS,
+            parent_table=parent_table,
+            id_parent_record=id_parent_record,
+            activeDefTab=table_name,
+            tabs=get_table_relationships(parent_table), 
+            primary_info=primary_info,  
+            record_data=record_data,
+            kpis=kpis,
+            nombre=deep_getattr(record, variables.get('primary', [])[0]),
+            **context
+        )
+    else:
+        number_buttons=get_table_buttons().get(table_name,0)
+        date_variable=get_calendar_date_variable(table_name)
+        javascript = os.path.exists(f'static/js/table_logic/{table_name}.js')
+        checkbox=get_checkbox(table_name)    
+        return render_template(
+            "system/dynamic_related_data.html",
+            record=record,
+            title_formats=TITLE_FORMATS,
+            table_name=table_name,
+            columns=get_columns(table_name,'main_page'),
+            parent_table=parent_table,
+            id_parent_record=id_parent_record,
+            activeDefTab=table_name,
+            tabs=get_table_relationships(parent_table),
+            number_buttons=number_buttons,
+            date_variable=date_variable,
+            checkbox=checkbox,
+            javascript=javascript,
+            **context        
+        )

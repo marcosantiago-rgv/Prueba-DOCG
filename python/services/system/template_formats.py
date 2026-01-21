@@ -12,22 +12,21 @@ def commafy(value):
 # Filtro para formatear nombres de bases
 def title_format(value):
     replacements = TITLE_FORMATS
-    
     # First check for exact match
     if value=='id_visualizacion':
         return "ID"
     if value in replacements:
         if 'id' in value:
             return replacements[value]  
+        if replacements[value].isupper():
+            return replacements[value]    
         return replacements[value].capitalize()
-    # Replace underscores with spaces
-    
     formatted = value.replace("_id_visualizacion","").replace("_", " ")
     # Remove "id " prefix if present
     if formatted.startswith("id "):
         formatted = formatted[3:]
     # Capitalize first letter
-    formatted = formatted.capitalize()
+    formatted = formatted.capitalize().replace('.',' ')
     # Replace words with their accented versions if they exist
     for k, v in replacements.items():
         if k in formatted.lower():

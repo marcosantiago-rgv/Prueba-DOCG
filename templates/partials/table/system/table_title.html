@@ -1,5 +1,5 @@
 <div class="flex justify-between items-center gap-3">
-    <h2 class="text-base font-semibold mb-4">{{ table_name|title_format }}</h2>
+    <h2 class="text-base font-semibold mb-4" x-text="titleFormat(table_name)"> </h2>
     <div class="flex space-x-2 items-center">
         {% include 'partials/table/additional_buttons/' ~ table_name ~ '.html'  ignore missing %}
         {% if date_variable!='' and  date_variable %}
@@ -24,7 +24,8 @@
         {% endif %}
         <!-- Botón para generar Excel -->
         {% set kind = 'report' if report else 'model' %}
-        <button id="export_button" type="button" onclick="generate_excel('{{ table_name }}', '{{ kind }}')"
+        {% set id_table_name = id if report else table_name %}
+        <button id="export_button" type="button" onclick="generate_excel('{{ id_table_name }}', '{{ kind }}')"
             class="border w-10 h-10 flex items-center justify-center text-primary border-transparent rounded-md transition-all duration-300 hover:text-white hover:bg-primary bg-primary/10">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
                 xmlns="http://www.w3.org/2000/svg">

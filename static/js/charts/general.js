@@ -47,7 +47,7 @@ function generar_grafica_categorias(nombre_grafica, tipo_grafica,x_key,y_key,z_k
                 return {
                     name: (typeof z === 'number' || (!isNaN(z) && z.trim && z.trim() !== ''))
                         ? String(z)
-                        : capitalizeWords(z),
+                        : titleFormat(z),
                     data: xValues.map(x => {
                         const match = data.find(d => d[x_key] === x && d[z_key] === z);
                         return match ? Number(match[y_key]) || 0 : 0;

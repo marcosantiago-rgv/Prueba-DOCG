@@ -7,7 +7,7 @@ select
     subtotal,
     importe_total,
     fecha_entrega_estimada,
-    archivos.nombre as archivo_cotizacion,
+    archivos.nombre_del_archivo as archivo_cotizacion,
     productos_en_ordenes_de_compra.fecha_de_creacion
 from productos_en_ordenes_de_compra
 left join productos

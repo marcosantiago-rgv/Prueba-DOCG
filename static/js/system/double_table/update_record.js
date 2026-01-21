@@ -1,5 +1,6 @@
     function update_record(record,column) {
-        fetch(`/dynamic/${table_name}/double_table/update/${column}/${record.id}/${record[column]}`, {
+        const safeValue = encodeURIComponent(record[column]);
+        fetch(`/dynamic/${table_name}/double_table/update/${column}/${record.id}/${safeValue}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'

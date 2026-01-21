@@ -18,6 +18,12 @@ class Productos(db.Model,BaseMixin,AuditMixin):
 
     estatus = db.Column(db.String(255),default="Activo")
 
+productos_proveedores = db.Table(
+    "productos_proveedores",
+    db.Column("id_proveedor", UUID(as_uuid=True), db.ForeignKey("proveedores.id")),
+    db.Column("id_producto", UUID(as_uuid=True), db.ForeignKey("productos.id"))
+)
+
 class Proveedores(db.Model,BaseMixin,AuditMixin):
     nombre = db.Column(db.String(255), nullable=False)
     razon_social = db.Column(db.String(255))
@@ -32,5 +38,9 @@ class Proveedores(db.Model,BaseMixin,AuditMixin):
     email_contacto = db.Column(db.String(255))
     condiciones_pago = db.Column(db.String(100)) 
 
+    dias_de_entrega = db.Column(db.ARRAY(db.String(100))) 
+
     sitio_web = db.Column(db.String(255))
     estatus = db.Column(db.String(255),default="Activo")
+
+    id_producto = db.relationship('Productos', secondary=productos_proveedores, backref=db.backref('proveedores', lazy='dynamic'))

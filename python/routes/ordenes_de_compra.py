@@ -16,6 +16,7 @@ ordenes_de_compra_bp = Blueprint("ordenes_de_compra", __name__,url_prefix="/orde
 @ordenes_de_compra_bp.route("/aprobar/<id>", methods=["GET","POST"])
 @login_required
 @roles_required()
+@return_url_redirect
 def aprobar(id):
     try:
         record=OrdenesDeCompra.query.get(id)
@@ -48,6 +49,7 @@ def aprobar(id):
 @ordenes_de_compra_bp.route("/cancelar/<id>", methods=["GET","POST"])
 @login_required
 @roles_required()
+@return_url_redirect
 def cancelar(id):
     try:
         record=OrdenesDeCompra.query.get(id)
@@ -69,6 +71,7 @@ def cancelar(id):
 @ordenes_de_compra_bp.route("/recibir/<id>", methods=["GET"])
 @login_required
 @roles_required()
+@return_url_redirect
 def recibir(id):
     record=OrdenesDeCompra.query.get(id)
     if record.estatus in ('Aprobada','Recibida parcial'):
@@ -77,6 +80,7 @@ def recibir(id):
 @ordenes_de_compra_bp.route("/confirmar/<id>", methods=["GET"])
 @login_required
 @roles_required()
+@return_url_redirect
 def confirmar(id):
     try:
         record=OrdenesDeCompra.query.get(id)
@@ -129,6 +133,7 @@ def confirmar(id):
 @ordenes_de_compra_bp.route("/finalizar/<id>", methods=["GET","POST"])
 @login_required
 @roles_required()
+@return_url_redirect
 def finalizar(id):
     try:
         record=OrdenesDeCompra.query.get(id)
@@ -151,3 +156,27 @@ def finalizar(id):
         db.session.rollback()
         flash(f"Error al finalizar la orden de compra: {str(e)}", "danger")
     return redirect(url_for('dynamic.table_view', table_name='ordenes_de_compra'))
+
+'''
+# CHECKBOX ACTIONS
+@ordenes_de_compra_bp.route("/aprobar", methods=["POST"])
+@login_required
+@csrf.exempt
+def aprobar():
+    try:
+        data = request.get_json()
+        ids = data.get("ids", [])
+        # One single database query
+        result = (
+            Noticias.query
+            .filter(Noticias.id.in_(ids), Noticias.estatus == "Sin revisar")
+            .update({ "estatus": "Aprobada" }, synchronize_session=False)
+        )
+        db.session.commit()
+        return jsonify({"success": True, "message": f"Se han revisado {result} noticias."})
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"danger": True, "message": f"Error al revisar: {str(e)}"}), 500
+
+'''

@@ -14,5 +14,5 @@ def inicio():
     data = {'activeMenu': 'inicio'}
     fecha_inicio = date.today().replace(day=1)
     fecha_fin=date.today()
-    return render_template('main/dashboards/inicio/pagina_principal.html', **data,fecha_inicio=fecha_inicio,fecha_fin=fecha_fin)
+    return render_template('main/dashboards/inicio/pagina_principal.html', **data,fecha_inicio=fecha_inicio,fecha_fin=fecha_fin,title_formats=TITLE_FORMATS)
 
