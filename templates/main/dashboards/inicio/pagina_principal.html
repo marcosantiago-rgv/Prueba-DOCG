@@ -2,6 +2,8 @@
 {% include 'partials/system/flash_alerts.html' %}
 {% block content %}
 {% include 'partials/system/alerts.html' %}
+{% import 'variables.html' as vars %}
+
 <div id="main" class=" pt-5">
     <div class="flex flex-col gap-5 overflow-y-auto" style="max-height: calc(100vh - 171px);">
         <div class="grid grid-cols-1 xl:grid-cols-1 gap-5">
@@ -17,8 +19,8 @@
                     </div>
                     <div class="flex gap-1 xl:gap-[30px] flex-wrap grid-cols-1 sm:grid-cols-1 justify-center">
                         <div class="flex flex-col items-center">
-                            <span class="text-lg font-bold">     
-                                123
+                            <span class="text-lg font-bold" id="indicador">     
+                                
                             </span>
                         </div>|
                         <div class="flex flex-col items-center">
@@ -52,11 +54,15 @@
                     </div>
             </div>
         </div>
-        <div class="grid grid-cols-1 xl:grid-cols-1 gap-5">
+        <div class="grid grid-cols-2 xl:grid-cols-1 gap-5">
             <div class="bg-white dark:bg-dark dark:border-gray/20 border-2 border-lightgray/10 p-5 rounded-lg">
                 <h2 class="mb-[30px] font-semibold">Compras mensuales por producto</h2>
                 <div id="grafica_ejemplo"></div>
             </div>
+            <div class="bg-white dark:bg-dark dark:border-gray/20 border-2 border-lightgray/10 p-5 rounded-lg">
+                <h2 class="mb-[30px] font-semibold">Detalle compras</h2>
+                <div id="detalle_compras" class="overflow-y-auto"></div>
+            </div>            
         </div>
         <div class="grid grid-cols-1 xl:grid-cols-1 gap-5">
             <div class="bg-white dark:bg-dark dark:border-gray/20 border-2 border-lightgray/10 p-5 rounded-lg">
@@ -83,6 +89,9 @@
 <script src="/static/js/charts/general.js"></script>
 <script src="/static/js/charts/waterfall.js"></script>
 <script>
+        const title_formats = {{ title_formats | tojson }}; 
+        const percentage_format_columns = {{ vars.percentage_format_columns | tojson }};
+        const money_format_columns = {{ vars.money_format_columns | tojson }};        
         generar_grafica_categorias("#grafica_ejemplo", "bar_stacked",'mes_anio','importe_total','producto','/dashboard_queries/compras_mensuales',options={height:400,valueType: 'currency'})
         function updateComprasDiarias() {
             const compras_diarias_inicio = document.getElementById('compras_diarias_inicio').value;
@@ -96,6 +105,7 @@
             )
         }
         updateComprasDiarias()
-
+        obtener_valor("#indicador",'importe_total','/dashboard_queries/compras_totales','currency')        
+        render_dynamic_table("detalle_compras", '/dashboard_queries/tables?path=compras')
 </script>
 {% endblock content %}

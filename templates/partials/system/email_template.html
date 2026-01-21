@@ -162,13 +162,13 @@
         <!-- Header -->
         <div class="header">
             <!--<img src="https://url_app/static/images/logo-light.png">-->
-            <h1>Prueba DOCG - RGV</h1>
+            <h1>nombre_app - RGV</h1>
         </div>
 
         <!-- Cuerpo del email -->
         <div class="email-body">
             <p>Hola,</p>
-            <p>{{ body_content }}</p>
+            <p>{{ body_content | safe }}</p>
 
             <!-- Lista de detalles -->
             {% if details_list %}
@@ -176,7 +176,7 @@
                 <div class="details-title">Detalles</div>
                 <ul class="details-list">
                     {% for detail in details_list %}
-                    <li>{{ detail }}</li>
+                    <li>{{ detail | safe }}</li>
                     {% endfor %}
                 </ul>
             </div>
@@ -192,7 +192,7 @@
 
         <!-- Footer -->
         <div class="footer">
-            <p><strong>Prueba DOCG</strong></p>
+            <p><strong>nombre_app</strong></p>
             <p>RGV</p>
         </div>
     </div>
