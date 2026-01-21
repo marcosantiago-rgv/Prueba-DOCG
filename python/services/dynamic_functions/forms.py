@@ -13,15 +13,19 @@ def get_foreign_options():
         "id_categoria_de_reporte": CategoriasDeReportes.query.filter_by(estatus="Activo"),
 
         "id_producto": Productos.query.filter_by(estatus="Activo"),
+        "id_almacen": Almacen.query.filter_by(estatus="Activo"),
+        "id_almacen_origen": Almacen.query.filter_by(estatus="Activo"),
+        "id_almacen_destino": Almacen.query.filter_by(estatus="Activo"),
         "id_proveedor": Proveedores.query.filter_by(estatus="Activo"),
-        "id_ubicacion":Ubicaciones.query.filter_by(estatus="Activo"),
+        "id_ubicacion": Ubicaciones.query.filter_by(estatus="Activo"),
         "unidad_de_medida": {"Pieza", "KG"},
-        "dias_de_entrega":["Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Domingo"],
+        "dias_de_entrega": ["Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Domingo"],
         "id_categoria": CategoriaGasto.query.filter_by(estatus="Activo"),
 
-        "id_gasto": Gasto.query.filter(Gasto.estatus != "Pagado"), 
+        "id_gasto": Gasto.query.filter(Gasto.estatus != "Pagado"),
         "id_cuenta": CuentaBanco.query.filter_by(estatus="Activo"),
-        
+
+
         "id_orden_de_compra": OrdenesDeCompra.query.filter(OrdenesDeCompra.estatus != "Cancelado")
     }
     return foreign_options
@@ -57,7 +61,15 @@ def get_ignored_columns(table_name):
         "usuarios": {'codigo_unico', 'contrasena', 'contrasena_api', 'intentos_de_inicio_de_sesion', 'ultima_sesion', 'ultimo_cambio_de_contrasena', 'codigo_unico_expira', 'codigo_unico_login'},
         "archivos": {'tabla_origen', 'id_registro', 'nombre', 'ruta_s3'},
         "ordenes_de_compra": {'importe_total', 'subtotal', 'descuentos', 'fecha_entrega_real'},
+
+        "almacen": set(),
+        "productos_inventario": set(),
+
+        # En alta de transferencia de inventario ocultamos el almacén de origen
+        "transferencia_inventario": {"id_almacen_origen"},
+
         "cuenta_banco": {'saldo_actual'}
+
     }
     columns = columns.get(table_name, columnas_generales) | columnas_generales
     return columns
@@ -85,7 +97,10 @@ def get_non_mandatory_columns(table_name):
     columnas_generales = {'descripcion', 'notas', 'fecha_fin'}
     columns = {
         "productos": {'marca', 'codigo_de_barras'} | columnas_generales,
+        "productos_inventario": {'marca', 'codigo_de_barras'} | columnas_generales,
         "proveedores": {'telefono', 'email', 'direccion', 'codigo_postal', 'pais', 'persona_contacto', 'telefono_contacto', 'email_contacto', 'condiciones_de_pago', 'rfc', 'razon_social', 'sitio_web', 'condiciones_pago'} | columnas_generales,
+        "almacen": {'descripcion'} | columnas_generales,
+        "transferencia_inventario": set() | columnas_generales,
     }
     columns = columns.get(table_name)
     if columns == None:

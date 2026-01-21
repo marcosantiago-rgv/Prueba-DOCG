@@ -7,18 +7,19 @@ from python.models import db
 from python.models.sistema import *
 
 
-
-class Productos(db.Model,BaseMixin,AuditMixin):
+class Productos(db.Model, BaseMixin, AuditMixin):
+    __tablename__ = 'productos'
 
     nombre = db.Column(db.String(255), nullable=False)
-    unidad_de_medida = db.Column(db.String(50)) 
+    unidad_de_medida = db.Column(db.String(50))
     codigo_de_barras = db.Column(db.String(255), nullable=True)
     descripcion = db.Column(db.String(500), nullable=True)
-    id_archivo_imagen=db.Column(db.String(255))
+    id_archivo_imagen = db.Column(db.String(255))
 
-    estatus = db.Column(db.String(255),default="Activo")
+    estatus = db.Column(db.String(255), default="Activo")
 
-class Proveedores(db.Model,BaseMixin,AuditMixin):
+
+class Proveedores(db.Model, BaseMixin, AuditMixin):
     nombre = db.Column(db.String(255), nullable=False)
     razon_social = db.Column(db.String(255))
     rfc = db.Column(db.String(20))
@@ -30,15 +31,15 @@ class Proveedores(db.Model,BaseMixin,AuditMixin):
     persona_contacto = db.Column(db.String(255))
     telefono_contacto = db.Column(db.String(50))
     email_contacto = db.Column(db.String(255))
-    condiciones_pago = db.Column(db.String(100)) 
-    dias_de_entrega = db.Column(db.ARRAY(db.String(100))) 
-
+    condiciones_pago = db.Column(db.String(100))
+    dias_de_entrega = db.Column(db.ARRAY(db.String(100)))
 
     sitio_web = db.Column(db.String(255))
-    estatus = db.Column(db.String(255),default="Activo")
+    estatus = db.Column(db.String(255), default="Activo")
 
-class Ubicaciones(db.Model,BaseMixin,AuditMixin):
+
+class Ubicaciones(db.Model, BaseMixin, AuditMixin):
     nombre = db.Column(db.String(255), nullable=False)
     direccion = db.Column(db.String(255), nullable=False)
-   
-    estatus = db.Column(db.String(255),default="Activo")
+
+    estatus = db.Column(db.String(255), default="Activo")

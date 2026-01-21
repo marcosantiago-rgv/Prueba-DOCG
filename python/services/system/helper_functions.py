@@ -1,11 +1,12 @@
 
+from decimal import Decimal, InvalidOperation
 from python.models.modelos import *
-from sqlalchemy import String, Text, or_,func,Integer, Float, Numeric
+from sqlalchemy import String, Text, or_, func, Integer, Float, Numeric
 from sqlalchemy.sql import case
-from flask import session,flash,request
+from flask import session, flash, request
 import re
 import json
-from datetime import date, datetime,timedelta
+from datetime import date, datetime, timedelta
 from decimal import Decimal
 import random
 from sqlalchemy import inspect
@@ -15,6 +16,7 @@ import math
 #####
 # funciones auxiliares
 #####
+
 
 def get_all_models():
     """
@@ -27,15 +29,23 @@ def get_all_models():
             models.append(model)
     return models
 
+
 def get_model_by_name(table_name):
     """
     Retorna el modelo que corresponde al nombre de la tabla proporcionado.
     Si no se encuentra, retorna None.
     """
+    # Mapeo especial para productos_inventario
+    if table_name == "productos_inventario":
+        return get_model_by_name("productos")
+    # Mapeo especial para existencias (tabla fisica "existencia")
+    if table_name == "existencias":
+        return get_model_by_name("existencia")
     for model in get_all_models():
         if model.__tablename__ == table_name:
             return model
     return None
+
 
 def sanitize_data(model, data):
     for col in model.__table__.columns:
@@ -59,7 +69,7 @@ def sanitize_data(model, data):
                 else:
                     value = None
         elif "time" in col_type_str:
-            value=datetime.fromisoformat(value)+timedelta(hours=6)
+            value = datetime.fromisoformat(value)+timedelta(hours=6)
         elif "date" in col_type_str:
             if not value:
                 value = None
@@ -96,7 +106,7 @@ def sanitize_data(model, data):
             except (ValueError, TypeError):
                 value = None  # fallback seguro
         if isinstance(value, float) and math.isnan(value):
-            value = None                
+            value = None
         data[col.name] = value
 
     return data
@@ -120,23 +130,27 @@ def date_format(value):
         return value.strftime("%Y-%m-%d")
     else:
         return value
-    
+
 # Filtro para formatear moneda
+
+
 def money_format(value):
     try:
         return f"${float(value):,.2f}"
     except (ValueError, TypeError):
-        return value 
+        return value
+
 
 def hour_format(value):
     if 'pm' in value.lower() or 'am' in value.lower():
-        new_value= datetime.strptime(value.strip().lower(), "%I:%M %p").strftime("%H:%M")
+        new_value = datetime.strptime(
+            value.strip().lower(), "%I:%M %p").strftime("%H:%M")
     else:
         try:
             parts = value.strip().split(":")
-            new_value=":".join(parts[:2])    
+            new_value = ":".join(parts[:2])
         except:
-            new_value=value
+            new_value = value
     return new_value
 
 
@@ -170,17 +184,22 @@ def search_table(query, model, search, related_name_columns):
 
     return query
 
+
 def get_id_visualizacion(table_name):
     modelo = get_model_by_name(table_name)
-    max_id = modelo.query.with_entities(func.max(modelo.id_visualizacion)).scalar()       
+    max_id = modelo.query.with_entities(
+        func.max(modelo.id_visualizacion)).scalar()
     return (max_id or 0) + 1
+
 
 # queries con variables dinamicas
 PARAM_REGEX = re.compile(r":([a-zA-Z_][a-zA-Z0-9_]*)")
 
+
 def extract_param_names(sql: str) -> set[str]:
     # Find :param placeholders in the SQL
     return set(PARAM_REGEX.findall(sql))
+
 
 def to_jsonable(v):
     if isinstance(v, (datetime, date)):
@@ -189,12 +208,11 @@ def to_jsonable(v):
         return float(v)  # or str(v) if you prefer exact representation
     return v
 
+
 def rowmapping_to_dict(rm):
     # rm is a RowMapping
     return {k: to_jsonable(v) for k, v in rm.items()}
 
-from decimal import Decimal, InvalidOperation
-import re
 
 def parse_money(value):
     if value is None:
@@ -218,6 +236,7 @@ def parse_money(value):
             return float(s)
         except InvalidOperation:
             raise ValueError(f"importe value '{value}' is not a valid number")
+
 
 def record_to_ordered_list(model, joins, record, columns_order):
     ordered_fields = []
@@ -256,7 +275,7 @@ def record_to_ordered_list(model, joins, record, columns_order):
                 value = (value - timedelta(hours=6))
                 value = value.strftime('%Y-%m-%d %H:%M:%S')
         elif isinstance(value, date):
-            value = value.strftime('%Y-%m-%d')    
+            value = value.strftime('%Y-%m-%d')
         elif hasattr(value, "__table__"):  # skip ORM objects
             continue
         base_data[key] = value
@@ -270,12 +289,13 @@ def record_to_ordered_list(model, joins, record, columns_order):
                 alias_field = f"id_{table_alias.lower()}_{column_name}"
                 value = base_data.get(alias_field)
             else:
-                if 'id_' in col and col not in ("id_visualizacion", "id_usuario_correo_electronico","id_categoria_de_gasto","id_proveedor","id_cuenta_de_banco"):
-                    id_col=re.sub(r'_(nombre|descripcion|nombre_completo|id_visualizacion).*$', '', col)
+                if 'id_' in col and col not in ("id_visualizacion", "id_usuario_correo_electronico", "id_categoria_de_gasto", "id_proveedor", "id_cuenta_de_banco"):
+                    id_col = re.sub(
+                        r'_(nombre|descripcion|nombre_completo|id_visualizacion).*$', '', col)
                     value = f'{base_data.get(col)}__{base_data.get(id_col)}__{fk_map.get(id_col)}'
                 else:
                     value = base_data.get(col)
-            if value is not None and value!='None__None':
+            if value is not None and value != 'None__None':
                 ordered_fields.append((col, value))
     else:
         # Default: preserve order of base_data
@@ -283,12 +303,14 @@ def record_to_ordered_list(model, joins, record, columns_order):
 
     return ordered_fields
 
+
 def get_query_variables_values(base_query):
     variables_query = extract_param_names(base_query)
-    variables_request = {k: v for k, v in request.values.items() if k in variables_query and v != ""}
-    usuario=Usuarios.query.get(session["id_usuario"])
-    query_variables={
-        "id_usuario":usuario.id,
+    variables_request = {
+        k: v for k, v in request.values.items() if k in variables_query and v != ""}
+    usuario = Usuarios.query.get(session["id_usuario"])
+    query_variables = {
+        "id_usuario": usuario.id,
     }
     for key in query_variables:
         if key in variables_query and query_variables[key] is not None:
@@ -296,7 +318,7 @@ def get_query_variables_values(base_query):
     return variables_request
 
 
-def query_to_dict(record,model):
+def query_to_dict(record, model):
     if hasattr(record, "_mapping"):
         record_mapping = record._mapping
         model_instance = record_mapping.get(model, record)
@@ -312,7 +334,7 @@ def query_to_dict(record,model):
                 val = (val - timedelta(hours=6))
                 val = val.strftime('%Y-%m-%d %H:%M:%S')
         elif isinstance(val, date):
-            val = val.strftime('%Y-%m-%d')                 
+            val = val.strftime('%Y-%m-%d')
         model_dict[col] = val
     # Add all join columns (from add_columns)
     for key, value in record_mapping.items():
@@ -324,13 +346,15 @@ def query_to_dict(record,model):
                 value = (value - timedelta(hours=6))
                 value = value.strftime('%Y-%m-%d %H:%M:%S')
             elif isinstance(value, date):
-                value = value.strftime('%Y-%m-%d')   
+                value = value.strftime('%Y-%m-%d')
         elif not hasattr(value, "__table__"):  # skip whole ORM objects like Inventario
             model_dict[key] = value
     return model_dict
 
+
 def generate_pin(length=6):
     return ''.join([str(random.randint(0, 9)) for _ in range(length)])
+
 
 def resolve_foreign_keys_bulk(model, df):
     """
@@ -371,7 +395,8 @@ def resolve_foreign_keys_bulk(model, df):
 
         # ONE bulk query
         rows = (
-            db.session.query(RefModel.id_visualizacion, getattr(RefModel, ref_pk_col))
+            db.session.query(RefModel.id_visualizacion,
+                             getattr(RefModel, ref_pk_col))
             .filter(RefModel.id_visualizacion.in_(needed_ids))
             .all()
         )
@@ -410,6 +435,7 @@ def resolve_foreign_keys_bulk(model, df):
         )
 
     return df
+
 
 def detect_table_from_columns(df_columns):
     normalized = {c.strip() for c in df_columns}

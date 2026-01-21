@@ -14,7 +14,10 @@ def get_joins():
         "id_categoria_de_reporte": (CategoriasDeReportes, CategoriasDeReportes.id, CategoriasDeReportes.nombre),
 
         "id_producto": (Productos, Productos.id, Productos.nombre),
+        "id_almacen": (Almacen, Almacen.id, Almacen.nombre),
         "id_proveedor": (Proveedores, Proveedores.id, Proveedores.nombre),
+        "id_almacen_origen": (Almacen, Almacen.id, Almacen.nombre),
+        "id_almacen_destino": (Almacen, Almacen.id, Almacen.nombre),
         # "id_ubicacion": (Ubicaciones, Ubicaciones.id, Ubicaciones.nombre),
         "id_orden_de_compra": (OrdenesDeCompra, OrdenesDeCompra.id, OrdenesDeCompra.id_visualizacion),
         "id_gasto": (Gasto, Gasto.id, Gasto.descripcion),
@@ -62,6 +65,48 @@ def get_columns(table_name, section):
             "pdf": []
         },
 
+        "almacen": {
+            # Lo que se muestra en la tabla principal
+            "main_page": ["id_visualizacion", "nombre", "ubicacion", "descripcion", "estatus"],
+            # Campos que se ven en el modal
+            "modal": [
+                "id",
+                "id_visualizacion",
+                "nombre",
+                "ubicacion",
+                "descripcion",
+                "estatus",
+                "id_usuario",
+                "fecha_de_creacion",
+                "fecha_de_actualizacion",
+            ],
+            "pdf": ["nombre", "ubicacion", "descripcion", "estatus"],
+        },
+
+        "existencias": {
+            "main_page": [
+                "id_visualizacion",
+                "id_producto_nombre",
+                "id_almacen_nombre",
+                "cantidad",
+            ],
+            "modal": [
+                "id",
+                "id_visualizacion",
+                "id_producto_nombre",
+                "id_almacen_nombre",
+                "cantidad",
+                # "id_usuario",
+                "fecha_de_creacion",
+                "fecha_de_actualizacion",
+            ],
+            "pdf": [
+                "id_producto_nombre",
+                "id_almacen_nombre",
+                "cantidad",
+            ],
+        },
+
         "productos": {
             "main_page": ["id_visualizacion", "nombre", "unidad_de_medida", "estatus", "id_usuario_correo_electronico"],
             "modal": ["id", "id_visualizacion", "nombre", "unidad_de_medida", "numero_de_usos", "codigo_de_barras", "descripcion", "id_archivo_imagen", "estatus", "id_usuario_correo_electronico", "fecha_de_creacion", "fecha_de_actualizacion"],
@@ -71,6 +116,39 @@ def get_columns(table_name, section):
             "main_page": ["id_visualizacion", "nombre", "razon_social", "persona_contacto", "telefono_contacto", "email_contacto", "estatus", "dias_de_entrega"],
             "modal": ["id", "id_visualizacion", "nombre", "razon_social", "rfc", "direccion", "codigo_postal", "telefono", "email", "persona_contacto", "telefono_contacto", "email_contacto", "condiciones_pago", "sitio_web", "estatus", "id_usuario_correo_electronico", "fecha_de_creacion", "fecha_de_actualizacion"],
             "pdf": ["id_visualizacion", "nombre", "razon_social", "rfc", "direccion", "codigo_postal", "telefono", "email", "persona_contacto", "telefono_contacto", "email_contacto", "condiciones_pago", "sitio_web", "estatus", "id_usuario_correo_electronico", "fecha_de_creacion", "fecha_de_actualizacion"]
+        },
+        "transferencia_inventario": {
+            "main_page": [
+                "id_visualizacion",
+                "id_producto_nombre",
+                "id_almacen_origen_nombre",
+                "id_almacen_destino_nombre",
+                "cantidad",
+                "fecha",
+                "estatus",
+            ],
+            "modal": [
+                "id",
+                "id_visualizacion",
+                "id_producto_nombre",
+                "id_almacen_origen_nombre",
+                "id_almacen_destino_nombre",
+                "cantidad",
+                "fecha",
+                "estatus",
+                "id_usuario",
+                "fecha_de_creacion",
+                "fecha_de_actualizacion",
+            ],
+            "pdf": [
+                "id_visualizacion",
+                "id_producto_nombre",
+                "id_almacen_origen_nombre",
+                "id_almacen_destino_nombre",
+                "cantidad",
+                "fecha",
+                "estatus",
+            ],
         },
         "ordenes_de_compra": {
             "main_page": ["id_visualizacion", "id_proveedor_nombre", "fecha_orden", "fecha_entrega_estimada", "fecha_entrega_real", "importe_total", "notas", "estatus"],
@@ -87,28 +165,28 @@ def get_columns(table_name, section):
             "modal": ["id", "cantidad_recibida", "fecha_entrega" "id_usuario_correo_electronico", "fecha_de_creacion", "fecha_de_actualizacion"],
             "pdf": ["cantidad_recibida", "fecha_entrega" "id_usuario_correo_electronico", "fecha_de_creacion", "fecha_de_actualizacion"]
         },
-         "inventario": {
+        "inventario": {
             "main_page": ["id_producto_nombre", "cantidad"],
             "modal": ["id", "id_producto_nombre", "cantidad", "id_usuario_correo_electronico", "fecha_de_creacion", "fecha_de_actualizacion"],
             "pdf": ["id_producto_nombre", "cantidad", "id_usuario_correo_electronico", "fecha_de_creacion", "fecha_de_actualizacion"]
-         },
+        },
         "ubicaciones": {
             "main_page": ["id_visualizacion", "nombre", "estatus"],
             "modal": ["id", "nombre", "estatus", "id_usuario_correo_electronico", "fecha_de_creacion", "fecha_de_actualizacion"],
             "pdf": ["nombre", "estatus", "id_usuario_correo_electronico", "fecha_de_creacion", "fecha_de_actualizacion"]
-         },
+        },
         "cuenta_banco": {
-            "main_page": ["id_visualizacion","nombre", "banco", "saldo_inicial", "saldo_actual", "estatus"],
-            "modal": ["id", "id_visualizacion","nombre", "banco", "tipo_cuenta", "numero_cuenta", "clabe", "saldo_inicial",  "estatus", "fecha_de_creacion"],
+            "main_page": ["id_visualizacion", "nombre", "banco", "saldo_inicial", "saldo_actual", "estatus"],
+            "modal": ["id", "id_visualizacion", "nombre", "banco", "tipo_cuenta", "numero_cuenta", "clabe", "saldo_inicial",  "estatus", "fecha_de_creacion"],
             "pdf": ["nombre", "banco", "saldo_actual", "moneda"]
         },
         "gasto": {
             "main_page": ["id_visualizacion", "id_categoria_nombre", "descripcion", "monto", "fecha", "estatus"],
-            "modal": ["id","id_visualizacion","id_categoria_nombre", "descripcion", "monto", "fecha", "archivo_comprobante","estatus"], 
+            "modal": ["id", "id_visualizacion", "id_categoria_nombre", "descripcion", "monto", "fecha", "archivo_comprobante", "estatus"],
             "pdf": ["id_visualizacion", "descripcion", "monto", "fecha"]
         },
         "categoria_gasto": {
-            "main_page": ["id_visualizacion","nombre", "descripcion", "estatus"],
+            "main_page": ["id_visualizacion", "nombre", "descripcion", "estatus"],
             "modal": ["id", "id_visualizacion", "nombre", "descripcion", "estatus", "fecha_de_creacion"],
             "pdf": ["nombre", "descripcion"]
         },
@@ -118,7 +196,15 @@ def get_columns(table_name, section):
         },
 
     }
-    columns = columns.get(table_name).get(section)
+    # Si la tabla no está configurada en "columns", regresa None para que la
+    # lógica que llama a esta función pueda usar un fallback genérico.
+    table_config = columns.get(table_name)
+    if not table_config:
+        return None
+
+    # Si la sección (main_page, modal, pdf, etc.) no existe para esa tabla,
+    # también regresamos None y dejamos que el caller decida el comportamiento.
+    columns = table_config.get(section)
     return columns
 
 
@@ -135,7 +221,10 @@ def get_estatus_options(table_name):
         'ordenes_de_compra': ["En revisión", "Aprobada", 'Recibida parcial', "Recibida", 'Finalizada', "Cancelada"],
         "productos_en_ordenes_de_compra": ['Pendiente', 'Recibido parcial', 'Recibido'],
         'gasto': ["En revisión", "Aprobado", "Pagado parcial", "Pagado", "Cancelado"],
-        'pago': ["En revisión", "Aprobado" ,"Pagado", "Cancelado"]
+        'pago': ["En revisión", "Aprobado", "Pagado", "Cancelado"],
+        'transferencia_inventario': ["En revisión", "Aprobado", "Realizado"],
+        # Sin estatus para existencias (evita tabs de estatus que no aplican)
+        'existencias': [],
     }
     options = options.get(table_name, ["Activo", "Inactivo"])
     return options
@@ -144,7 +233,8 @@ def get_estatus_options(table_name):
 def get_open_status(table_name):
     status = {
         "ordenes_de_compra": ['En revisión', 'Aprobada', 'Recibida parcial', 'Recibida'],
-        "productos_en_ordenes_de_compra": ['Pendiente', 'Recibida parcial']
+        "productos_en_ordenes_de_compra": ['Pendiente', 'Recibida parcial'],
+        "transferencia_inventario": ['En revisión', 'Aprobado'],
     }
     status = status.get(table_name, '')
     return status
@@ -162,7 +252,13 @@ def get_breadcrumbs(table_name):
         "productos": ['Cátalogos', 'catalogos'],
         "ubicaciones": ['Cátalogos', 'catalogos'],
         "proveedores": ['Cátalogos', 'catalogos'],
-        "ubicaciones":['Cátalogos','catalogos'],
+        "ubicaciones": ['Cátalogos', 'catalogos'],
+
+        # Inventario
+        "almacen": ['Inventario', 'inventario'],
+        "existencias": ['Inventario', 'inventario'],
+        "productos_inventario": ['Inventario', 'inventario'],
+        "transferencia_inventario": ['Inventario', 'inventario'],
 
 
         "ordenes_de_compra": ['Compras', 'ordenes_de_compras'],
@@ -199,7 +295,9 @@ def get_calendar_date_variable(table_name):
 
 def get_variable_tabs(table_name):
     tabs = {
-        "gasto": "estatus"
+        "gasto": "estatus",
+        # Para existencias no usamos estatus; agrupamos, por ejemplo, por producto
+        "existencias": "id_producto",
     }
     tabs = tabs.get(table_name, 'estatus')
     return tabs
@@ -239,7 +337,7 @@ def get_date_fields():
 def get_checkbox(table_name):
     checkbox = {
         'ordenes_de_compra': True,
-        #'gasto': True
+        # 'gasto': True
     }
     checkbox = checkbox.get(table_name, False)
     return checkbox

@@ -25,7 +25,7 @@
         <div class="h-[calc(100vh-93px)] overflow-y-auto overflow-x-hidden space-y-16 px-4 pt-2 pb-4">
             <ul class="relative flex flex-col gap-1 text-sm"
                 x-data="{ activeMenu: '{{activeMenu}}', activeItem: '{{activeItem}}' }">
-                <li class="menu nav-item">
+                <li class="menu nav-item" style="order: 1;">
                     <a href="/" class="nav-link group" :class="{'active' : activeMenu === 'inicio'}">
                         <div class="flex items-center">
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
@@ -40,8 +40,88 @@
                         </div>
                     </a>
                 </li>
-                {% if can_access('/dashboards/reportes/view') %}
-                <li class="menu nav-item">
+
+
+
+                <!-- inventario -->
+                {% if can_access('/dynamic/almacen/view') or can_access('/dynamic/existencias/view') or
+                can_access('/dynamic/productos_inventario/view') %}
+                <li class="menu nav-item" style="order: 6;">
+                    <a href="javascript:;" class="nav-link group items-center justify-between"
+                        :class="{'active' : activeMenu === 'inventario'}"
+                        @click="activeMenu === 'inventario' ? activeMenu = null : activeMenu = 'inventario'">
+                        <div class="flex items-center">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path fill-rule="evenodd" clip-rule="evenodd"
+                                    d="M18.0909 2.54877C17.5385 2.23946 16.9504 2.20831 16.3288 2.286C15.7383 2.3598 15.02 2.54651 14.1567 2.7709L12.1384 3.2954C11.2755 3.51963 10.557 3.70634 10.0072 3.92891C9.4292 4.16293 8.92943 4.47736 8.60526 5.02195C8.27903 5.56998 8.24664 6.15584 8.32794 6.76777C8.40459 7.34473 8.59805 8.04488 8.82853 8.87901L9.37108 10.8429C9.60161 11.6775 9.79499 12.3775 10.0259 12.9139C10.271 13.4835 10.5985 13.9684 11.1541 14.2795C11.7064 14.5888 12.2945 14.62 12.9162 14.5423C13.5066 14.4685 14.225 14.2818 15.0882 14.0574L17.1066 13.5329C17.9695 13.3086 18.688 13.1219 19.2377 12.8994C19.8157 12.6653 20.3155 12.3509 20.6397 11.8063C20.9659 11.2583 20.9983 10.6724 20.917 10.0605C20.8403 9.48355 20.6469 8.7834 20.4164 7.94926L19.8738 5.98536C19.6433 5.1508 19.4499 4.45076 19.2191 3.91434C18.9739 3.34477 18.6465 2.85989 18.0909 2.54877ZM14.485 4.2354C15.4099 3.99503 16.0331 3.83463 16.5148 3.77442C16.9764 3.71673 17.1974 3.7676 17.358 3.85754C17.5154 3.94567 17.6656 4.09931 17.8413 4.50734C18.0265 4.93768 18.1937 5.53684 18.442 6.43548L18.9564 8.29754C19.2048 9.19641 19.3687 9.79611 19.4301 10.2581C19.4883 10.6968 19.4362 10.8956 19.3508 11.0391C19.2633 11.186 19.1047 11.3349 18.6748 11.509C18.2271 11.6903 17.605 11.8535 16.6798 12.0939L14.76 12.5929C13.835 12.8333 13.2118 12.9937 12.7301 13.0539C12.2685 13.1116 12.0476 13.0607 11.8869 12.9707C11.7296 12.8826 11.5793 12.729 11.4037 12.3209C11.2185 11.8906 11.0512 11.2914 10.8029 10.3928L10.2885 8.53074C10.0402 7.63187 9.87625 7.03217 9.81487 6.57022C9.75658 6.13148 9.80876 5.93269 9.89418 5.78921C9.98164 5.64227 10.1402 5.49334 10.5701 5.31928C11.0179 5.138 11.64 4.97476 12.5651 4.73434L14.485 4.2354Z"
+                                    fill="#1C274C" />
+                                <path fill-rule="evenodd" clip-rule="evenodd"
+                                    d="M3.2007 4.72469C2.80157 4.61396 2.38823 4.84775 2.27749 5.24688C2.16675 5.64602 2.40054 6.05936 2.79968 6.17009L4.50338 6.64278C4.92898 6.76086 5.24592 7.08236 5.35419 7.47427L7.3055 14.5374C7.23053 14.5521 7.1556 14.5692 7.0808 14.5887C5.10375 15.1025 3.89563 17.0913 4.43836 19.0558C4.97848 21.0108 7.03215 22.1384 9.00137 21.6266C10.7247 21.1788 11.8638 19.6102 11.7683 17.9139L20.1888 15.7256C20.5897 15.6214 20.8303 15.2119 20.7261 14.811C20.6219 14.4101 20.2124 14.1696 19.8115 14.2738L11.3734 16.4667C10.8651 15.4794 9.93146 14.7927 8.86688 14.5562L6.80003 7.07483C6.5469 6.1586 5.82129 5.45177 4.9044 5.19738L3.2007 4.72469ZM7.45809 16.0404C8.66981 15.7255 9.88575 16.4288 10.198 17.5589C10.5076 18.6796 9.82797 19.862 8.62408 20.1748C7.41235 20.4897 6.19641 19.7864 5.8842 18.6563C5.5746 17.5357 6.25419 16.3533 7.45809 16.0404Z"
+                                    fill="#1C274C" />
+                            </svg>
+
+                            <span class="pl-1.5">Inventario</span>
+                        </div>
+                        <div class="w-4 h-4 flex items-center justify-center dropdown-icon"
+                            :class="{'!rotate-180' : activeMenu === 'inventario'}">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-6 h-6">
+                                <path d="M12 13L17 8H7L12 13Z" fill="currentColor"></path>
+                            </svg>
+                        </div>
+                    </a>
+
+                    <!-- Submenu for inventory -->
+                    <ul x-cloak x-show="activeMenu === 'inventario'" x-collapse class="sub-menu flex flex-col gap-1">
+                        <!-- {% if can_access('/dynamic/productos_inventario/view') %}
+                        <li>
+                            <a :class="{'active': activeItem === 'productos_inventario'}"
+                                href="/dynamic/productos_inventario/view"
+                                @click="activeItem = 'productos_inventario'">Productos En Inventario</a>
+                        </li>
+                        {% endif %} -->
+
+                        {% if can_access('/dynamic/almacen/view') %}
+                        <li>
+                            <a :class="{'active': activeItem === 'almacen'}" href="/dynamic/almacen/view">Almacen</a>
+                        </li>
+                        {% endif %}
+
+                        {% if can_access('/dynamic/existencias/view') %}
+                        <li>
+                            <a :class="{'active': activeItem === 'existencias'}"
+                                href="/dynamic/existencias/view">Existencias</a>
+                        </li>
+                        {% endif %}
+
+                        {% if can_access('/dynamic/transferencia_inventario/view') %}
+                        <li>
+                            <a :class="{'active': activeItem === 'transferencia_inventario'}"
+                                href="/dynamic/transferencia_inventario/view">
+                                Transferencias
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                <li class="menu nav-item" style="order: 2;">
                     <a href="/dynamic/reportes/view" class="nav-link group"
                         :class="{'active' : activeMenu === 'reportes'}">
                         <div class="flex items-center">
@@ -63,8 +143,10 @@
                     </a>
                 </li>
                 {% endif %}
-                {% if can_access('/dynamic/gasto/view') or can_access('/dynamic/categoria_gasto/view') or can_access('/dynamic/pago/view') or can_access('/dynamic/cuenta_banco/view') %}
-                <li class="menu nav-item">
+
+                {% if can_access('/dynamic/gasto/view') or can_access('/dynamic/categoria_gasto/view') or
+                can_access('/dynamic/pago/view') or can_access('/dynamic/cuenta_banco/view') %}
+                <li class="menu nav-item" style="order: 3;">
                     <a href="javaScript:;" class="nav-link group items-center justify-between"
                         :class="{'active' : activeMenu === 'finanzas'}"
                         @click="activeMenu === 'finanzas' ? activeMenu = null : activeMenu = 'finanzas'">
@@ -80,22 +162,28 @@
                         <div class="w-4 h-4 flex items-center justify-center dropdown-icon"
                             :class="{'!rotate-180' : activeMenu === 'finanzas'}">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-6 h-6">
-                                <path d="M11.9997 13.1714L16.9495 8.22168L18.3637 9.63589L11.9997 15.9999L5.63574 9.63589L7.04996 8.22168L11.9997 13.1714Z" fill="currentColor"></path>
+                                <path
+                                    d="M11.9997 13.1714L16.9495 8.22168L18.3637 9.63589L11.9997 15.9999L5.63574 9.63589L7.04996 8.22168L11.9997 13.1714Z"
+                                    fill="currentColor"></path>
                             </svg>
                         </div>
                     </a>
                     <ul x-cloak x-show="activeMenu === 'finanzas'" x-collapse class="sub-menu flex flex-col gap-1">
                         <li>
                             <a :class="{'active': activeItem === 'gastos'}" href="/dynamic/gasto/view">Gastos</a>
-                            <a :class="{'active': activeItem === 'categorias_gasto'}" href="/dynamic/categoria_gasto/view">Categorías de Gasto</a>
-                            <a :class="{'active': activeItem === 'pagos'}" href="/dynamic/pago/view">Pagos Realizados</a>
-                            <a :class="{'active': activeItem === 'cuentas_banco'}" href="/dynamic/cuenta_banco/view">Cuentas Bancarias</a>
+                            <a :class="{'active': activeItem === 'categorias_gasto'}"
+                                href="/dynamic/categoria_gasto/view">Categorías de Gasto</a>
+                            <a :class="{'active': activeItem === 'pagos'}" href="/dynamic/pago/view">Pagos
+                                Realizados</a>
+                            <a :class="{'active': activeItem === 'cuentas_banco'}"
+                                href="/dynamic/cuenta_banco/view">Cuentas Bancarias</a>
                         </li>
                     </ul>
                 </li>
+
                 {% endif %}
                 {% if can_access('/dynamic/proveedores/view') or can_access('/dynamic/productos/view') %}
-                <li class="menu nav-item">
+                <li class="menu nav-item" style="order: 4;">
                     <a href="javaScript:;" class="nav-link group items-center justify-between"
                         :class="{'active' : activeMenu === 'catalogos'}"
                         @click="activeMenu === 'catalogos' ? activeMenu = null : activeMenu = 'catalogos'">
@@ -134,13 +222,16 @@
                                 href="/dynamic/proveedores/view">Proveedores</a>
                             {% endif %}
                             {% if can_access('/dynamic/productos/view') %}
-                            <a :class="{'active': activeItem === 'productos'}"
-                                href="/dynamic/productos/view">Productos</a>
+                            <a :class="{'active': activeItem === 'productos'}" href="/dynamic/productos/view"
+                                @click="activeItem = 'productos'">Productos</a>
                             {% endif %}
                         </li>
                     </ul>
                 </li>
-                <li class="menu nav-item">
+
+
+
+                <li class="menu nav-item" style="order: 5;">
                     <a href="/dynamic/ordenes_de_compra/view" class="nav-link group"
                         :class="{'active' : activeMenu === 'compras'}">
                         <div class="flex items-center">
@@ -162,7 +253,7 @@
                 </li>
                 {% endif %}
                 {% if can_access('/dynamic/usuarios/view') or can_access('/dynamic/roles/view')%}
-                <li class="menu nav-item">
+                <li class="menu nav-item" style="order: 7;">
                     <a href="javascript:;" class="nav-link group items-center justify-between"
                         :class="{'active' : activeMenu === 'permisos'}"
                         @click="activeMenu === 'permisos' ? activeMenu = null : activeMenu = 'permisos'">
@@ -202,38 +293,11 @@
                 {% endif %}
 
 
-                <!-- ordenes de compra -->
-
-                <!-- {% if can_access('/dynamic/ordenes_de_compra/view') %}
-                <li class="menu nav-item">
-                    <a href="/dynamic/ordenes_de_compra/view" class="nav-link group"
-                        :class="{'active' : activeMenu === 'ordenes_de_compra'}">
-                        <div class="flex items-center">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
-                                xmlns="http://www.w3.org/2000/svg">
-                                <path
-                                    d="M7.5 18C8.32843 18 9 18.6716 9 19.5C9 20.3284 8.32843 21 7.5 21C6.67157 21 6 20.3284 6 19.5C6 18.6716 6.67157 18 7.5 18Z"
-                                    stroke="currentColor" stroke-width="1.5" />
-                                <path
-                                    d="M16.5 18.0001C17.3284 18.0001 18 18.6716 18 19.5001C18 20.3285 17.3284 21.0001 16.5 21.0001C15.6716 21.0001 15 20.3285 15 19.5001C15 18.6716 15.6716 18.0001 16.5 18.0001Z"
-                                    stroke="currentColor" stroke-width="1.5" />
-                                <path
-                                    d="M2.26121 3.09184L2.50997 2.38429H2.50997L2.26121 3.09184ZM2.24876 2.29246C1.85799 2.15507 1.42984 2.36048 1.29246 2.75124C1.15507 3.14201 1.36048 3.57016 1.75124 3.70754L2.24876 2.29246ZM4.58584 4.32298L5.20507 3.89983V3.89983L4.58584 4.32298ZM5.88772 14.5862L5.34345 15.1022H5.34345L5.88772 14.5862ZM20.6578 9.88275L21.3923 10.0342L21.3933 10.0296L20.6578 9.88275ZM20.158 12.3075L20.8926 12.4589L20.158 12.3075ZM20.7345 6.69708L20.1401 7.15439L20.7345 6.69708ZM19.1336 15.0504L18.6598 14.469L19.1336 15.0504ZM5.70808 9.76V7.03836H4.20808V9.76H5.70808ZM2.50997 2.38429L2.24876 2.29246L1.75124 3.70754L2.01245 3.79938L2.50997 2.38429ZM10.9375 16.25H16.2404V14.75H10.9375V16.25ZM5.70808 7.03836C5.70808 6.3312 5.7091 5.7411 5.65719 5.26157C5.60346 4.76519 5.48705 4.31247 5.20507 3.89983L3.96661 4.74613C4.05687 4.87822 4.12657 5.05964 4.1659 5.42299C4.20706 5.8032 4.20808 6.29841 4.20808 7.03836H5.70808ZM2.01245 3.79938C2.68006 4.0341 3.11881 4.18965 3.44166 4.34806C3.74488 4.49684 3.87855 4.61727 3.96661 4.74613L5.20507 3.89983C4.92089 3.48397 4.54304 3.21763 4.10241 3.00143C3.68139 2.79485 3.14395 2.60719 2.50997 2.38429L2.01245 3.79938ZM4.20808 9.76C4.20808 11.2125 4.22171 12.2599 4.35876 13.0601C4.50508 13.9144 4.79722 14.5261 5.34345 15.1022L6.43198 14.0702C6.11182 13.7325 5.93913 13.4018 5.83723 12.8069C5.72607 12.1578 5.70808 11.249 5.70808 9.76H4.20808ZM10.9375 14.75C9.52069 14.75 8.53763 14.7482 7.79696 14.6432C7.08215 14.5418 6.70452 14.3576 6.43198 14.0702L5.34345 15.1022C5.93731 15.7286 6.69012 16.0013 7.58636 16.1283C8.45674 16.2518 9.56535 16.25 10.9375 16.25V14.75ZM4.95808 6.87H17.0888V5.37H4.95808V6.87ZM19.9232 9.73135L19.4235 12.1561L20.8926 12.4589L21.3923 10.0342L19.9232 9.73135ZM17.0888 6.87C17.9452 6.87 18.6989 6.871 19.2937 6.93749C19.5893 6.97053 19.8105 7.01643 19.9659 7.07105C20.1273 7.12776 20.153 7.17127 20.1401 7.15439L21.329 6.23978C21.094 5.93436 20.7636 5.76145 20.4632 5.65587C20.1567 5.54818 19.8101 5.48587 19.4604 5.44678C18.7646 5.369 17.9174 5.37 17.0888 5.37V6.87ZM21.3933 10.0296C21.5625 9.18167 21.7062 8.47024 21.7414 7.90038C21.7775 7.31418 21.7108 6.73617 21.329 6.23978L20.1401 7.15439C20.2021 7.23508 20.2706 7.38037 20.2442 7.80797C20.2168 8.25191 20.1002 8.84478 19.9223 9.73595L21.3933 10.0296ZM16.2404 16.25C17.0021 16.25 17.6413 16.2513 18.1566 16.1882C18.6923 16.1227 19.1809 15.9794 19.6074 15.6318L18.6598 14.469C18.5346 14.571 18.3571 14.6525 17.9744 14.6994C17.5712 14.7487 17.0397 14.75 16.2404 14.75V16.25ZM19.4235 12.1561C19.2621 12.9389 19.1535 13.4593 19.0238 13.8442C18.9007 14.2095 18.785 14.367 18.6598 14.469L19.6074 15.6318C20.0339 15.2842 20.2729 14.8346 20.4453 14.3232C20.6111 13.8312 20.7388 13.2049 20.8926 12.4589L19.4235 12.1561Z"
-                                    fill="currentColor" />
-                            </svg>
-
-                            <span class="pl-1.5">Compras Sidebar</span>
-                        </div>
-                    </a>
-                </li>
-                {% endif %} -->
-
-
 
 
 
                 {% if can_access('/dynamic/logs_auditoria/view') or can_access('/dynamic/roles/view')%}
-                <li class="menu nav-item">
+                <li class="menu nav-item" style="order: 8;">
                     <a href="/dynamic/logs_auditoria/view" class="nav-link group"
                         :class="{'active' : activeMenu === 'auditoria'}">
                         <div class="flex items-center">
@@ -261,7 +325,7 @@
                 </li>
                 {% endif %}
                 <!-- Lista dinámica de tablas DB -->
-                <li class="menu nav-item">
+                <li class="menu nav-item" style="order: 9;">
                     <a href="javascript:;" class="nav-link group items-center justify-between"
                         :class="{'active' : activeMenu === 'bases_de_datos'}"
                         @click="activeMenu === 'bases_de_datos' ? activeMenu = null : activeMenu = 'bases_de_datos'">
