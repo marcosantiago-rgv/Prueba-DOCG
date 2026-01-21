@@ -79,7 +79,6 @@
                 <div class="p-6 border-slate-100 dark:border-slate-700 flex justify-between items-center">
                     <div>
                         <h3 class="text-lg font-bold text-slate-800 dark:text-white">Tendencia de Gastos Diarios</h3>
-                        <p class="text-sm text-slate-500">Visualización de egresos confirmados por fecha</p>
                         <span class="text-lightgray text-sm">$MXN</span>       
                     </div>
                     <div class="text-primary">
@@ -99,7 +98,6 @@
             <div class="bg-white dark:bg-dark dark:border-gray/20 border-2 border-lightgray/10 p-5 rounded-lg">
                 <div class="flex flex-col mb-4">
                     <h2 class="font-semibold text-slate-800 dark:text-white">Distribución de Gastos</h2>
-                    <span class="text-sm text-slate-500">Por categoría de egreso</span>
                 </div>
                 <div id="grafica_gastos_categorias"></div>
             </div>
@@ -177,7 +175,6 @@
                 document.getElementById('kpi_total_gastos').innerText = formatter.format(gastos);
                 document.getElementById('kpi_total_pagos').innerText = formatter.format(pagos);
                 document.getElementById('kpi_pendiente').innerText = formatter.format(pendiente);
-                document.getElementById('porcentaje_pagos').innerText = `${res.tendencia}%`;
             }
         } catch (error) {
             console.error("Error cargando los números:", error);
