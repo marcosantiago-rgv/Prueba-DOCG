@@ -5,10 +5,13 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 from python.models import db
 from sqlalchemy.orm import validates
+from decimal import Decimal
 from sqlalchemy.types import TypeDecorator, String
 from cryptography.fernet import Fernet
 import os
 from dotenv import load_dotenv 
+from sqlalchemy.dialects.postgresql import UUID,ARRAY
+import uuid
 
 load_dotenv()
 
@@ -110,10 +113,10 @@ class CategoriasDeReportes(db.Model,BaseMixin,AuditMixin):
     estatus = db.Column(db.String(255),default="Activo")
 
 class Reportes(db.Model,BaseMixin,AuditMixin):
-    nombre = db.Column(db.String(50), nullable=False)
     id_categoria_de_reporte = db.Column(db.UUID,db.ForeignKey('categorias_de_reportes.id'),nullable=False)
+    
+    nombre = db.Column(db.String(50), nullable=False)
     descripcion = db.Column(db.String(255), nullable=True)
-    ruta_sql = db.Column(db.String(255), nullable=False)
     estatus = db.Column(db.String(255),default="Activo")
 
     categoria = db.relationship("CategoriasDeReportes", backref="reportes", lazy=True)

@@ -3,12 +3,12 @@
 from flask import Blueprint, render_template, jsonify, request, Response, session
 from sqlalchemy import or_, and_, cast, String, func, text
 from python.models.modelos import *
-
 from python.services.system.authentication import *
-
-import io
 from PIL import Image, ImageDraw, ImageFont
 from python.services.system.helper_functions import *
+from python.services.system.boto3_s3 import S3Service
+
+s3_service = S3Service()
 
 report_queries_bp = Blueprint("report_queries", __name__, url_prefix="/report_queries")
 
@@ -24,34 +24,42 @@ def get_query_variables_values(base_query):
             variables_request[key] = query_variables[key]
     return variables_request
 
-@report_queries_bp.route("/<string:sql_name>", methods=["GET"])
+@report_queries_bp.route("/<id>", methods=["GET"])
 @login_required
 @roles_required()
-def report_queries(sql_name):
-    context = {
-            "activeMenu": 'reportes', 
-            "breadcrumbs": [{"name":"Reportes","url":""}]
-        }
-    path = './static/sql/report_queries/'+sql_name+'.sql'
-    base_query = open(path, "r", encoding="utf-8").read()
-    variables_request=get_query_variables_values(base_query) 
-    data=db.session.execute(text(base_query),variables_request)
-    columns =  list(data.keys())
-    return render_template(
-        "system/dynamic_table.html",
-        columns=columns,
-        table_name=sql_name,
-        title_formats=TITLE_FORMATS,
-        report=1,
-        **context,
-    )
+def report_queries(id):
+    try:
+        context = {
+                "activeMenu": 'reportes', 
+                "breadcrumbs": [{"name":"Reportes","url":""}]
+            }
+        record=Reportes.query.get(id)    
+        filepath = Archivos.query.filter_by(id_registro=id).order_by(Archivos.fecha_de_creacion.desc()).first().ruta_s3
+        s3 = S3Service()
+        base_query = s3.read_file(filepath)    
+        variables_request=get_query_variables_values(base_query) 
+        data=db.session.execute(text(base_query),variables_request)
+        columns = list(data.keys())
+        return render_template(
+            "system/dynamic_table.html",
+            columns=columns,
+            id=id,
+            table_name=record.nombre,
+            title_formats=TITLE_FORMATS,
+            report=1,
+            **context,
+        )
+    except:
+        flash('El reporte no tiene un archivo SQL correcto.','info')
+    return redirect(url_for('dynamic.table_view', table_name='reportes'))        
 
-@report_queries_bp.route("/<string:sql_name>/data", methods=["GET"])
+@report_queries_bp.route("/data/<id>", methods=["GET"])
 @login_required
 @roles_required()
-def data(sql_name):
-    path = './static/sql/report_queries/'+sql_name+'.sql'
-    base_query = open(path, "r", encoding="utf-8").read()
+def data(id):
+    filepath = Archivos.query.filter_by(id_registro=id).order_by(Archivos.fecha_de_creacion.desc()).first().ruta_s3
+    s3 = S3Service()
+    base_query = s3.read_file(filepath)    
     variables_request=get_query_variables_values(base_query)
     # --- dynamic table inputs ---
     view      = request.args.get("view", 50, type=int)

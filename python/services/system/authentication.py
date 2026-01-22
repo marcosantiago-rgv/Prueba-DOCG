@@ -15,6 +15,7 @@ import re
 from python.services.system.extensions import csrf,limiter
 from python.services.system.helper_functions import *
 from webauthn.helpers import options_to_json, base64url_to_bytes,bytes_to_base64url
+import os
 
 from webauthn.helpers.structs import (
     RegistrationCredential,
@@ -38,9 +39,10 @@ from webauthn.helpers.exceptions import (
 )
 import base64
 
-RP_NAME = 'Prueba DOCG'
-ORIGIN='localhost'
-RP_ID='localhost'
+RP_NAME = os.getenv('RP_NAME')
+ORIGIN=os.getenv('ORIGIN')
+RP_ID=os.getenv('RP_ID')
+
 
 def login_required(f):
     @wraps(f)

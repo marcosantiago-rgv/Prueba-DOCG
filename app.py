@@ -50,6 +50,13 @@ app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SECURE'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
+if os.environ.get("FLASK_ENV") == "development":
+    app.config["WTF_CSRF_ENABLED"] = False
+    app.config['SESSION_COOKIE_SECURE'] = False
+    debug=True
+else:
+    debug=False
+    
 app.jinja_env.globals['can_access'] = can_access
 app.jinja_env.filters["date_format"] = date_format
 app.jinja_env.filters["commafy"] = commafy
@@ -199,4 +206,4 @@ def inject_table_names():
 
 
 if __name__ == "__main__":
-    app.run(host="localhost", port=8000, debug=True)
+    app.run(host="0.0.0.0", port=8000, debug=debug)

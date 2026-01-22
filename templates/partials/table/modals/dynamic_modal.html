@@ -1,4 +1,9 @@
 <!-- templates/partials/table_modal.html -->
+<style>
+    tbody tr:last-child td {
+        border-bottom: none !important;
+    }
+</style>
 <div id="modal" class="hidden fixed inset-0 bg-dark/90 dark:bg-white/5 backdrop-blur-sm z-[99999] hidden overflow-y-auto">
     <div class="flex items-center justify-center min-h-screen px-4">
         <div class="bg-white dark:bg-dark dark:border-gray/20 border-2 border-lightgray/10 rounded-lg overflow-hidden my-8 w-full max-w-xl">
@@ -16,23 +21,14 @@
                     </svg>
                 </button>
             </div>
-            <div class="p-5 space-y-4">         
+            <div class="px-3 space-y-4">         
                 <div class="text-big font-normal">
-                    <div class="flex justify-end items-center ml-auto" id="buttons_modal_exits">
+                    <div class="flex justify-end items-center ml-auto p-3" id="buttons_modal_exits">
                         {% include 'partials/table/modals/' ~ table_name ~ '.html' ignore missing %}
                     </div>                       
-                    <h5 class="font-semibold text-lg">Información de registro</h5>
-                    <br>
-                    <table class="overflow-auto w-full table-striped" id="modal_content"></table>
-                    <br>
-                    {% if relationships!='' and table_name not in ('reportes','archivos') %}
-                        <h5 class="font-semibold text-lg">Información de registros asociados con registro</h5>
-                        <br>
-                        <table class="overflow-auto w-full table-striped" id="modal_content_relationship"></table>
-                        <br>
-                    {% endif %}
+                    <table class="overflow-auto w-full" id="modal_content"></table>
                 </div>
-                <div class="flex justify-start items-center gap-4 ">
+                <div class="flex justify-start items-center gap-4 p-3">
                     <!-- Botón para descargar -->
                     <button data-action="descargar" type="button"
                         class="bg-gray/10 w-10 h-10 flex items-center justify-center hover:bg-dark hover:text-white dark:hover:bg-white dark:hover:text-dark border border-transparent rounded-md transition-all duration-300">
@@ -46,7 +42,7 @@
                         </svg>
                     </button>
                     <!-- Botón para actualizar -->
-                    {% if table_name not in ('reportes','archivos','logs_auditoria') and not parent_table and can_access('/dynamic/' ~ table_name ~ '/edit') %}
+                    {% if table_name not in vars.no_edit_button and can_access('/dynamic/' ~ table_name ~ '/edit') %}
                         <button data-action="actualizar" type="button"
                             class="bg-gray/10 w-10 h-10 flex items-center justify-center hover:bg-dark hover:text-white dark:hover:bg-white dark:hover:text-dark border border-transparent rounded-md transition-all duration-300">
                             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -68,17 +64,7 @@
                                     fill="currentColor" />
                             </svg>
                         </button>
-                    {% endif %} 
-                    {% if table_name in vars.files_button_functionality and not parent_table %}
-                        <div class="flex justify-end items-center gap-2" x-data x-show="true">
-                            <template x-if="!['Cancelada'].includes($store.modalData.record.estatus)">
-                                <button data-action="files" type="button"
-                                    class="btn border text-primary border-transparent rounded-md transition-all duration-300 hover:text-white hover:bg-primary bg-primary/10">
-                                    Archivos
-                                </button>
-                            </template>   
-                        </div>         
-                    {% endif %}                      
+                    {% endif %}                  
                 </div>                  
             </div>
         </div>
@@ -88,4 +74,5 @@
 <form id="action_buttons" method="POST" style="display: none;">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 </form>
+<script src="/static/js/system/funciones_generales.js"></script>
 <script src="/static/js/system/table/dynamic_modal.js"></script>

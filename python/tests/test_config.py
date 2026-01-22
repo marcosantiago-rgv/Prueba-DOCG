@@ -3,7 +3,7 @@
 from python.services.system.email import send_html_email
 
 # variables de configuración
-SYSTEM_NAME = "Prueba DOCG"
+SYSTEM_NAME = "nombre_app"
 EMAIL_RECIPIENTS = ["david.contreras@rgvsoluciones.com"]
 SENDER_NAME = "Test Runner"
 

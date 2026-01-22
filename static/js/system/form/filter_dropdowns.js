@@ -1,3 +1,4 @@
+// filter
 Object.entries(filters).forEach(([childColumn, parentColumn]) => {
 	const $parent = $(`#${parentColumn}`);
 	const $child = $(`#${childColumn}`);
@@ -14,18 +15,35 @@ Object.entries(filters).forEach(([childColumn, parentColumn]) => {
 		allOptions
 		.filter((_, opt) => $(opt).data("filter") == selectedValue)
 		.each((_, opt) => $child.append($(opt).clone()));
-		// Refresh Select2
-		$child.trigger("change");
-	}
-	// Init Select2 (if not already)
-	if (!$child.data("select2")) {
-		$child.select2({
-		placeholder: "Selecciona una opción",
-		allowClear: true
-		});
 	}
 	// Attach listener
 	$parent.on("change", filterChildOptions);
 	// Run once at page load
 	filterChildOptions();
 });
+
+// filter from multi select
+function filterSelectOptionsByIds(selectElement, allowedIds) {
+    const allowedSet = new Set(allowedIds.map(String));
+	const $select = $(selectElement);
+	const allOptions = $select.find("option").not('[value=""]').clone();
+	$select.empty();
+	$select.append('<option value="">Selecciona una opción</option>');
+    allOptions.each(function () {
+        const value = String($(this).val() || "");
+
+        if (!value) return;
+
+        if (allowedSet.has(value)) {
+            $select.append($(this).clone());
+        }
+    });
+    $select.val(null);
+
+    // Refresh Select2
+    if ($select.hasClass("select2-hidden-accessible")) {
+        $select.trigger("change.select2");
+    } else {
+        $select.trigger("change");
+    }
+}
