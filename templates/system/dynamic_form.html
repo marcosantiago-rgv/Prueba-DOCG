@@ -3,7 +3,7 @@
 {% block content %}
 {% include './partials/system/alerts.html' %}
 <!-- Breadcrumb -->
-{% include 'partials/table/breadcrumbs.html' %}
+{% include 'partials/table/system/breadcrumbs.html' %}
 {% import 'variables.html' as vars %}
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -59,7 +59,7 @@
                                 {% for field, data in multiple_choice_data.items() %}
                                     <select id="{{ field }}" name="{{ field }}" class="js-example-basic-multiple"  multiple {% if column in required_fields %} required {% endif %}>
                                         {% for option in data.options %}
-                                            <option value="{{ option }}" {% if option.id in data.selected %} selected {% endif %}>
+                                            <option value="{{ option }}" {% if option in record[field] %} selected {% endif %}>
                                                 {{ option }}
                                             </option>
                                         {% endfor %}
@@ -113,14 +113,14 @@
                                 <select name="{{ column }}"  id="{{ column  }}" class="js-example-basic-multiple" multiple="multiple" {% if column in required_fields %} required {% endif %}>
                                 </select>
                             {% else %}
-                                {% if column in date_time_columns %}
+                                {% if column in vars.date_time_columns %}
                                     <input type="datetime-local" id="{{ column }}" name="{{ column }}" value="{{ (record[column] | local_time) if record else default_variable_values[column] }}" class="form-input rounded-lg" style="width:40%" {% if column in required_fields %} required {% endif %}>
                                 {% elif "fecha" in column or column in date_columns %}
                                     <!-- Campo de fecha -->
                                     <input type="date" id="{{ column }}" name="{{ column }}" value="{{record[column] if record else default_variable_values[column] }}" class="form-input rounded-lg" style="width:40%" {% if column in required_fields %} required {% endif %}>
-                                {% elif column in time_columns %}
+                                {% elif column in vars.time_columns %}
                                     <input type="time" id="{{ column }}" name="{{ column }}" value="{{record[column] if record else default_variable_values[column] }}" class="form-input rounded-lg" style="width:40%"  {% if column in required_fields %} required {% endif %}>
-                                {% elif ("archivo" in column or column in file_columns) and table_name != "archivos"%}
+                                {% elif ("archivo" in column or column in  vars.file_columns) and table_name != "archivos"%}
                                     <div class="flex items-center gap-2 mt-4" data-file-widget>
                                         <input type="file" id="file-upload_{{ column }}" name="{{ column }}" class="hidden" data-file-input>
                                         <label for="file-upload_{{ column }}"
@@ -175,7 +175,7 @@
                         class="btn border text-primary border-transparent rounded-md transition-all duration-300 hover:text-white hover:bg-primary bg-primary/10">
                         Guardar
                     </button>
-                    <a href="{{ url_for('dynamic.table_view', table_name=table_name) }}"
+                <a href="{{ session.get('return_url', url_for('dynamic.table_view', table_name=table_name)) }}"
                     class="btn border text-danger border-transparent rounded-md transition-all duration-300 hover:text-white hover:bg-danger bg-danger/10">
                         Cancelar
                     </a>
@@ -186,30 +186,14 @@
 </div>
 <script>
     const filters = {{ form_filters | tojson }};
+    const allow_new_value_dropdowns={{ vars.allow_new_value_dropdowns | tojson }};  
 </script>
 <script src="/static/js/system/form/filter_dropdowns.js"></script>
 <script src="/static/js/system/form/fill_inputs_url.js"></script>
 <script src="/static/js/system/form/upload_files.js"></script>
-<script>
-    $(document).ready(function () {
-        $("form").on("submit", function () {
-            $(this)
-                .find(":input:disabled")
-                .prop("disabled", false);
-        });
-    });
-    $(document).ready(function () {
-        $('.js-example-basic-multiple').select2({
-            width: '100%',
-            dropdownAutoWidth: true,
-        });
-    });
-    $(document).ready(function() {
-        $('.searchable-select').select2({
-        width: '100%'
-        });
-    });
-</script>
+<script src="/static/js/system/form/select2.js"></script>
+<script src="/static/js/system/form/show_alert.js"></script>
+
 {% if record %}
     <script>
         const record_edit = {{ record.id | tojson }};

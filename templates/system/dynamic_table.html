@@ -5,94 +5,33 @@
 {% block content %}
 {% include "./partials/system/alerts.html" %}
 <!-- Breadcrumb -->
-{% include 'partials/table/breadcrumbs.html' %}
+{% include 'partials/table/system/breadcrumbs.html' %}
 {% import 'variables.html' as vars %}
 <!-- Elemento oculto para pasar data al JS: nombre de tabla y columnas -->
 {% if report %}
-    <div id="table-data" data-table="/report_queries/{{ table_name }}/data" data-columns='{{ columns|tojson }}' hidden></div>
+    <div id="table-data" data-table="/report_queries/data/{{id}}" data-columns='{{ columns|tojson }}' hidden></div>
 {% else %}
     <div id="table-data" data-table="/dynamic/{{ table_name }}/data" data-columns='{{ columns|tojson }}' hidden></div>
 {% endif %}
 <div class="flex flex-col h-[calc(100vh-188px)] sm:h-[calc(100vh-204px)]"  x-data="calendarComponent()" x-init="init()">
     <div class="grid grid-cols-1 gap-5">
         {% if table_name not in vars.no_tabs and not report %}
-            {% include 'partials/table/dynamic_tabs.html' %}
+            {% include 'partials/table/system/dynamic_tabs.html' %}
             {% set height=470 %}
         {% else %}
             {% set height=400 %}
         {% endif %}
         <div class="sticky top-0 bg-white dark:bg-dark dark:border-gray/20 border-2 border-lightgray/10 p-5 rounded-lg">
             <div class="overflow-auto space-y-4" x-data="tabla" x-init="initData(); initDatePicker(); $watch('searchInput', value => { search(value) });selectedIds = [];document.querySelectorAll('input[type=checkbox]').forEach(cb => cb.checked = false);">
-                {% include 'partials/table/table_title.html' %}                
-                <div id="table_view" class="flex-1 overflow-y-auto table-scroll-horizontal" style="max-height: calc(100vh - {{height}}px)">
-                        <table class="w-full table-hover table-striped">
-                            {% include 'partials/table/table_head.html' %}
-                            <tbody>
-                                <!-- Se recorre la lista de registros obtenidos dinámicamente -->
-                                <template x-for="(record, index) in items" :key="index">
-                                    <tr class="cursor-pointer hover:bg-gray-100" 
-                                    {% if not report %}
-                                    @click="openActions('{{ table_name }}', record.id,record.estatus)"
-                                    {% endif %}>
-                                        {% if checkbox %}
-                                            <td>
-                                                <input type="checkbox" class="form-checkbox" :value="record.id" @change.stop="handleCheckboxChange(record.id)" @click.stop  />
-                                            </td>
-                                        {% endif %}
-                                        <!-- Se recorre el array de columnas que se pasó desde el servidor -->
-                                        <template x-for="(col, i) in columns" :key="i">
-                                            <td style="white-space: normal">
-                                                <!-- If the column is 'estatus', show a badge -->
-                                                <template x-if="col.includes('estatus')">
-                                                    <div 
-                                                        class="inline-flex items-center rounded-full text-xs justify-center px-2.5 py-1.5"
-                                                        :class="{
-                                                            'bg-purple text-white':purple_badge_values.includes(record[col]),
-                                                            'bg-success text-white':success_badge_values.includes(record[col]),
-                                                            'bg-danger text-white':danger_badge_values.includes(record[col]),
-                                                            'bg-warning':warning_badge_values.includes(record[col]),
-                                                            'bg-primary text-white':primary_badge_values.includes(record[col]),
-                                                            'bg-gray/10':gray_badge_values.includes(record[col]),
-                                                            'bg-a text-white': !record[col]
-                                                        }"
-                                                        x-text="record[col] || '-'">
-                                                    </div>
-                                                </template>
-
-                                                <!-- Otherwise, use your normal text logic -->
-                                                <template x-if="!col.toLowerCase().includes('estatus')">
-                                                    <span 
-                                                        x-text="record[col] 
-                                                            ? (money_format_columns.includes(col)
-                                                                ? money_format(record[col]) 
-                                                            : percentage_format_columns.includes(col)
-                                                                ? record[col] + '%'
-                                                            : record[col])
-                                                            : '-'">
-                                                    </span>
-                                                </template>
-                                            </td>
-                                        </template>
-                                        {% include 'partials/table/buttons/' ~ table_name ~ '.html' ignore missing %}
-                                    </tr>
-                                </template>
-                                <!-- Si no hay registros, se muestra un mensaje -->
-                                <tr x-show="isEmpty()">
-                                    <td :colspan="columns.length" class="text-center text-gray-500">
-                                        No se encontraron registros
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                        <br>
-                        {% include 'partials/table/pagination.html' %}
-                </div>
+                {% include 'partials/table/system/table_title.html' %}
+                {% include 'partials/table/system/table.html' %}
+                {% include 'partials/table/system/pagination.html' %}
                 <div id="calendar_wrapper" style="display:none">
                     <div id="calendar_view"></div>
                 </div>
             </div>
         </div>
-        {% include 'partials/table/modals/dynamic_modal.html' %}
+            {% include 'partials/table/modals/dynamic_modal.html' %}
     </div>
 </div>
 {% include "./partials/system/loader.html" %}

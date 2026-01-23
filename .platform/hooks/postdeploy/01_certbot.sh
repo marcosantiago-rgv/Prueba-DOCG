@@ -2,7 +2,7 @@
 set -euo pipefail
 
 DOMAIN="url_app"
-APP="Prueba DOCG"
+APP="nombre_app"
 S3_BUCKET="rgv"
 S3_PREFIX="ssl/$APP/letsencrypt"
 CERT_PATH="/etc/letsencrypt/live/$DOMAIN/fullchain.pem"

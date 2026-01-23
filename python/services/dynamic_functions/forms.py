@@ -14,24 +14,34 @@ def get_foreign_options():
 
         "id_producto": Productos.query.filter_by(estatus="Activo"),
         "id_proveedor": Proveedores.query.filter_by(estatus="Activo"),
-        "id_ubicacion":Ubicaciones.query.filter_by(estatus="Activo"),
         "unidad_de_medida": {"Pieza", "KG"},
-        "dias_de_entrega":["Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Domingo"],
+        "dias_de_entrega": ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'],
+
+        "id_producto": Productos.query.filter_by(estatus="Activo"),
+        "id_almacen": Almacen.query.filter_by(estatus="Activo"),
+        "id_almacen_origen": Almacen.query.filter_by(estatus="Activo"),
+        "id_almacen_destino": Almacen.query.filter_by(estatus="Activo"),
+        "id_proveedor": Proveedores.query.filter_by(estatus="Activo"),
+        # "id_ubicacion": Ubicaciones.query.filter_by(estatus="Activo"),
+        "unidad_de_medida": {"Pieza", "KG"},
+        "dias_de_entrega": ["Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Domingo"],
         "id_categoria": CategoriaGasto.query.filter_by(estatus="Activo"),
 
-        "id_gasto": Gasto.query.filter(Gasto.estatus != "Pagado"), 
+        "id_gasto": Gasto.query.filter(Gasto.estatus != "Pagado"),
         "id_cuenta": CuentaBanco.query.filter_by(estatus="Activo"),
-        
+
+
         "id_orden_de_compra": OrdenesDeCompra.query.filter(OrdenesDeCompra.estatus != "Cancelado")
     }
+
     return foreign_options
 
 
 # specific filters for forms
+# specific filters for forms
 def get_form_options(table_name):
     options = {
         # "inventario": {"id_producto": Productos.query.filter(Productos.estatus == "Activo",Productos.categoria.has(CategoriasDeProductos.nombre.in_(["Producto terminado", "Producto intermedio"])))},
-        "dias_de_entrega": ["Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Domingo"]
     }
     options = options.get(table_name, {})
     return options
@@ -40,11 +50,11 @@ def get_form_options(table_name):
 def get_multiple_choice_data():
     multiple_choice_data = {}
     options = {
-        "ejemplo": [""]
+        "dias_de_entrega": ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'],
     }
     for i in options:
         multiple_choice_data[i] = {
-            "selected": options[i],
+            "selected": [],
             "options": options[i]
         }
     return multiple_choice_data
@@ -57,7 +67,16 @@ def get_ignored_columns(table_name):
         "usuarios": {'codigo_unico', 'contrasena', 'contrasena_api', 'intentos_de_inicio_de_sesion', 'ultima_sesion', 'ultimo_cambio_de_contrasena', 'codigo_unico_expira', 'codigo_unico_login'},
         "archivos": {'tabla_origen', 'id_registro', 'nombre', 'ruta_s3'},
         "ordenes_de_compra": {'importe_total', 'subtotal', 'descuentos', 'fecha_entrega_real'},
+
+        "almacen": set(),
+        "productos_inventario": set(),
+
+        # En alta de transferencia de inventario ocultamos el almacén de origen
+        "transferencia_inventario": {"id_almacen_origen"},
+
         "cuenta_banco": {'saldo_actual'}
+
+
     }
     columns = columns.get(table_name, columnas_generales) | columnas_generales
     return columns
@@ -71,6 +90,7 @@ def get_ignored_columns_edit(table_name, estatus):
         "archivos": {'default': {'tabla_origen', 'id_registro', 'nombre', 'ruta_s3'}},
         "ordenes_de_compra": {'default': {'importe_total', 'importe_pagado', 'subtotal', 'descuentos', 'estatus_de_pago', 'fecha_entrega_real'}},
         "cuenta_banco": {'default': {'saldo_actual'}}
+
     }
     table_dict = tables.get(table_name, columnas_generales)
     if not estatus or estatus not in table_dict:
@@ -86,6 +106,10 @@ def get_non_mandatory_columns(table_name):
     columns = {
         "productos": {'marca', 'codigo_de_barras'} | columnas_generales,
         "proveedores": {'telefono', 'email', 'direccion', 'codigo_postal', 'pais', 'persona_contacto', 'telefono_contacto', 'email_contacto', 'condiciones_de_pago', 'rfc', 'razon_social', 'sitio_web', 'condiciones_pago'} | columnas_generales,
+        "productos_inventario": {'marca', 'codigo_de_barras'} | columnas_generales,
+        "almacen": {'descripcion'} | columnas_generales,
+        "transferencia_inventario": set() | columnas_generales,
+
     }
     columns = columns.get(table_name)
     if columns == None:
@@ -95,8 +119,7 @@ def get_non_mandatory_columns(table_name):
 
 def get_default_variable_values(table_name):
     default_values = {
-        "ordenes_de_compra": {"fecha_orden": datetime.today().strftime("%Y-%m-%d")},
-        # "ordenes_de_compra": {"fecha_orden": datetime.today().strftime("%Y-%m-%d"),"descuentos":0},
+        "ordenes_de_compra": {"fecha_orden": datetime.today().strftime("%Y-%m-%d"), "descuentos": 0},
     }
     default_values = default_values.get(table_name, {})
     return default_values
@@ -110,19 +133,24 @@ def get_url_after_add(table_name):
     return columns
 
 
-def get_non_edit_status(table_name=None):
-    if table_name in ['pago', 'gasto']:
-        return ['Cancelado', 'Pagado']
-    status = ['Cancelado', 'Cancelada', 'Recibida', 'Finalizada', 'Entregada', 'Realizada', 'Realizado',
-              'Pagado', 'Pagado parcial', 'Aprobada', 'Aprobado', 'Recibida parcial', 'Pagado parcial', 'En proceso']
+# def get_non_edit_status(table_name=None):
+#     if table_name in ['pago', 'gasto']:
+#         return ['Cancelado', 'Pagado']
+#     status = ['Cancelado', 'Cancelada', 'Recibida', 'Finalizada', 'Entregada', 'Realizada', 'Realizado',
+#               'Pagado', 'Pagado parcial', 'Aprobada', 'Aprobado', 'Recibida parcial', 'Pagado parcial', 'En proceso']
+def get_non_edit_status(table_name):
+    general_status = {'Cancelado', 'Cancelada', 'Recibida', 'Finalizada', 'Entregada', 'Realizada', 'Realizado',
+                      'Pagado', 'Pagado parcial', 'Aprobada', 'Aprobado', 'Recibida parcial', 'Pagado parcial', 'En proceso'}
+    status_to_remove = {
+        "table_name": {'estatus'},
+    }
+    status = general_status-status_to_remove.get(table_name, {''})
     return status
 
 
 def get_no_edit_access():
-    # tables = ['productos_en_ordenes_de_compra', 'productos_en_ordenes_de_ventas', 'entrega_de_productos_en_ordenes_de_compra',
-    #           'recetas', 'gastos_y_compras_en_pagos', 'productos_en_transferencias_de_inventario']
-    tables = ['productos_en_ordenes_de_compra',
-              'entrega_de_productos_en_ordenes_de_compra']
+    tables = ['productos_en_ordenes_de_compra', 'productos_en_ordenes_de_ventas', 'entrega_de_productos_en_ordenes_de_compra',
+              'recetas', 'gastos_y_compras_en_pagos', 'productos_en_transferencias_de_inventario']
     return tables
 
 
@@ -139,4 +167,13 @@ def get_parent_record(table_name):
         "productos_en_ordenes_de_compra": 'id_orden_de_compra',
     }
     parent_record = parent_record.get(table_name, '')
+    return parent_record
+
+
+def get_parent_record(table_name, parent_table):
+    parent_record = {
+        "productos_en_ordenes_de_compra": {'ordenes_de_compra': 'id_orden_de_compra'},
+    }
+    parent_record = parent_record.get(
+        table_name, {'': ''}).get(parent_table, '')
     return parent_record

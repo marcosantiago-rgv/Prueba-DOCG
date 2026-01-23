@@ -46,7 +46,7 @@ def forgot_password_email(recipient_email,unique_code):
     try:
         # Enviar correo al cliente
         send_html_email(
-            subject="Cambio de contraseña - Prueba DOCG",
+            subject="Cambio de contraseña - nombre_app",
             recipient_email=recipient_email,
             template="partials/system/email_template.html",
             body_content="Favor de ingresar al siguiente link para cambiar la contraseña.",
@@ -61,10 +61,10 @@ def new_user_email(recipient_email,contrasena):
     try:
         # Enviar correo al cliente
         send_html_email(
-            subject="Prueba DOCG",
+            subject="nombre_app",
             recipient_email=recipient_email,
             template="partials/system/email_template.html",
-            body_content="Se acaba de crear tu usuario para la aplicación Prueba DOCG.",
+            body_content="Se acaba de crear tu usuario para la aplicación nombre_app.",
             details_list=[
                 "URL Plataforma: url_app",
                 f"Correo electrónico: {recipient_email}",
@@ -78,7 +78,7 @@ def one_time_code_email(recipient_email,unique_code):
     try:
         # Enviar correo al cliente
         send_html_email(
-            subject="Código de un solo uso para inicio de sesión - Prueba DOCG",
+            subject="Código de un solo uso para inicio de sesión - nombre_app",
             recipient_email=recipient_email,
             template="partials/system/email_template.html",
             body_content="El sigueinte código tiene una vigencia de 15 minutos para inciar sesión.",

@@ -27,16 +27,19 @@ from flask import request
 from sqlalchemy.inspection import inspect
 from sqlalchemy.orm import aliased
 from python.services.dynamic_functions.pdf import *
+from python.services.system.boto3_s3 import S3Service
+
+s3_service = S3Service()
 
 class ExcelService:
     @staticmethod
-    def generate_excel(table_name,kind):
+    def generate_excel(id_table_name,kind):
         """Exporta los datos de una tabla a un archivo Excel."""
         try:
             params = {}
             params['id_usuario'] = session['id_usuario']
             if kind=='model':
-                model = get_model_by_name(table_name)
+                model = get_model_by_name(id_table_name)
                 query = model.query
                 joins = get_joins()
                 filtered_joins = {field: val for field, val in joins.items() if field in model.__table__.columns}
@@ -51,20 +54,24 @@ class ExcelService:
                         if col.key == name_column.key:
                             aliased_name_columns.append(alias_col)
                 result = query.all()
-                columns=get_columns(table_name,'main_page')
+                columns=get_columns(id_table_name,'main_page')
                 if session['nombre_rol']=='Sistema':
                     columns.append('id')
                 rows = [
                     {col: record_dict[col] for col in columns if col in record_dict}
                     for record_dict in (query_to_dict(record, model) for record in result)
                 ]
+                sheet_name=id_table_name
             elif kind=='report':
-                path = './static/sql/report_queries/'+table_name+'.sql'
-                base_query = open(path, "r", encoding="utf-8").read()
+                record=Reportes.query.get(id_table_name)    
+                filepath = Archivos.query.filter_by(id_registro=id_table_name).order_by(Archivos.fecha_de_creacion.desc()).first().ruta_s3
+                s3 = S3Service()
+                base_query = s3.read_file(filepath)
                 variables_query = extract_param_names(base_query)
                 variables_request = {k: v for k, v in request.values.items() if k in variables_query and v != ""}
                 result=db.session.execute(text(base_query),variables_request)
                 rows = [dict(row) for row in result.mappings()]
+                sheet_name=record.nombre
 
             if not rows:
                 return None, "La tabla no contiene datos."
@@ -74,7 +81,7 @@ class ExcelService:
             # Exportar a excel
             output = io.BytesIO()
             with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
-                df.to_excel(writer, index=False, sheet_name=table_name)
+                df.to_excel(writer, index=False, sheet_name=sheet_name)
 
             output.seek(0)
             return output.getvalue(), None

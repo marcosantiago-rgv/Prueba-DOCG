@@ -1,5 +1,21 @@
 # app.py
 
+from flask.json.provider import DefaultJSONProvider
+from python.routes.ordenes_de_compra import ordenes_de_compra_bp
+# import blueprint transferencias
+from python.routes.transferencias import transferencias_bp
+from python.routes.inventario import inventario_bp
+from python.routes.system.access_control import access_control_bp
+from python.routes.system.report_queries import report_queries_bp
+from python.routes.dashboards import dashboards_bp
+from python.routes.system.dashboard_queries import dashboard_queries_bp
+from python.services.api import api_bp
+from python.services.system.authentication import auth_bp
+from python.routes.system.home import home_bp
+from python.routes.system.files import files_bp
+from python.routes.system.errors import errors_bp
+from python.routes.system.dynamic_routes import dynamic_bp
+import datetime as dt
 import os
 from datetime import timedelta
 
@@ -34,6 +50,13 @@ app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SECURE'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
+if os.environ.get("FLASK_ENV") == "development":
+    app.config["WTF_CSRF_ENABLED"] = False
+    app.config['SESSION_COOKIE_SECURE'] = False
+    debug=True
+else:
+    debug=False
+    
 app.jinja_env.globals['can_access'] = can_access
 app.jinja_env.filters["date_format"] = date_format
 app.jinja_env.filters["commafy"] = commafy
@@ -74,6 +97,8 @@ event.listen(db.session, "after_flush", add_logs_post_flush)
 event.listen(db.session, "after_commit", clear_audit_flag)
 
 # Configuración del usuario en `g`
+
+
 @app.before_request
 def set_usuario_email():
     """Asigna el email del usuario autenticado a `g.usuario_email`."""
@@ -99,8 +124,6 @@ def run_tests():
     else:
         print("\n\033[92m¡Todas las pruebas pasaron exitosamente!\033[0m")
 
-from flask.json.provider import DefaultJSONProvider
-import datetime as dt
 
 class CustomJSONProvider(DefaultJSONProvider):
     def default(self, obj):
@@ -112,19 +135,10 @@ class CustomJSONProvider(DefaultJSONProvider):
             return obj.isoformat()
         return super().default(obj)
 
+
 app.json = CustomJSONProvider(app)
 
 # Registro de Blueprints
-from python.routes.system.dynamic_routes import dynamic_bp
-from python.routes.system.errors import errors_bp
-from python.routes.system.files import files_bp
-from python.routes.system.home import home_bp
-from python.services.system.authentication import auth_bp
-from python.services.api import api_bp
-from python.routes.system.dashboard_queries import dashboard_queries_bp
-from python.routes.dashboards import dashboards_bp
-from python.routes.system.report_queries import report_queries_bp
-from python.routes.system.access_control import access_control_bp
 
 app.register_blueprint(errors_bp)
 app.register_blueprint(auth_bp)
@@ -136,12 +150,10 @@ app.register_blueprint(dashboard_queries_bp)
 app.register_blueprint(dashboards_bp)
 app.register_blueprint(report_queries_bp)
 app.register_blueprint(access_control_bp)
-
-
-from python.routes.ordenes_de_compra import ordenes_de_compra_bp
+app.register_blueprint(inventario_bp)
+app.register_blueprint(transferencias_bp)  # register blueprint transferencias
 app.register_blueprint(ordenes_de_compra_bp)
 
-from python.services.system.template_formats import *
 
 # Almacenar los nombres de las tablas en caché
 TABLES_CACHE = {}
@@ -186,10 +198,12 @@ def load_table_names():
 with app.app_context():
     load_table_names()
 
+
 @app.context_processor
 def inject_table_names():
     """Inyecta las tablas pre-cargadas en las plantillas."""
     return {"table_names": TABLES_CACHE}
 
+
 if __name__ == "__main__":
-    app.run(host="localhost", port=8000, debug=True)
+    app.run(host="0.0.0.0", port=8000, debug=debug)

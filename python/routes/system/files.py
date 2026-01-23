@@ -23,17 +23,13 @@ def excel(table,kind):
     """Ruta para generar y descargar un archivo Excel de una table específica."""
     try:
         excel_content, error = ExcelService.generate_excel(table,kind)
-
-
         if error:
             flash(f"No se pudo generar el archivo Excel: {error}", "danger")
-
         response = Response(
             excel_content,
             mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             headers={"Content-Disposition": f"attachment; filename={table}.xlsx"},
         )
-        #flash(f"Se ha descargado el archivo: {table}.xlsx", "success")
         return response
     except Exception as e:
         flash(f"Error inesperado: {str(e)}", "danger")
