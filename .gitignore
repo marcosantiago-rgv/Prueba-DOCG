@@ -1,9 +1,0 @@
-*.xlsx
-__pycache__/
-*.DS_Store
-flask_session/
-venv/
-.env
-.flaskenv
-migrations/
-migrations_local/
