@@ -481,9 +481,16 @@ def add(table_name):
 
             selected_items = db.session.query(related_model).filter(
                 related_model.id.in_(selected_ids)).all() if selected_ids else []
+
+            # relationship puede ser una colección normal o un AppenderQuery
             relationship = getattr(new_record, relationship_name)
-            relationship.clear()
-            relationship.extend(selected_items)
+            if isinstance(relationship, AppenderQuery):
+                # lazy='dynamic' (AppenderQuery) no soporta clear/extend, pero sí append
+                for item in selected_items:
+                    relationship.append(item)
+            else:
+                # Colecciones normales (lista-like) permiten extend directamente
+                relationship.extend(selected_items)
         # archivos
         archivos = [file for key, file in request.files.items()]
         if archivos and table_name != 'archivos':
@@ -621,9 +628,18 @@ def edit(table_name):
                         # Query related objects and update relationship
                         selected_items = db.session.query(related_model).filter(
                             related_model.id.in_(selected_ids)).all() if selected_ids else []
+
                         relationship = getattr(record, relationship_name)
-                        relationship.clear()
-                        relationship.extend(selected_items)
+                        if isinstance(relationship, AppenderQuery):
+                            # Para relaciones lazy='dynamic', eliminamos los existentes y agregamos los nuevos
+                            for existing in relationship.all():
+                                relationship.remove(existing)
+                            for item in selected_items:
+                                relationship.append(item)
+                        else:
+                            # Para relaciones normales, usamos clear + extend
+                            relationship.clear()
+                            relationship.extend(selected_items)
                     else:
                         # Assign normal fields
                         setattr(record, key, value)

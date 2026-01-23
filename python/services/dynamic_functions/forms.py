@@ -14,6 +14,7 @@ def get_foreign_options():
 
         "id_producto": Productos.query.filter_by(estatus="Activo"),
         "id_proveedor": Proveedores.query.filter_by(estatus="Activo"),
+        "proveedores": Proveedores.query.filter_by(estatus="Activo"),
         "unidad_de_medida": {"Pieza", "KG"},
         "dias_de_entrega": ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'],
 
@@ -22,6 +23,7 @@ def get_foreign_options():
         "id_almacen_origen": Almacen.query.filter_by(estatus="Activo"),
         "id_almacen_destino": Almacen.query.filter_by(estatus="Activo"),
         "id_proveedor": Proveedores.query.filter_by(estatus="Activo"),
+        "proveedores": Proveedores.query.filter_by(estatus="Activo"),
         # "id_ubicacion": Ubicaciones.query.filter_by(estatus="Activo"),
         "unidad_de_medida": {"Pieza", "KG"},
         "dias_de_entrega": ["Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Domingo"],
@@ -71,8 +73,9 @@ def get_ignored_columns(table_name):
         "almacen": set(),
         "productos_inventario": set(),
 
-        # En alta de transferencia de inventario ocultamos el almacén de origen
-        "transferencia_inventario": {"id_almacen_origen"},
+        # En transferencia de inventario ya no ocultamos el almacén de origen
+        # para evitar que el campo requerido quede en NULL al guardar
+        "transferencia_inventario": set(),
 
         "cuenta_banco": {'saldo_actual'}
 
