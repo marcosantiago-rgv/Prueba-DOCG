@@ -1,0 +1,11 @@
+<div class="flex items-center gap-2">
+    {% if can_access('/dynamic/categorias_de_reportes/view') %}
+    <div class="flex justify-end">
+        <a href="/dynamic/categorias_de_reportes/view"
+            title="Configurar Categorías de Reporte"
+            class="btn border text-primary border-transparent rounded-md transition-all duration-300 hover:text-white hover:bg-primary bg-primary/10 px-3 h-10 flex items-center gap-2">
+            <span class="hidden md:block text-xs font-semibold">Categorías</span>
+        </a>
+    </div>
+    {% endif %}
+</div>

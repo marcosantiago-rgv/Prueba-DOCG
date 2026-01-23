@@ -280,6 +280,7 @@ def get_table_relationships(table_name):
     relationships = {
         "ordenes_de_compra": ["productos_en_ordenes_de_compra"],
         "productos_en_ordenes_de_compra": ["entrega_de_productos_en_ordenes_de_compra"],
+        "gasto": ["pago"]
     }
     relationships = relationships.get(table_name, '')
     return relationships

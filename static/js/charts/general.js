@@ -368,7 +368,9 @@ function renderizar_grafica(selector, chartType, data_y, data_x, options = {}) {
     const mergedOptions = { ...defaultOptions, ...options };
 
     const chartKey = selector.replace(/[^a-zA-Z0-9]/g, "");
-    if (window[chartKey]) { window[chartKey].destroy() }
+    if (window[chartKey] && typeof window[chartKey].destroy === 'function') {
+    window[chartKey].destroy();
+    }
     window[chartKey] = new ApexCharts(document.querySelector(selector), mergedOptions);
     window[chartKey].render();
     registerChart(window[chartKey]);

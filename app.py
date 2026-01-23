@@ -4,6 +4,8 @@ from flask.json.provider import DefaultJSONProvider
 from python.routes.ordenes_de_compra import ordenes_de_compra_bp
 # import blueprint transferencias
 from python.routes.transferencias import transferencias_bp
+from python.routes.gastos import gasto_bp
+from python.routes.pago import pago_bp
 from python.routes.inventario import inventario_bp
 from python.routes.system.access_control import access_control_bp
 from python.routes.system.report_queries import report_queries_bp
@@ -146,7 +148,8 @@ app.register_blueprint(access_control_bp)
 app.register_blueprint(inventario_bp)
 app.register_blueprint(transferencias_bp)  # register blueprint transferencias
 app.register_blueprint(ordenes_de_compra_bp)
-
+app.register_blueprint(gasto_bp) 
+app.register_blueprint(pago_bp)
 
 # Almacenar los nombres de las tablas en caché
 TABLES_CACHE = {}
