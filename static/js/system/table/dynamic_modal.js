@@ -5,14 +5,9 @@ document.addEventListener('alpine:init', () => {
         record: null,
 
         getField(key) {
-            if (!Array.isArray(this.record)) return null;
-
-            for (const section of this.record) {
-                for (const field of section.fields) {
-                    if (field.key === key) {
-                        return field.value;
-                    }
-                }
+            // Si hay objeto plano (flat), preferirlo
+            if (this.record && typeof this.record === 'object') {
+                return this.record[key] ?? null;
             }
             return null;
         }
@@ -110,7 +105,10 @@ async function openActions(form, recordId, estatus) {
 
     const data = await get_record(form, recordId);
     const popupActions = document.getElementById('modal');
-    Alpine.store('modalData').record = data;
+    // Guardamos en el store la versión "plana" que regresa get_record
+    // para que los templates personalizados (como transferencia_inventario)
+    // puedan seguir usando propiedades como .id o .estatus.
+    Alpine.store('modalData').record = data || null;
     popupActions.classList.remove('hidden');
     hideLoader();
 
@@ -159,7 +157,7 @@ async function get_record(form, recordId) {
         }
 
         const data = await response.json();
-        const record = data[0]; // array of sections
+        const sections = data[0]; // array de secciones [{section, fields:[{key,value}]}]
 
         const modal_content = document.getElementById('modal_content');
         modal_content.innerHTML = '';
@@ -261,7 +259,7 @@ async function get_record(form, recordId) {
         // ===============================
         // SECTION LOOP (ORDER PRESERVED)
         // ===============================
-        record.forEach(sectionObj => {
+        sections.forEach(sectionObj => {
             const sectionName = sectionObj.section;
             const fields = sectionObj.fields;
 
@@ -361,7 +359,17 @@ async function get_record(form, recordId) {
             modal_content.appendChild(table);
         });
 
-        return record;
+        // Construimos un objeto plano { clave: valor }
+        // a partir de todas las secciones y campos,
+        // útil para los botones personalizados del modal.
+        const flatRecord = {};
+        sections.forEach(sectionObj => {
+            sectionObj.fields.forEach(({ key, value }) => {
+                flatRecord[key] = value;
+            });
+        });
+
+        return flatRecord;
 
     } catch (error) {
         console.error("Error fetching or processing data:", error);

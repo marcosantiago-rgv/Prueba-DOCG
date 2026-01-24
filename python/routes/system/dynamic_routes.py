@@ -421,6 +421,75 @@ def add(table_name):
     if not model:
         flash(f"La tabla '{table_name}' no existe.", "danger")
         return redirect(url_for("dynamic.table_view", table_name=table_name))
+
+    # Manejo especial: permitir multiselección de productos en transferencia_inventario
+    if table_name == "transferencia_inventario":
+        try:
+            # IDs de productos seleccionados (pueden ser varios)
+            product_ids = [v for v in request.form.getlist("id_producto") if v]
+            if not product_ids:
+                flash("Debes seleccionar al menos un producto.", "danger")
+                return redirect(request.referrer or url_for("dynamic.table_view", table_name=table_name))
+
+            # Tomar valores base para el resto de columnas (un valor por campo)
+            base_data = {}
+            for col_name in model.__table__.columns.keys():
+                if col_name in ("id", "id_producto"):
+                    continue
+                if col_name in request.form:
+                    base_data[col_name] = request.form.get(col_name)
+
+            # Sanitizar datos (fechas, números, etc.), sin incluir id_producto
+            base_data = sanitize_data(model, base_data)
+
+            created_ids = []
+            for pid in product_ids:
+                row_data = dict(base_data)
+                try:
+                    row_data["id_producto"] = UUID(pid)
+                except (ValueError, TypeError):
+                    # Si algún id viene mal formado, lo ignoramos
+                    continue
+
+                new_record = model(**row_data)
+                new_record.id_usuario = Usuarios.query.get(
+                    session["id_usuario"]).id
+                if hasattr(model, "id_visualizacion"):
+                    new_record.id_visualizacion = get_id_visualizacion(
+                        table_name)
+
+                db.session.add(new_record)
+                db.session.flush()
+                created_ids.append(new_record.id)
+
+            if not created_ids:
+                db.session.rollback()
+                flash(
+                    "No se pudieron crear transferencias con los productos seleccionados.", "danger")
+                return redirect(request.referrer or url_for("dynamic.table_view", table_name=table_name))
+
+            # Ejecutar flujo de éxito sobre el último registro creado
+            on_success(table_name, created_ids[-1])
+            db.session.commit()
+            flash(
+                f"Se crearon {len(created_ids)} transferencias de inventario.", "success")
+
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Error al crear las transferencias: {str(e)}", "danger")
+            return (request.referrer or "/")
+
+        return_url = session.get("return_url")
+        if return_url:
+            session.pop("return_url", None)
+            return redirect(return_url)
+        else:
+            url = get_url_after_add(table_name)
+            if "double_table_view" in url:
+                return redirect(url_for(url, table_name=table_name))
+            else:
+                return redirect(url_for(url, table_name=table_name, parent_table=parent_table, id_parent_record=id_parent_record))
+
     try:
         # Retrieve all form data (handling multi-select fields correctly)
         model_columns = model.__table__.columns.keys(
@@ -630,16 +699,26 @@ def edit(table_name):
                             related_model.id.in_(selected_ids)).all() if selected_ids else []
 
                         relationship = getattr(record, relationship_name)
-                        if isinstance(relationship, AppenderQuery):
-                            # Para relaciones lazy='dynamic', eliminamos los existentes y agregamos los nuevos
+
+                        # Manejo robusto de relaciones según sus capacidades
+                        # - Relaciones dinámicas (lazy='dynamic' / AppenderQuery) no tienen clear()
+                        #   pero sí append/remove y se comportan como una consulta.
+                        # - Colecciones normales (InstrumentedList) sí soportan clear()/extend().
+                        if hasattr(relationship, "append") and not hasattr(relationship, "clear"):
+                            # Relaciones tipo consulta dinámica: vaciar mediante remove() y volver a agregar
                             for existing in relationship.all():
                                 relationship.remove(existing)
                             for item in selected_items:
                                 relationship.append(item)
                         else:
-                            # Para relaciones normales, usamos clear + extend
-                            relationship.clear()
-                            relationship.extend(selected_items)
+                            # Colecciones normales: usar clear + extend cuando estén disponibles
+                            if hasattr(relationship, "clear") and hasattr(relationship, "extend"):
+                                relationship.clear()
+                                relationship.extend(selected_items)
+                            else:
+                                # Fallback: asignar directamente la colección de seleccionados
+                                setattr(record, relationship_name,
+                                        selected_items)
                     else:
                         # Assign normal fields
                         setattr(record, key, value)
@@ -670,16 +749,18 @@ def edit(table_name):
                         db.session.add(new_record)
                         setattr(record, archivo.name,
                                 f'{new_record.id}__{archivo.filename}')
-            state = inspect(record)
-            changed_fields = {
-                attr.key: {
-                    "old": attr.history.deleted[0] if attr.history.deleted else None,
-                    "new": attr.history.added[0] if attr.history.added else None
-                }
-                for attr in state.attrs if attr.history.has_changes()
-            }
+            # Registrar cambios si en un futuro se quiere usar esta información
+            # (por ahora edit_on_success solo acepta table_name e id)
+            # state = inspect(record)
+            # changed_fields = {
+            #     attr.key: {
+            #         "old": attr.history.deleted[0] if attr.history.deleted else None,
+            #         "new": attr.history.added[0] if attr.history.added else None
+            #     }
+            #     for attr in state.attrs if attr.history.has_changes()
+            # }
             db.session.flush()
-            edit_on_success(table_name, record.id, changed_fields)
+            edit_on_success(table_name, record.id)
             db.session.commit()
             flash(
                 f"Registro actualizado exitosamente en '{table_name.replace('_', ' ').capitalize()}'.", "success")
@@ -792,8 +873,26 @@ def record_data(table_name, id_record):
     query = query.filter(model.id == id_record)
     records = query.all()
     columns_order = get_columns(table_name, 'modal')
-    record = [record_to_ordered_dict(
-        model, record, columns_order) for record in records]
+
+    # Construimos la estructura para el modal dependiendo del tipo de configuración
+    # 1) Si columns_order es un dict (secciones -> columnas), usamos record_to_ordered_dict
+    if isinstance(columns_order, dict):
+        record = [record_to_ordered_dict(
+            model, record, columns_order) for record in records]
+    # 2) Si es una lista simple de columnas, la envolvemos en una sola sección
+    #    usando record_to_ordered_list y luego adaptamos al formato esperado
+    else:
+        record = []
+        for r in records:
+            ordered_fields = record_to_ordered_list(
+                model, None, r, columns_order)
+            section = {
+                "section": "informacion_general",
+                "fields": [
+                    {"key": k, "value": v} for k, v in ordered_fields
+                ],
+            }
+            record.append([section])
     relationships = get_table_relationships(table_name)
     if relationships and record:
         relationships_section = {

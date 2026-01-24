@@ -73,13 +73,14 @@
 
                     <!-- Submenu for inventory -->
                     <ul x-cloak x-show="activeMenu === 'inventario'" x-collapse class="sub-menu flex flex-col gap-1">
-                        <!-- {% if can_access('/dynamic/productos_inventario/view') %}
+                        {% if can_access('/dynamic/productos_inventario/view') %}
                         <li>
                             <a :class="{'active': activeItem === 'productos_inventario'}"
                                 href="/dynamic/productos_inventario/view"
-                                @click="activeItem = 'productos_inventario'">Productos En Inventario</a>
+                                @click="activeItem = 'productos_inventario'">Existencias</a>
+                            <!-- @click="activeItem = 'productos_inventario'">Productos En Inventario</a> -->
                         </li>
-                        {% endif %} -->
+                        {% endif %}
 
                         {% if can_access('/dynamic/almacen/view') %}
                         <li>
@@ -87,12 +88,12 @@
                         </li>
                         {% endif %}
 
-                        {% if can_access('/dynamic/existencias/view') %}
+                        <!-- {% if can_access('/dynamic/existencias/view') %}
                         <li>
                             <a :class="{'active': activeItem === 'existencias'}"
                                 href="/dynamic/existencias/view">Existencias</a>
                         </li>
-                        {% endif %}
+                        {% endif %} -->
 
                         {% if can_access('/dynamic/transferencia_inventario/view') %}
                         <li>

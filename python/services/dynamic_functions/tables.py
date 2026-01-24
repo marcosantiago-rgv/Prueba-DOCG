@@ -113,6 +113,61 @@ def get_columns(table_name, section):
             "modal": {"informacion_general": ["id", "id_visualizacion", "nombre", "unidad_de_medida", "numero_de_usos", "codigo_de_barras", "id_archivo_imagen", "estatus"], "detalles": ["descripcion"], "sistema": ["id_usuario_correo_electronico", "fecha_de_creacion", "fecha_de_actualizacion"]},
             "pdf": ["id_visualizacion", "nombre", "unidad_de_medida", "codigo_de_barras", "descripcion", "estatus", "id_usuario_correo_electronico", "fecha_de_creacion", "fecha_de_actualizacion"]
         },
+        "productos_inventario": {
+            "main_page": [
+                "id_visualizacion",
+                "nombre",
+                "unidad_de_medida",
+                "codigo_de_barras",
+                "descripcion",
+                "estatus",
+                "id_usuario_correo_electronico",
+                "proveedores",
+            ],
+            "modal": [
+                "id",
+                "id_visualizacion",
+                "nombre",
+                "unidad_de_medida",
+                "codigo_de_barras",
+                "descripcion",
+                "estatus",
+                "id_usuario_correo_electronico",
+                "proveedores",
+                "fecha_de_creacion",
+                "fecha_de_actualizacion",
+            ],
+            "pdf": [
+                "id_visualizacion",
+                "nombre",
+                "unidad_de_medida",
+                "codigo_de_barras",
+                "descripcion",
+                "estatus",
+                "id_usuario_correo_electronico",
+                "proveedores",
+            ],
+        },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         "proveedores": {
 
             "main_page": ["id_visualizacion", "nombre", "razon_social", "persona_contacto", "telefono_contacto", "email_contacto", "estatus", "id_producto", "dias_de_entrega"],
