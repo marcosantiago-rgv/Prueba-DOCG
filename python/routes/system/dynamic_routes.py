@@ -417,6 +417,12 @@ def form(table_name):
 def add(table_name):
     parent_table = request.args.get("parent_table")
     id_parent_record = request.args.get("id_parent_record")
+    # DEBUG: ver qué llega cuando se crea un registro
+    print("[ADD] table_name=", table_name)
+    print("[ADD] parent_table=", parent_table,
+          "id_parent_record=", id_parent_record)
+    print("[ADD] FORM=", dict(request.form))
+    print("[ADD] FILES=", {k: v.filename for k, v in request.files.items()})
     model = get_model_by_name(table_name)
     if not model:
         flash(f"La tabla '{table_name}' no existe.", "danger")
@@ -514,23 +520,56 @@ def add(table_name):
         new_record.id_usuario = Usuarios.query.get(session["id_usuario"]).id
         if hasattr(model, 'id_visualizacion'):
             new_record.id_visualizacion = get_id_visualizacion(table_name)
+
+        # Caso especial: creación directa en la tabla 'archivos'
         if table_name == 'archivos':
+            # Debe venir un archivo adjunto sí o sí
+            archivo = request.files.get("archivo")
+            if not (archivo and archivo.filename):
+                db.session.rollback()
+                flash("Debes seleccionar un archivo antes de guardar.", "danger")
+                return (request.referrer or "/")
+
+            # Metadatos de vínculo
             new_record.tabla_origen = parent_table
             new_record.id_registro = id_parent_record
-            new_record.ruta_s3 = ''
+
+            # Etiqueta que verá el usuario: si llenó "Nombre del archivo"
+            # se respeta, si no se usa el nombre físico del archivo.
+            label = normal_data.get('nombre_del_archivo') or archivo.filename
+            new_record.nombre_del_archivo = label
+
+            # La columna 'nombre' es NOT NULL en BD, así que garantizamos
+            # que siempre tenga un valor coherente.
+            if not getattr(new_record, "nombre", None):
+                new_record.nombre = label
+
+            # DEBUG: verificar qué valores se van a insertar
+            try:
+                print("[ADD-ARCHIVOS] label=", label)
+                print("[ADD-ARCHIVOS] nombre_del_archivo=",
+                      new_record.nombre_del_archivo)
+                print("[ADD-ARCHIVOS] nombre=", new_record.nombre)
+            except Exception as _:
+                pass
+
+            # Ruta en S3 basada en tabla_origen e id del registro
+            new_record.ruta_s3 = f"{parent_table}/{new_record.id}_{archivo.filename}"
+
         if table_name == 'usuarios':
             alphabet = string.ascii_letters + string.digits
             contrasena = ''.join(secrets.choice(alphabet) for i in range(20))
             new_record.contrasena = generate_password_hash(contrasena)
             new_record.ultimo_cambio_de_contrasena = datetime.today()
             new_user_email(new_record.correo_electronico, contrasena)
+
         db.session.add(new_record)
         db.session.flush()
+
+        # Sube archivo a S3 solo después de que el registro existe en BD
         if table_name == 'archivos':
             archivo = request.files.get("archivo")
             s3_service.upload_file(archivo, new_record.id, parent_table)
-            new_record.ruta_s3 = f"{parent_table}/{new_record.id}_{archivo.filename}"
-            new_record.nombre_del_archivo = archivo.filename
         # Process many-to-many relationships
         for key, value in relationship_data.items():
             related_model = getattr(model, key).property.mapper.class_
