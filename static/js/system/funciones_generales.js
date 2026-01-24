@@ -1,6 +1,28 @@
-// capitaliza nombres
-function capitalizeWords(str) {
-    return str.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+
+function titleFormat(value) {
+  const replacements = title_formats;
+  // Check for exact match
+  if (replacements[value]) {
+    return replacements[value].charAt(0).toUpperCase() + replacements[value].slice(1);
+  }
+
+  // Replace underscores with spaces
+  let formatted = value.replace(/_/g, " ");
+  // Remove "id " prefix if present
+  if (formatted.startsWith("id ")) {
+    formatted = formatted.slice(3);
+  }
+
+  // Replace words with accented versions if needed
+  for (let k in replacements) {
+    const regex = new RegExp(`\\b${k}\\b`, "i");
+    if (regex.test(formatted)) {
+      formatted = formatted.replace(regex, replacements[k]);
+    }
+  }
+  formatted = formatted.charAt(0).toUpperCase() + formatted.slice(1);
+
+  return formatted;
 }
 // funcion para obtener el lunes de hace dos semanas
 function getMondayOfTwoWeeksAgo() {
@@ -18,6 +40,14 @@ function getMondayOfTwoWeeksAgo() {
 }
 function money_format(value) {
     return `$${new Intl.NumberFormat().format(value)}`;
+}
+function formatNumber(value) {
+        // Format number with commas as thousands separators
+        return new Intl.NumberFormat('en-US').format(value);
+}
+function formatCurrency(value) {
+        // Ensure it's a valid number, then format it as currency
+        return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value);
 }
 // funcion para obtener un valor de un sql
 function obtener_valor(selector,columnName,path,format) {
@@ -101,4 +131,10 @@ function render_dynamic_table(element_id, path) {
                 "<p class='text-red-500 italic'>Error loading data</p>";
         });
 }
+
+// capitaliza nombres
+function capitalizeWords(str) {
+    return str.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+
 

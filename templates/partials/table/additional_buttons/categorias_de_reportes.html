@@ -1,9 +1,8 @@
-<div class="flex items-center gap-2">
+{% if can_access('/dynamic/reportes/view') %}
     <div class="flex justify-end">
-        <a href="/dynamic/reportes/view"
-            title="Volver a Reportes"
-            class="btn border text-primary border-transparent rounded-md transition-all duration-300 hover:text-white hover:bg-primary bg-primary/10 px-3 h-10 flex items-center gap-2">
-            <span class="hidden md:block text-xs font-semibold">Reportes</span>
+        <a href="{{ url_for('dynamic.table_view',table_name='reportes') }}" 
+        class="btn border text-primary border-transparent rounded-md transition-all duration-300 hover:text-white hover:bg-primary bg-primary/10">
+            Reportes
         </a>
     </div>
-</div>
+{% endif %}

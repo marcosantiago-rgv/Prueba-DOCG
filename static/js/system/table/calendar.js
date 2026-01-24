@@ -77,9 +77,18 @@
         let start_date;
         let end_date;
         let allDay;
-        start_date=`${r[date_variable_back]}`
-        allDay=false;
-        end_date=null
+        if(r['hora_inicio']){
+          start_date = `${r[date_variable_back]}T${r['hora_inicio']}`;
+          allDay=false;
+        }else{
+          start_date=`${r[date_variable_back]}`;
+          allDay=true;
+        }
+        if(r['hora_fin']){
+          end_date = `${r[date_variable_back]}T${r['hora_fin']}`;
+        }else{
+          end_date=null
+        }  
 		const baseTitle = titleField
 		.map(f => r[f])
 		.filter(v => v != null && v !== '')
@@ -153,7 +162,7 @@
       calendar.render();
     } else {
       calendar = new FullCalendar.Calendar(calEl, {
-        initialView: 'dayGridMonth',
+        initialView: 'timeGridWeek',
         locale,
         eventDisplay: 'block',   // 👈 force block rendering in month view
         height: 'auto',
@@ -304,7 +313,7 @@ function calendar_view() {
   const btn = document.getElementById('calendar_button');
 
   if (tabla) tabla.style.display = 'none';
-  if (pagination) pagination.style.display = 'none';
+  if (pagination) pagination.classList.add('hidden');
   if (wrap)  wrap.style.display  = 'block';
   if (btn)   btn.textContent = 'Tabla';
   if (typeof window.InitCalendar === 'function') {
@@ -329,7 +338,7 @@ function table_view() {
   const btn = document.getElementById('calendar_button');
 
   if (tabla) tabla.style.display = 'block';
-  if (pagination) pagination.style.display = 'block';
+  if (pagination) pagination.classList.remove('hidden');
   if (wrap)  wrap.style.display  = 'none';
   if (btn)   btn.textContent = 'Calendario';
 }

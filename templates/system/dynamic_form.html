@@ -3,7 +3,7 @@
 {% block content %}
 {% include './partials/system/alerts.html' %}
 <!-- Breadcrumb -->
-{% include 'partials/table/breadcrumbs.html' %}
+{% include 'partials/table/system/breadcrumbs.html' %}
 {% import 'variables.html' as vars %}
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -21,144 +21,152 @@
         font-size: 0.875rem;
     }
 </style>
-<div class="flex flex-col gap-5  h-[calc(100vh-188px)] sm:h-[calc(100vh-204px)]" >
+<div class="flex flex-col gap-5  h-[calc(100vh-188px)] sm:h-[calc(100vh-204px)]">
     <div class="grid grid-cols-1 gap-5">
-                    <!-- Título del form -->
-            <h2 class="text-base font-semibold">
-                {{ action }} en {{ table_name|title_format }}
-            </h2>
-        <div class="bg-white dark:bg-dark dark:border-gray/20 border-2 border-lightgray/10 px-5 rounded-lg overflow-y-auto" style="max-height: calc(100vh - 240px);">
+        <!-- Título del form -->
+        <h2 class="text-base font-semibold">
+            {{ action }} en {{ table_name|title_format }}
+        </h2>
+        <div class="bg-white dark:bg-dark dark:border-gray/20 border-2 border-lightgray/10 px-5 rounded-lg overflow-y-auto"
+            style="max-height: calc(100vh - 240px);">
             <!-- form -->
-            <form method="POST" class="space-y-4" id="dynamic_form"  
-                action="{{ url_for('dynamic.edit', table_name=table_name, id=record.id) if record else url_for('dynamic.add', table_name=table_name, id_parent_record=id_parent_record, parent_table=parent_table) }}" 
+            <form method="POST" class="space-y-4" id="dynamic_form"
+                action="{{ url_for('dynamic.edit', table_name=table_name, id=record.id) if record else url_for('dynamic.add', table_name=table_name, id_parent_record=id_parent_record, parent_table=parent_table) }}"
                 enctype="multipart/form-data">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 {% for column in columns %}
-                    {% if column != "id" %}
-                    <div class="space-y-2">
-                        <label for="{{ column|title_format }}" class="text-sm text-lightgray capitalize">
-                            {{ column|title_format }}
-                            {% if column in required_fields %}
-                                <span class="text-red-500">*</span>
-                            {% endif %}
-                        </label>
-                        <br>
-                        {% if foreign_options is defined and column in foreign_options %}
-                        <!-- Multi - Select --> 
-                            {% if column in many_to_many_data%}
-                                {% for field, data in many_to_many_data.items() %}
-                                    <select id="{{ field }}" name="{{ field }}" class="js-example-basic-multiple"  multiple {% if column in required_fields %} required {% endif %}>
-                                        {% for option in data.options %}
-                                            <option value="{{ option.id }}" {% if option.id in data.selected %} selected {% endif %}>
-                                                {{ option.nombre or option.nombre_completo or option.id_cliente.nombre_completo or option.id_visualizacion }}
-                                            </option>
-                                        {% endfor %}
-                                    </select>
-                                {% endfor %}
-                            {% elif column in multiple_choice_data %}
-                                {% for field, data in multiple_choice_data.items() %}
-                                    <select id="{{ field }}" name="{{ field }}" class="js-example-basic-multiple"  multiple {% if column in required_fields %} required {% endif %}>
-                                        {% for option in data.options %}
-                                            <option value="{{ option }}" {% if option.id in data.selected %} selected {% endif %}>
-                                                {{ option }}
-                                            </option>
-                                        {% endfor %}
-                                    </select>
-                                {% endfor %}
-                            {%else%}
-                                <select id="{{ column }}" name="{{ column }}" class="searchable-select" {% if column in required_fields %} required {% endif %}
-                                    {% if not record and default_variable_values.get(column) and default_variable_values.get(column)!='None'  %} disabled {% endif %}>
-                                    <option value="">
-                                        Selecciona una opción
-                                    </option>
-                                    {% for option in foreign_options[column] %}
-                                         <!-- Opciones de select dentro de foreign options que no sean de otras bases-->
-                                        {% if column in vars.columns_foreign_options %}
-                                            <option value="{{ option }}" {% if record and record[column] == option %}selected{% endif %} {% if default_variable_values[column] == option %}selected{% endif %}>
-                                                {{ option }}
-                                            </option>
-                                         <!-- Opciones de select dentro de foreign options que sean de otras bases-->
-                                        {% else %}
-                                            <option value="{{ option.id }}" 
-                                                {% if (record and record[column] == option.id) 
-                                                or (default_variable_values and (default_variable_values.get(column) | string) == (option.id | string)) %}
-                                                selected
-                                                {% endif %}
-                                                {% if form_filters[column] %}
-                                                    data-filter="{{ option[form_filters[column]] }}"
-                                                {% endif %}
-                                                >
-                                               {% if vars[column] is defined %}
-                                                    {{ vars[column](option) }}
-                                                {% else %}
-                                                   {% if column == 'id_orden_de_compra' %}
-                                                        {{ option.proveedor.nombre if option.proveedor else 'Sin Proveedor' }}
-                                                        
-                                                    {% elif column == 'id_gasto' or column == 'gasto' %}
-                                                        {{ option.descripcion or option.nombre or option.id }}
-
-                                                    {% else %}
-                                                        {{ option.nombre or option.nombre_completo or option.razon_social or option.id }}
-                                                    {% endif %}
-                                                    {% endif %}
-                                            </option>
-                                        {% endif %}
-                                    {% endfor %}
-                                </select>
-                            {%endif%}
-                        <!-- Select -->
-                        {% else %}
-                            {% if "ejemplo_select_multiple" in column %}
-                                <!-- Renderizar el campo como un select multiple -->
-                                <select name="{{ column }}"  id="{{ column  }}" class="js-example-basic-multiple" multiple="multiple" {% if column in required_fields %} required {% endif %}>
-                                </select>
-                            {% else %}
-                                {% if column in date_time_columns %}
-                                    <input type="datetime-local" id="{{ column }}" name="{{ column }}" value="{{ (record[column] | local_time) if record else default_variable_values[column] }}" class="form-input rounded-lg" style="width:40%" {% if column in required_fields %} required {% endif %}>
-                                {% elif "fecha" in column or column in date_columns %}
-                                    <!-- Campo de fecha -->
-                                    <input type="date" id="{{ column }}" name="{{ column }}" value="{{record[column] if record else default_variable_values[column] }}" class="form-input rounded-lg" style="width:40%" {% if column in required_fields %} required {% endif %}>
-                                {% elif column in time_columns %}
-                                    <input type="time" id="{{ column }}" name="{{ column }}" value="{{record[column] if record else default_variable_values[column] }}" class="form-input rounded-lg" style="width:40%"  {% if column in required_fields %} required {% endif %}>
-                                {% elif ("archivo" in column or column in file_columns) and table_name != "archivos"%}
-                                    <div class="flex items-center gap-2 mt-4" data-file-widget>
-                                        <input type="file" id="file-upload_{{ column }}" name="{{ column }}" class="hidden" data-file-input>
-                                        <label for="file-upload_{{ column }}"
-                                            class="btn flex items-center gap-2 bg-primary border border-primary rounded-md text-white transition-all duration-300 hover:bg-primary/[0.85] hover:border-primary/[0.85] cursor-pointer">
-                                            Seleccionar archivo
-                                        </label>
-                                        <span  class="file-name text-gray-500 ml-2" data-file-name>
-                                            {{(record[column].split('__')[1] if record and record[column] is not none else 'No se ha seleccionado ningún archivo')}}
-                                        </span>
-                                        <button type="button" data-delete-file
-                                            class="flex items-center justify-center text-red-500 hover:text-red-700 p-2 rounded-full hover:opacity-80 rotate-0 hover:rotate-180 transition-all duration-300">
-                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5">
-                                                <path
-                                                    d="M12.0007 10.5865L16.9504 5.63672L18.3646 7.05093L13.4149 12.0007L18.3646 16.9504L16.9504 18.3646L12.0007 13.4149L7.05093 18.3646L5.63672 16.9504L10.5865 12.0007L5.63672 7.05093L7.05093 5.63672L12.0007 10.5865Z"
-                                                    fill="currentColor"></path>
-                                            </svg>
-                                        </button>
-                                    </div>
-                                {% else %}
-                                <!-- Campo de texto normal -->
-                                    <input type="text" id="{{ column }}" name="{{ column }}" value="{{ (record[column] if record and record[column] is not none else '') if record else default_variable_values[column] }}"class="form-input rounded-lg"  {% if column in required_fields %} required {% endif %}>
-                                {% endif %}
-                            {% endif %}
+                {% if column != "id" %}
+                <div class="space-y-2">
+                    <label for="{{ column|title_format }}" class="text-sm text-lightgray capitalize">
+                        {{ column|title_format }}
+                        {% if column in required_fields %}
+                        <span class="text-red-500">*</span>
                         {% endif %}
-                    </div>
+                    </label>
+                    <br>
+                    {% if foreign_options is defined and column in foreign_options %}
+                    <!-- Multi - Select -->
+                    {% if column in many_to_many_data%}
+                    {% for field, data in many_to_many_data.items() %}
+                    <select id="{{ field }}" name="{{ field }}" class="js-example-basic-multiple" multiple {% if column
+                        in required_fields %} required {% endif %}>
+                        {% for option in data.options %}
+                        <option value="{{ option.id }}" {% if option.id in data.selected %} selected {% endif %}>
+                            {{ option.nombre or option.nombre_completo or option.id_cliente.nombre_completo or
+                            option.id_visualizacion }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    {% endfor %}
+                    {% elif column in multiple_choice_data %}
+                    {% for field, data in multiple_choice_data.items() %}
+                    <select id="{{ field }}" name="{{ field }}" class="js-example-basic-multiple" multiple {% if column
+                        in required_fields %} required {% endif %}>
+                        {% for option in data.options %}
+                        <option value="{{ option }}" {% if option in record[field] %} selected {% endif %}>
+                            {{ option }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    {% endfor %}
+                    {%else%}
+                    {# Caso especial: en transferencia_inventario permitir multiselect de productos #}
+                    {% if table_name == 'transferencia_inventario' and column == 'id_producto' %}
+                    <select id="{{ column }}" name="{{ column }}" class="js-example-basic-multiple" multiple {% if
+                        column in required_fields %} required {% endif %}>
+                        {% for option in foreign_options[column] %}
+                        {% if column in vars.columns_foreign_options %}
+                        <option value="{{ option }}" {% if record and record[column]==option %}selected{% endif %}>
+                            {{ option }}
+                        </option>
+                        {% else %}
+                        <option value="{{ option.id }}" {% if record and record[column]==option.id %}selected{% endif
+                            %}>
+                            {% if vars[column] is defined %}
+                            {{ vars[column](option) }}
+                            {% else %}
+                            {{ option.nombre or option.nombre_completo or option.razon_social or option.id }}
+                            {% endif %}
+                        </option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                    {% else %}
+                    <select id="{{ column }}" name="{{ column }}" class="searchable-select" {% if column in
+                        required_fields %} required {% endif %} {% if not record and default_variable_values.get(column)
+                        and default_variable_values.get(column)!='None' %} disabled {% endif %}>
+                        <option value="">
+                            Selecciona una opción
+                        </option>
+                        {% for option in foreign_options[column] %}
+                        <!-- Opciones de select dentro de foreign options que no sean de otras bases-->
+                        {% if column in vars.columns_foreign_options %}
+                        <option value="{{ option }}" {% if record and record[column]==option %}selected{% endif %} {% if
+                            default_variable_values[column]==option %}selected{% endif %}>
+                            {{ option }}
+                        </option>
+                        <!-- Opciones de select dentro de foreign options que sean de otras bases-->
+                        {% else %}
+                        <option value="{{ option.id }}" {% if (record and record[column]==option.id) or
+                            (default_variable_values and (default_variable_values.get(column) | string)==(option.id |
+                            string)) %} selected {% endif %} {% if form_filters[column] %}
+                            data-filter="{{ option[form_filters[column]] }}" {% endif %}>
+                            {% if vars[column] is defined %}
+                            {{ vars[column](option) }}
+                            {% else %}
+                            {% if column == 'id_orden_de_compra' %}
+                            {{ option.proveedor.nombre if option.proveedor else 'Sin Proveedor' }}
+
+                            {% elif column == 'id_gasto' or column == 'gasto' %}
+                            {{ option.descripcion or option.nombre or option.id }}
+
+                            {% else %}
+                            {{ option.nombre or option.nombre_completo or option.razon_social or option.id }}
+                            {% endif %}
+                            {% endif %}
+                        </option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
                     {% endif %}
-                {% endfor %}
-                {% if table_name == "archivos" %}
-                    <div class="flex items-center gap-2 mt-4">
-                        <input type="file" id="file-upload" name="archivo" class="hidden">
-                        <label for="file-upload"
+                    {%endif%}
+                    <!-- Select -->
+                    {% else %}
+                    {% if "ejemplo_select_multiple" in column %}
+                    <!-- Renderizar el campo como un select multiple -->
+                    <select name="{{ column }}" id="{{ column  }}" class="js-example-basic-multiple" multiple="multiple"
+                        {% if column in required_fields %} required {% endif %}>
+                    </select>
+                    {% else %}
+                    {% if column in vars.date_time_columns %}
+                    <input type="datetime-local" id="{{ column }}" name="{{ column }}"
+                        value="{{ (record[column] | local_time) if record else default_variable_values[column] }}"
+                        class="form-input rounded-lg" style="width:40%" {% if column in required_fields %} required {%
+                        endif %}>
+                    {% elif "fecha" in column or column in date_columns %}
+                    <!-- Campo de fecha -->
+                    <input type="date" id="{{ column }}" name="{{ column }}"
+                        value="{{record[column] if record else default_variable_values[column] }}"
+                        class="form-input rounded-lg" style="width:40%" {% if column in required_fields %} required {%
+                        endif %}>
+                    {% elif column in vars.time_columns %}
+                    <input type="time" id="{{ column }}" name="{{ column }}"
+                        value="{{record[column] if record else default_variable_values[column] }}"
+                        class="form-input rounded-lg" style="width:40%" {% if column in required_fields %} required {%
+                        endif %}>
+                    {% elif ("archivo" in column or column in vars.file_columns) and table_name != "archivos"%}
+                    <div class="flex items-center gap-2 mt-4" data-file-widget>
+                        <input type="file" id="file-upload_{{ column }}" name="{{ column }}" class="hidden"
+                            data-file-input>
+                        <label for="file-upload_{{ column }}"
                             class="btn flex items-center gap-2 bg-primary border border-primary rounded-md text-white transition-all duration-300 hover:bg-primary/[0.85] hover:border-primary/[0.85] cursor-pointer">
                             Seleccionar archivo
                         </label>
-                        <span id="file-name" class="file-name text-gray-500 ml-2">
-                            No se ha seleccionado ningún archivo
+                        <span class="file-name text-gray-500 ml-2" data-file-name>
+                            {{(record[column].split('__')[1] if record and record[column] is not none else 'No se ha
+                            seleccionado ningún archivo')}}
                         </span>
-                        <button type="button" id="delete-file-btn"
+                        <button type="button" data-delete-file
                             class="flex items-center justify-center text-red-500 hover:text-red-700 p-2 rounded-full hover:opacity-80 rotate-0 hover:rotate-180 transition-all duration-300">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5">
                                 <path
@@ -167,6 +175,36 @@
                             </svg>
                         </button>
                     </div>
+                    {% else %}
+                    <!-- Campo de texto normal -->
+                    <input type="text" id="{{ column }}" name="{{ column }}"
+                        value="{{ (record[column] if record and record[column] is not none else '') if record else default_variable_values[column] }}"
+                        class="form-input rounded-lg" {% if column in required_fields %} required {% endif %}>
+                    {% endif %}
+                    {% endif %}
+                    {% endif %}
+                </div>
+                {% endif %}
+                {% endfor %}
+                {% if table_name == "archivos" %}
+                <div class="flex items-center gap-2 mt-4">
+                    <input type="file" id="file-upload" name="archivo" class="hidden">
+                    <label for="file-upload"
+                        class="btn flex items-center gap-2 bg-primary border border-primary rounded-md text-white transition-all duration-300 hover:bg-primary/[0.85] hover:border-primary/[0.85] cursor-pointer">
+                        Seleccionar archivo
+                    </label>
+                    <span id="file-name" class="file-name text-gray-500 ml-2">
+                        No se ha seleccionado ningún archivo
+                    </span>
+                    <button type="button" id="delete-file-btn"
+                        class="flex items-center justify-center text-red-500 hover:text-red-700 p-2 rounded-full hover:opacity-80 rotate-0 hover:rotate-180 transition-all duration-300">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5">
+                            <path
+                                d="M12.0007 10.5865L16.9504 5.63672L18.3646 7.05093L13.4149 12.0007L18.3646 16.9504L16.9504 18.3646L12.0007 13.4149L7.05093 18.3646L5.63672 16.9504L10.5865 12.0007L5.63672 7.05093L7.05093 5.63672L12.0007 10.5865Z"
+                                fill="currentColor"></path>
+                        </svg>
+                    </button>
+                </div>
                 {% endif %}
 
                 <!-- Botones de acción -->
@@ -175,8 +213,8 @@
                         class="btn border text-primary border-transparent rounded-md transition-all duration-300 hover:text-white hover:bg-primary bg-primary/10">
                         Guardar
                     </button>
-                    <a href="{{ url_for('dynamic.table_view', table_name=table_name) }}"
-                    class="btn border text-danger border-transparent rounded-md transition-all duration-300 hover:text-white hover:bg-danger bg-danger/10">
+                    <a href="{{ session.get('return_url', url_for('dynamic.table_view', table_name=table_name)) }}"
+                        class="btn border text-danger border-transparent rounded-md transition-all duration-300 hover:text-white hover:bg-danger bg-danger/10">
                         Cancelar
                     </a>
                 </div>
@@ -186,49 +224,33 @@
 </div>
 <script>
     const filters = {{ form_filters | tojson }};
+    const allow_new_value_dropdowns = {{ vars.allow_new_value_dropdowns | tojson }};  
 </script>
 <script src="/static/js/system/form/filter_dropdowns.js"></script>
 <script src="/static/js/system/form/fill_inputs_url.js"></script>
 <script src="/static/js/system/form/upload_files.js"></script>
-<script>
-    $(document).ready(function () {
-        $("form").on("submit", function () {
-            $(this)
-                .find(":input:disabled")
-                .prop("disabled", false);
-        });
-    });
-    $(document).ready(function () {
-        $('.js-example-basic-multiple').select2({
-            width: '100%',
-            dropdownAutoWidth: true,
-        });
-    });
-    $(document).ready(function() {
-        $('.searchable-select').select2({
-        width: '100%'
-        });
-    });
-</script>
+<script src="/static/js/system/form/select2.js"></script>
+<script src="/static/js/system/form/show_alert.js"></script>
+
 {% if record %}
-    <script>
-        const record_edit = {{ record.id | tojson }};
-    </script>
+<script>
+    const record_edit = {{ record.id | tojson }};
+</script>
 {% else %}
-    <script>
-        const record_edit = '';
-    </script>
+<script>
+    const record_edit = '';
+</script>
 {% endif %}
 {% if parent_record %}
-    <script>
-        const parent_record = {{ parent_record | tojson }};
-    </script>
-    <script src="/static/js/system/form/autoselect_parent_record.js"></script>
+<script>
+    const parent_record = {{ parent_record | tojson }};
+</script>
+<script src="/static/js/system/form/autoselect_parent_record.js"></script>
 {% endif %}
 {% if javascript and record %}
-    <script src="{{ url_for('static', filename='js/form_logic/edit/' ~ table_name ~ '.js') }}"></script>
+<script src="{{ url_for('static', filename='js/form_logic/edit/' ~ table_name ~ '.js') }}"></script>
 {% elif javascript %}
-    <script src="{{ url_for('static', filename='js/form_logic/add/' ~ table_name ~ '.js') }}"></script>
+<script src="{{ url_for('static', filename='js/form_logic/add/' ~ table_name ~ '.js') }}"></script>
 {% endif %}
 
 {% endblock content %}

@@ -17,7 +17,7 @@ function generate_excel(table,kind) {
             const a = document.createElement("a");
             a.style.display = "none";
             a.href = downloadUrl;
-            a.download = `${table}.xlsx`;
+            a.download = `${titleFormat(table_name)}.xlsx`;
             document.body.appendChild(a);
             a.click();
             window.URL.revokeObjectURL(downloadUrl);

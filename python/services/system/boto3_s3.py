@@ -79,3 +79,10 @@ class S3Service:
             return True
         except ClientError as e:
             raise Exception(f"Error al eliminar el archivo de S3: {e}")
+            
+    def read_file(self, filepath):
+        try:
+            obj = self.s3_client.get_object(Bucket=self.bucket_name, Key=filepath)
+            return obj["Body"].read().decode("utf-8")
+        except Exception as e:
+            raise Exception(f"Error al leer el archivo de S3: {e}")

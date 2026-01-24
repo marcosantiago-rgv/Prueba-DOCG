@@ -97,14 +97,18 @@ def realizar_transferencia(id):
     # Buscar existencia en almacén origen
     existencia_origen = Existencia.query.filter_by(
         id_producto=transferencia.id_producto, id_almacen=transferencia.id_almacen_origen).first()
-    if not existencia_origen:
-        flash('No hay existencia registrada para ese producto en el almacén origen. Revisa el módulo Inventario → Existencias.')
-        return redirect(url_for('transferencias.listar_transferencias'))
 
-    if existencia_origen.cantidad < transferencia.cantidad:
-        flash(
-            f'No hay suficiente existencia en el almacén origen. Disponible: {existencia_origen.cantidad}, solicitada: {transferencia.cantidad}.')
-        return redirect(url_for('transferencias.listar_transferencias'))
+    # Opción 1: permitir realizar aunque no exista registro o no haya stock suficiente
+    # Si no existe la fila de existencias en el almacén origen, la creamos en 0
+    if not existencia_origen:
+        existencia_origen = Existencia(
+            id_producto=transferencia.id_producto,
+            id_almacen=transferencia.id_almacen_origen,
+            cantidad=0,
+        )
+        db.session.add(existencia_origen)
+
+    # Descontamos la cantidad solicitada, permitiendo que quede en negativo si aplica
     existencia_origen.cantidad -= transferencia.cantidad
     # Buscar existencia en almacén destino
     existencia_destino = Existencia.query.filter_by(
@@ -117,7 +121,8 @@ def realizar_transferencia(id):
         db.session.add(existencia_destino)
     transferencia.estatus = 'Realizado'
     db.session.commit()
-    flash('Transferencia realizada y existencias actualizadas.')
+    flash('Transferencia realizada.')
+    # flash('Transferencia realizada. El almacén origen puede quedar con existencias negativas.')
     return redirect(url_for('dynamic.table_view', table_name='transferencia_inventario'))
 
 

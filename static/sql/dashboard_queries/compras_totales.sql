@@ -1,7 +1,5 @@
-
 select
-    id_visualizacion,
-    importe_total
+    sum(importe_total) as importe_total
 from ordenes_de_compra
 where 
     estatus='Finalizada'
