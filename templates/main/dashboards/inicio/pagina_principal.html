@@ -103,6 +103,7 @@
                     </div>
             </div>
         </div>
+        
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
             <div class="bg-white dark:bg-dark dark:border-gray/20 border-2 border-lightgray/10 p-5 rounded-lg">
                 <div class="mb-[30px] flex items-center flex-wrap justify-between">
@@ -127,18 +128,31 @@
         </div>
 
         </div>
+        <div class="bg-white dark:bg-dark dark:border-gray/20 border-2 border-lightgray/10 p-5 rounded-lg">
+                <h2 class="mb-[30px] font-semibold">Detalle de Gasto</h2>
+                <div id="resumen"></div>
+        </div>
+
+         <div class="bg-white dark:bg-dark dark:border-gray/20 border-2 border-lightgray/10 p-5 rounded-lg">
+                <h2 class="mb-[30px] font-semibold">Detalle de Gasto por Categoría</h2>
+                <div id="distribucion_gasto"></div>
+        </div>
        
         <div class="bg-white dark:bg-dark dark:border-gray/20 border-2 border-lightgray/10 p-5 rounded-lg">
             <h2 class="font-semibold text-slate-800 dark:text-white">Egresos Mensuales</h2>
             <span class="text-lightgray text-sm">$MXN</span>       
             <div id="grafica_pagos_mensuales"></div>
         </div>
+        <div class="bg-white dark:bg-dark dark:border-gray/20 border-2 border-lightgray/10 p-5 rounded-lg">
+                <h2 class="mb-[30px] font-semibold">Detalle de Pago</h2>
+                <div id="egresos"></div>
+        </div>
         <div class="grid grid-cols-1 xl:grid-cols-1 gap-5">
             <div class="bg-white dark:bg-dark dark:border-gray/20 border-2 border-lightgray/10 p-5 rounded-lg">
                 <h2 class="mb-[30px] font-semibold">Compras mensuales por producto</h2>
                 <div id="grafica_ejemplo"></div>
             </div>
-             <div class="bg-white dark:bg-dark dark:border-gray/20 border-2 border-lightgray/10 p-5 rounded-lg">
+            <div class="bg-white dark:bg-dark dark:border-gray/20 border-2 border-lightgray/10 p-5 rounded-lg">
                 <h2 class="mb-[30px] font-semibold">Detalle de compra</h2>
                 <div id="detalle_compras"></div>
             </div>
@@ -244,282 +258,293 @@
                 });
         }
 
-        function renderizarTendenciaEstilo(datos) {
-            const fechas = datos.map(d => {
-                const fecha = new Date(d.fecha);
-                return fecha.toLocaleDateString('es-MX', {
-                    day: '2-digit',
-                    month: 'short'
-                });
+       function renderizarTendenciaEstilo(datos) {
+        const fechas = datos.map(d => {
+            const fecha = new Date(d.fecha);
+            return fecha.toLocaleDateString('es-MX', {
+                day: '2-digit',
+                month: 'short'
             });
-            
-            const valores = datos.map(d => parseFloat(d.total_gastos) || 0);
-            
-            const options = {
-                series: [{
-                    name: "Gastos",
-                    data: valores
-                }],
-                chart: {
-                    type: "line",  
-                    height: 300,
-                    fontFamily: "Inter, sans-serif",
-                    zoom: {
-                        enabled: false,
-                    },
-                    toolbar: {
-                        show: false,
-                    },
-                    animations: {
-                        enabled: true,
-                        speed: 800
-                    }
-                },
-                dataLabels: {
+        });
+        
+        const valores = datos.map(d => parseFloat(d.total_gastos) || 0);
+        
+        const maxValor = Math.max(...valores);
+        const minValor = Math.min(...valores);
+        const yMax = Math.ceil(maxValor / 100) * 100; 
+        const yMin = Math.floor(minValor / 100) * 100; 
+        
+        const options = {
+            series: [{
+                name: "Gastos",
+                data: valores
+            }],
+            chart: {
+                type: "line",  
+                height: 300,
+                fontFamily: "Inter, sans-serif",
+                zoom: {
                     enabled: false,
                 },
-                stroke: {
-                    show: true,
-                    curve: "smooth",
-                    width: 3,
-                    lineCap: "square",
+                toolbar: {
+                    show: false,
                 },
+                animations: {
+                    enabled: true,
+                    speed: 800
+                }
+            },
+            dataLabels: {
+                enabled: false,
+            },
+            stroke: {
+                show: true,
+                curve: "smooth",
+                width: 3,
+                lineCap: "square",
+            },
+            colors: ["#267DFF"],
+            markers: {
+                size: 5, 
                 colors: ["#267DFF"],
-                markers: {
-                    size: 5, 
-                    colors: ["#267DFF"],
-                    strokeColors: "#fff",
-                    strokeWidth: 2,
-                    hover: {
-                        size: 7
-                    }
-                },
-                labels: fechas,
-                xaxis: {
-                    axisBorder: {
-                        show: false,
-                    },
-                    axisTicks: {
-                        show: false,
-                    },
-                    crosshairs: {
-                        show: true,
-                        position: 'back',
-                        stroke: {
-                            color: '#e0e6ed',
-                            width: 1,
-                            dashArray: 0,
-                        }
-                    },
-                    labels: {
-                        offsetX: 0,
-                        offsetY: 5,
-                        style: {
-                            fontSize: "14px",
-                            fontWeight: "600",
-                            colors: "#7780A1",
-                            cssClass: "apexcharts-xaxis-title",
-                        },
-                    },
-                    tooltip: {
-                        enabled: false
-                    }
-                },
-                yaxis: {
-                    tickAmount: 7,
-                    labels: {
-                        formatter: (value) => {
-                            if (value >= 1000) {
-                                return (value / 1000).toFixed(0) + "k";
-                            }
-                            return value;
-                        },
-                        offsetX: -10,
-                        offsetY: 0,
-                        style: {
-                            fontSize: "14px",
-                            fontWeight: "600",
-                            colors: "#7780A1",
-                            cssClass: "apexcharts-yaxis-title",
-                        },
-                    },
-                    opposite: false,
-                },
-                grid: {
-                    borderColor: "#e0e6ed",
-                    strokeDashArray: 7,
-                    xaxis: {
-                        lines: {
-                            show: true,
-                        },
-                    },
-                    yaxis: {
-                        lines: {
-                            show: false,
-                        },
-                    },
-                    padding: {
-                        top: 0,
-                        right: 0,
-                        bottom: 0,
-                        left: 25,
-                    },
-                },
-                legend: {
-                    show: false
-                },
-                tooltip: {
-                    shared: true,
-                    intersect: false,
-                    y: {
-                        formatter: function (value) {
-                            return '$' + new Intl.NumberFormat('es-MX', {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2
-                            }).format(value);
-                        }
-                    },
-                    style: {
-                        fontSize: '12px',
-                        fontFamily: 'Inter, sans-serif'
-                    }
+                strokeColors: "#fff",
+                strokeWidth: 2,
+                hover: {
+                    size: 7
                 }
-            };
-            
-            if (window.tendenciaGastosChart) {
-                window.tendenciaGastosChart.destroy();
-            }
-            
-            const chartElement = document.querySelector("#grafica_tendencias");
-            chartElement.innerHTML = ''; 
-            
-            window.tendenciaGastosChart = new ApexCharts(chartElement, options);
-            window.tendenciaGastosChart.render();
-        }
-
-      function updateDistribucionGastosBarras() {
-    const inicio = document.getElementById('compras_diarias_inicio').value;
-    const fin = document.getElementById('compras_diarias_fin').value;
-    
-    const url = `/dashboard_queries/gastos_por_categoria?fecha_inicio=${inicio}&fecha_fin=${fin}`;
-    
-    fetch(url)
-        .then(response => response.json())
-        .then(data => {
-            if (!data || data.length === 0) {
-                mostrarSinDatos('#distribucion-gastos-barras');
-                return;
-            }
-            
-            const categorias = data.map(d => d.categoria);
-            const montos = data.map(d => parseFloat(d.total) || 0);
-            
-            const options = {
-                chart: {
-                    height: 300, 
-                    type: "bar",
-                    fontFamily: "Inter, sans-serif",
-                    zoom: { enabled: false },
-                    toolbar: { show: false }
+            },
+            labels: fechas,
+            xaxis: {
+                axisBorder: {
+                    show: false,
                 },
-                plotOptions: {
-                    bar: {
-                        horizontal: false,
-                        endingShape: "rounded",  
-                        columnWidth: "50%",      
-                        borderRadius: 5,         
-                    },
+                axisTicks: {
+                    show: false,
                 },
-                stroke: {
+                crosshairs: {
                     show: true,
-                    width: 4,
-                    colors: ["transparent"], 
+                    position: 'back',
+                    stroke: {
+                        color: '#e0e6ed',
+                        width: 1,
+                        dashArray: 0,
+                    }
                 },
-                colors: ["#7B6AFE"],  
-                series: [{
-                    name: "Monto",
-                    data: montos
-                }],
-                dataLabels: {
-                    enabled: false, 
-                },
-                legend: {
-                    show: false,  
-                },
-                xaxis: {
-                    categories: categorias,
-                    axisBorder: {
-                        show: false,
-                    },
-                    axisTicks: {
-                        show: false,
-                    },
-                    crosshairs: {
-                        show: true,
-                    },
-                    labels: {
-                        offsetX: 0,
-                        offsetY: 5,
-                        style: {
-                            fontSize: "16px",  
-                            fontWeight: "600",
-                            colors: "#7780A1",
-                            cssClass: "apexcharts-xaxis-title",
-                        },
-                    },
-                },
-                yaxis: {
-                    show: false,  
-                },
-                fill: { 
-                    opacity: 1 
-                },
-                grid: {
-                    borderColor: "#e0e6ed",
-                    strokeDashArray: 7,
-                    xaxis: {
-                        lines: {
-                            show: false,
-                        },
-                    },
-                    yaxis: {
-                        lines: {
-                            show: false, 
-                        },
-                    },
-                    padding: {
-                        top: 0,
-                        right: 0,
-                        bottom: 0,
-                        left: 0,
+                labels: {
+                    offsetX: 0,
+                    offsetY: 5,
+                    style: {
+                        fontSize: "14px",
+                        fontWeight: "600",
+                        colors: "#7780A1",
+                        cssClass: "apexcharts-xaxis-title",
                     },
                 },
                 tooltip: {
-                    y: {
-                        formatter: function(val) {
-                            return '$' + new Intl.NumberFormat('es-MX').format(val);
-                        }
-                    }
+                    enabled: false
                 }
-            };
-            
-            if (window.distribucionGastosBarChart) {
-                window.distribucionGastosBarChart.destroy();
+            },
+            yaxis: {
+                min: yMin,
+                max: yMax,
+                tickAmount: Math.floor((yMax - yMin) / 100),
+                labels: {
+                    formatter: function(value) {
+                        return new Intl.NumberFormat('es-MX', {
+                            style: 'currency',
+                            currency: 'MXN',
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 0
+                        }).format(value);
+                    },
+                    offsetX: -10,
+                    offsetY: 0,
+                    style: {
+                        fontSize: "14px",
+                        fontWeight: "600",
+                        colors: "#7780A1",
+                        cssClass: "apexcharts-yaxis-title",
+                    },
+                },
+                opposite: false,
+            },
+            grid: {
+                borderColor: "#e0e6ed",
+                strokeDashArray: 7,
+                xaxis: {
+                    lines: {
+                        show: true,
+                    },
+                },
+                yaxis: {
+                    lines: {
+                        show: false,
+                    },
+                },
+                padding: {
+                    top: 0,
+                    right: 0,
+                    bottom: 0,
+                    left: 25,
+                },
+            },
+            legend: {
+                show: false
+            },
+            tooltip: {
+                shared: true,
+                intersect: false,
+                y: {
+                    formatter: function (value) {
+                        return new Intl.NumberFormat('es-MX', {
+                            style: 'currency',
+                            currency: 'MXN',
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                        }).format(value);
+                    }
+                },
+                style: {
+                    fontSize: '12px',
+                    fontFamily: 'Inter, sans-serif'
+                }
             }
+        };
+        
+        if (window.tendenciaGastosChart) {
+            window.tendenciaGastosChart.destroy();
+        }
+        
+        const chartElement = document.querySelector("#grafica_tendencias");
+        chartElement.innerHTML = ''; 
+        
+        window.tendenciaGastosChart = new ApexCharts(chartElement, options);
+        window.tendenciaGastosChart.render();
+    }
+
+        function updateDistribucionGastosBarras() {
+            const inicio = document.getElementById('compras_diarias_inicio').value;
+            const fin = document.getElementById('compras_diarias_fin').value;
             
-            const chartElement = document.querySelector("#distribucion-gastos-barras");
-            if (chartElement) {
-                chartElement.innerHTML = '';
-                
-                window.distribucionGastosBarChart = new ApexCharts(chartElement, options);
-                window.distribucionGastosBarChart.render();
-            }
-        })
-        .catch(error => {
-            console.error('Error cargando distribución de gastos:', error);
-            mostrarError('#distribucion-gastos-barras');
-        });
-}
+            const url = `/dashboard_queries/gastos_por_categoria?fecha_inicio=${inicio}&fecha_fin=${fin}`;
+            
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    if (!data || data.length === 0) {
+                        mostrarSinDatos('#distribucion-gastos-barras');
+                        return;
+                    }
+                    
+                    const categorias = data.map(d => d.categoria);
+                    const montos = data.map(d => parseFloat(d.total) || 0);
+                    
+                    const options = {
+                        chart: {
+                            height: 300, 
+                            type: "bar",
+                            fontFamily: "Inter, sans-serif",
+                            zoom: { enabled: false },
+                            toolbar: { show: false }
+                        },
+                        plotOptions: {
+                            bar: {
+                                horizontal: false,
+                                endingShape: "rounded",  
+                                columnWidth: "50%",      
+                                borderRadius: 5,         
+                            },
+                        },
+                        stroke: {
+                            show: true,
+                            width: 4,
+                            colors: ["transparent"], 
+                        },
+                        colors: ["#267DFF"],  
+                        series: [{
+                            name: "Monto",
+                            data: montos
+                        }],
+                        dataLabels: {
+                            enabled: false, 
+                        },
+                        legend: {
+                            show: false,  
+                        },
+                        xaxis: {
+                            categories: categorias,
+                            axisBorder: {
+                                show: false,
+                            },
+                            axisTicks: {
+                                show: false,
+                            },
+                            crosshairs: {
+                                show: true,
+                            },
+                            labels: {
+                                offsetX: 0,
+                                offsetY: 5,
+                                style: {
+                                    fontSize: "16px",  
+                                    fontWeight: "600",
+                                    colors: "#7780A1",
+                                    cssClass: "apexcharts-xaxis-title",
+                                },
+                            },
+                        },
+                        yaxis: {
+                            show: false,  
+                        },
+                        fill: { 
+                            opacity: 1 
+                        },
+                        grid: {
+                            borderColor: "#e0e6ed",
+                            strokeDashArray: 7,
+                            xaxis: {
+                                lines: {
+                                    show: false,
+                                },
+                            },
+                            yaxis: {
+                                lines: {
+                                    show: false, 
+                                },
+                            },
+                            padding: {
+                                top: 0,
+                                right: 0,
+                                bottom: 0,
+                                left: 0,
+                            },
+                        },
+                        tooltip: {
+                            y: {
+                                formatter: function(val) {
+                                    return '$' + new Intl.NumberFormat('es-MX').format(val);
+                                }
+                            }
+                        }
+                    };
+                    
+                    if (window.distribucionGastosBarChart) {
+                        window.distribucionGastosBarChart.destroy();
+                    }
+                    
+                    const chartElement = document.querySelector("#distribucion-gastos-barras");
+                    if (chartElement) {
+                        chartElement.innerHTML = '';
+                        
+                        window.distribucionGastosBarChart = new ApexCharts(chartElement, options);
+                        window.distribucionGastosBarChart.render();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error cargando distribución de gastos:', error);
+                    mostrarError('#distribucion-gastos-barras');
+                });
+        }
 
         function inicializarFechas() {
             const hoy = new Date();
@@ -787,6 +812,9 @@
         document.addEventListener('DOMContentLoaded', () => {
         cargarKPIs(); 
         render_dynamic_table("detalle_compras", '/dashboard_queries/tables?path=compras')
+        render_dynamic_table("resumen", '/dashboard_queries/tables?path=gastos_fechas')
+        render_dynamic_table("distribucion_gasto", '/dashboard_queries/tables?path=gastos_fechas')
+        render_dynamic_table("egresos", '/dashboard_queries/tables?path=pagos_por_mes')
 
 });
 </script>
