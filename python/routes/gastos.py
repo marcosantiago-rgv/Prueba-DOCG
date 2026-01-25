@@ -72,7 +72,7 @@ def pagar_rapido(id):
         )
         
         db.session.commit()
-        flash('Pago procesado y resumen actualizado', 'success')
+        flash('Pago procesado', 'success')
 
     except Exception as e:
         db.session.rollback()
@@ -104,7 +104,7 @@ def cancelar(id):
                 pago_asociado.estatus = "Cancelado"
             
             db.session.commit()
-            flash('Gasto cancelado correctamente. Los totales han sido actualizados.')
+            flash('Gasto cancelado correctamente')
             
     except Exception as e:
         db.session.rollback()
