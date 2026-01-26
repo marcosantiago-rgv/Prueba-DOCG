@@ -16,13 +16,14 @@ def get_joins():
         "id_producto": (Productos, Productos.id, Productos.nombre),
         "id_proveedor": (Proveedores, Proveedores.id, Proveedores.nombre),
         "id_orden_de_compra": (OrdenesDeCompra, OrdenesDeCompra.id, OrdenesDeCompra.id_visualizacion),
+        # cuando hagamos un join a la base de datos y queremos visualizar un campo en la tabla lo instanciamos
         "id_almacen": (Almacen, Almacen.id, Almacen.nombre),
         "id_almacen_origen": (Almacen, Almacen.id, Almacen.nombre),
         "id_almacen_destino": (Almacen, Almacen.id, Almacen.nombre),
-        # "id_ubicacion": (Ubicaciones, Ubicaciones.id, Ubicaciones.nombre),
         "id_gasto": (Gasto, Gasto.id, Gasto.descripcion),
         "id_categoria": (CategoriaGasto, CategoriaGasto.id, CategoriaGasto.nombre),
         "id_cuenta": (CuentaBanco, CuentaBanco.id, CuentaBanco.nombre),
+
 
     }
     return joins
@@ -71,36 +72,17 @@ def get_columns(table_name, section):
             "main_page": ["id_visualizacion", "nombre", "ubicacion", "descripcion", "estatus"],
             # Campos que se ven en el modal
             "modal": [
-                "id",
-                "id_visualizacion",
-                "nombre",
-                "ubicacion",
-                "descripcion",
-                "estatus",
-                "id_usuario",
-                "fecha_de_creacion",
-                "fecha_de_actualizacion",
+                "id", "id_visualizacion", "nombre", "ubicacion", "descripcion", "estatus", "id_usuario", "fecha_de_creacion", "fecha_de_actualizacion",
             ],
             "pdf": ["nombre", "ubicacion", "descripcion", "estatus"],
         },
 
         "existencias": {
-            "main_page": [
-                "id_visualizacion",
-                "id_producto_nombre",
-                "id_almacen_nombre",
-                "cantidad",
-            ],
-            "modal": [
-                "id",
-                "id_visualizacion",
-                "id_producto_nombre",
-                "id_almacen_nombre",
-                "cantidad",
-                # "id_usuario",
-                "fecha_de_creacion",
-                "fecha_de_actualizacion",
-            ],
+            "main_page": ["id_visualizacion", "id_producto_nombre", "id_almacen_nombre", "cantidad",
+                          ],
+            "modal": ["id", "id_visualizacion", "id_producto_nombre", "id_almacen_nombre", "cantidad",
+                      # "id_usuario","fecha_de_creacion","fecha_de_actualizacion",
+                      ],
             "pdf": [
                 "id_producto_nombre",
                 "id_almacen_nombre",
@@ -114,59 +96,13 @@ def get_columns(table_name, section):
             "pdf": ["id_visualizacion", "nombre", "unidad_de_medida", "codigo_de_barras", "descripcion", "estatus", "id_usuario_correo_electronico", "fecha_de_creacion", "fecha_de_actualizacion"]
         },
         "productos_inventario": {
-            "main_page": [
-                "id_visualizacion",
-                "nombre",
-                "unidad_de_medida",
-                "codigo_de_barras",
-                "descripcion",
-                "estatus",
-                "id_usuario_correo_electronico",
-                "proveedores",
-            ],
-            "modal": [
-                "id",
-                "id_visualizacion",
-                "nombre",
-                "unidad_de_medida",
-                "codigo_de_barras",
-                "descripcion",
-                "estatus",
-                "id_usuario_correo_electronico",
-                "proveedores",
-                "fecha_de_creacion",
-                "fecha_de_actualizacion",
-            ],
-            "pdf": [
-                "id_visualizacion",
-                "nombre",
-                "unidad_de_medida",
-                "codigo_de_barras",
-                "descripcion",
-                "estatus",
-                "id_usuario_correo_electronico",
-                "proveedores",
-            ],
+            "main_page": ["id_visualizacion", "nombre", "unidad_de_medida", "codigo_de_barras", "descripcion", "estatus", "id_usuario_correo_electronico", "proveedores",
+                          ],
+            "modal": ["id", "id_visualizacion", "nombre", "unidad_de_medida", "codigo_de_barras", "descripcion", "estatus", "id_usuario_correo_electronico", "proveedores", "fecha_de_creacion", "fecha_de_actualizacion",
+                      ],
+            "pdf": ["id_visualizacion", "nombre", "unidad_de_medida", "codigo_de_barras", "descripcion", "estatus", "id_usuario_correo_electronico", "proveedores",
+                    ],
         },
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
         "proveedores": {
 
@@ -176,37 +112,12 @@ def get_columns(table_name, section):
         },
 
         "transferencia_inventario": {
-            "main_page": [
-                "id_visualizacion",
-                "id_producto_nombre",
-                "id_almacen_origen_nombre",
-                "id_almacen_destino_nombre",
-                "cantidad",
-                "fecha",
-                "estatus",
-            ],
-            "modal": [
-                "id",
-                "id_visualizacion",
-                "id_producto_nombre",
-                "id_almacen_origen_nombre",
-                "id_almacen_destino_nombre",
-                "cantidad",
-                "fecha",
-                "estatus",
-                "id_usuario",
-                "fecha_de_creacion",
-                "fecha_de_actualizacion",
-            ],
-            "pdf": [
-                "id_visualizacion",
-                "id_producto_nombre",
-                "id_almacen_origen_nombre",
-                "id_almacen_destino_nombre",
-                "cantidad",
-                "fecha",
-                "estatus",
-            ],
+            "main_page": ["id_visualizacion", "id_producto_nombre", "id_almacen_origen_nombre", "id_almacen_destino_nombre", "cantidad", "fecha", "estatus",
+                          ],
+            "modal": ["id", "id_visualizacion", "id_producto_nombre", "id_almacen_origen_nombre", "id_almacen_destino_nombre", "cantidad", "fecha", "estatus", "id_usuario", "fecha_de_creacion", "fecha_de_actualizacion",
+                      ],
+            "pdf": ["id_visualizacion", "id_producto_nombre", "id_almacen_origen_nombre", "id_almacen_destino_nombre", "cantidad", "fecha", "estatus",
+                    ],
         },
         "ordenes_de_compra": {
             "main_page": ["id_visualizacion", "id_proveedor_nombre", "fecha_orden", "fecha_entrega_estimada", "fecha_entrega_real", "importe_total", "notas", "estatus"],
@@ -278,21 +189,25 @@ def get_table_buttons():
     return buttons
 
 
+# Esto funciona para cuando tenemos el flujo dentro de una tabla al darle click nos mostrara los  botones de los estatus que pueden cambiar
 def get_estatus_options(table_name):
     options = {
         'ordenes_de_compra': ["En revisión", "Aprobada", 'Recibida parcial', "Recibida", 'Finalizada', "Cancelada"],
         "productos_en_ordenes_de_compra": ['Pendiente', 'Recibido parcial', 'Recibido'],
         'gasto': ["En revisión", "Aprobado", "Pagado parcial", "Pagado", "Cancelado"],
         'pago': ["En revisión", "Aprobado", "Pagado", "Cancelado"],
+        # flujo para transferencias de inventario
         'transferencia_inventario': ["En revisión", "Aprobado", "Realizado"],
         # Sin estatus para existencias (evita tabs de estatus que no aplican)
         'existencias': [],
 
     }
+    # en caso de que no esté definido, usamos estos por defecto
     options = options.get(table_name, ["Activo", "Inactivo"])
     return options
 
 
+# estos son los estatus de la parte de arriba del front que indican registros en tipo de estatus dependiendo del modulo solo muestra no modifica   TABS
 def get_open_status(table_name):
     status = {
         # "ordenes_de_compra": ['En revisión', 'Aprobada', 'Recibida parcial', 'Recibida'],
@@ -304,6 +219,8 @@ def get_open_status(table_name):
     }
     status = status.get(table_name, '')
     return status
+
+# Sirve para decirle a la plantilla que parte del sidebar está activa dependiendo de la tabla en la que estemos
 
 
 def get_breadcrumbs(table_name):
@@ -323,7 +240,7 @@ def get_breadcrumbs(table_name):
         "productos_en_ordenes_de_compra": ['Compras', 'compras'],
         # "ubicaciones": ['Cátalogos', 'catalogos'],
 
-        # Inventario
+        # almacen,existencias,productos_inventario,transferencia_inventario es la seccion del modulo que se muestra en el breadcrumb Inventario y 'inventario' es el menú que se marca como activo
         "almacen": ['Inventario', 'inventario'],
         "existencias": ['Inventario', 'inventario'],
         "productos_inventario": ['Inventario', 'inventario'],
@@ -333,6 +250,7 @@ def get_breadcrumbs(table_name):
         # "ordenes_de_compra": ['Compras', 'ordenes_de_compras'],
         # "productos_en_ordenes_de_compra": ['Compras', 'ordenes_de_compras'],
         "entrega_de_productos_en_ordenes_de_compra": ['Compras', 'ordenes_de_compras'],
+        # cuenta_banco es el nombre de la tabla 'Finanzas' es el módulo que se muestra en el breadcrumb 'finanzas' es el menú que se marca como activo
         "cuenta_banco": ['Finanzas', 'finanzas'],
         "gasto": ['Finanzas', 'finanzas'],
         "pago": ['Finanzas', 'finanzas'],
@@ -344,6 +262,7 @@ def get_breadcrumbs(table_name):
     return breadcrumbs[0], breadcrumbs[1]
 
 
+# Funciona para que en el modal aparezcan los botones de las tablas relacionadas y poder navegar entre ellas con la opcion quie dice "ver registros relacionados"
 def get_table_relationships(table_name):
     relationships = {
         "ordenes_de_compra": ["productos_en_ordenes_de_compra"],
@@ -364,6 +283,8 @@ def get_calendar_date_variable(table_name):
     date_variable = date_variable.get(table_name, '')
     return date_variable
 
+# que variable se usa para hacer los tabs dinámicos en la parte superior de la tabla
+
 
 def get_variable_tabs(table_name):
     tabs = {
@@ -375,6 +296,7 @@ def get_variable_tabs(table_name):
     return tabs
 
 
+# contador automatizado de los tabs en la parte superior de la tabla dependiendo del estatus o variable que se haya definido NO TOCAR
 def get_data_tabs(table_name, parent_table, id_parent_record):
     column_tabs = get_variable_tabs(table_name)
     tabs = get_estatus_options(table_name)
@@ -406,12 +328,14 @@ def get_date_fields():
     date_fields = ["fecha_orden"]
     return date_fields
 
+# muestra los checkbox en las tablas que lo requieran cuando estemos enun modulo especifico
+
 
 def get_checkbox(table_name):
     checkbox = {
-        # 'ordenes_de_compra': True,
+        'ordenes_de_compra': True,
         # 'gasto': True
-        'table_name': True,
+        # 'table_name': True,
     }
     checkbox = checkbox.get(table_name, False)
     return checkbox

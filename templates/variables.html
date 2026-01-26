@@ -1,12 +1,14 @@
 <!--Dynamic tables variables-->
-{% set no_tabs=['logs_auditoria','archivos'] %}
+{% set no_tabs=['logs_auditoria','archivos'] %} <!-- Que tablas no queremos que tengan tabs  -->
 {% set no_tab_count = ['Inactivo','Cancelada','Finalizada'] %}
-{% set no_add_button = ['logs_auditoria'] %}
-{% set no_edit_button = ['logs_auditoria','archivos'] %}
-
+<!-- Que valores de los tabs no queremos que tengan conteo  -->
+{% set no_add_button = ['logs_auditoria'] %} <!-- Que tablas no queremos que tengan boton de agregar  -->
+{% set no_edit_button = ['logs_auditoria','archivos'] %} <!-- Que tablas no queremos que tengan botonde editar -->
 {% set date_range_search = ['fecha_orden'] %}
 {% set percentage_format_columns = [] %}
-{% set money_format_columns = ['importe','descuentos','precio_unitario','sub_total','impuesto','importe_total','monto','importe_pagado', 'saldo_inicial' , 'saldo_actual','importe_total','importe_restante','subtotal'] %}
+{% set money_format_columns =
+['importe','descuentos','precio_unitario','sub_total','impuesto','importe_total','monto','importe_pagado',
+'saldo_inicial' , 'saldo_actual','importe_total','importe_restante','subtotal'] %}
 {% set purple_badge_values = [] %}
 {% set primary_badge_values = ['En revisión'] %}
 {% set success_badge_values = [] %}
@@ -24,11 +26,11 @@
 {% set file_columns=['archivo_cotizacion','imagen_verificacion'] %}
 
 {% macro id_proveedor(option) %}
-    {{ option.id_visualizacion ~ ' - ' ~ option.nombre }}
+{{ option.id_visualizacion ~ ' - ' ~ option.nombre }}
 {% endmacro %}
 
 {% macro id_ubicacion(option) %}
-    {{ option.id_visualizacion ~ ' - ' ~ option.nombre }}
+{{ option.id_visualizacion ~ ' - ' ~ option.nombre }}
 {% endmacro %}
 
 {% macro id_categoria_gasto(option) %}
@@ -42,7 +44,9 @@
 
 <!--Dynamic two table variables-->
 {% set textarea_columns = ['notas','descripcion','sugerencias','motivo'] %}
-{% set number_colums = ['cantidad','cantidad_recibida','sub_total','importe','importe_ajuste','precio_unitario','cantidad_ordenada','descuento_porcentaje','subtotal','valor_unitario','impuesto'] %}
+{% set number_colums =
+['cantidad','cantidad_recibida','sub_total','importe','importe_ajuste','precio_unitario','cantidad_ordenada','descuento_porcentaje','subtotal','valor_unitario','impuesto']
+%}
 {% set text_columns = ['folio_fiscal'] %}
 
 {% set allow_new_value_dropdowns = [] %}

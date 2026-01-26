@@ -21,7 +21,7 @@
     <template x-if="$store.modalData.record.estatus === 'Aprobado'">
         <button type="button"
             @click.stop.prevent="window.location.href = `/transferencias/realizar/${encodeURIComponent($store.modalData.record.id)}`"
-            class="btn border text-success border-transparent rounded-md transition-all duration-300 hover:text-white hover:bg-success bg-success/10">
+            class="btn border text-primary border-transparent rounded-md transition-all duration-300 hover:text-white hover:bg-primary bg-primary/10">
             Realizar
         </button>
     </template>
