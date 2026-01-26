@@ -1,4 +1,4 @@
-from python.models.modelos import MovimientoBancario 
+from python.models.modelos import MovimientoBancario, Pago, PagosGastos
 from python.models import db
 from sqlalchemy import func
 
@@ -23,3 +23,15 @@ class FinanzasService:
 
         # Retornar el cálculo final 
         return (saldo_inicial or 0) + ingresos - egresos
+    @staticmethod
+    def recalcular_total_pago(pago_id):
+        """Suma los montos de la tabla intermedia y actualiza la cabecera del Pago"""
+        total = db.session.query(func.sum(PagosGastos.monto_aplicado)).filter(
+            PagosGastos.id_pago == pago_id
+        ).scalar() or 0
+        
+        pago = Pago.query.get(pago_id)
+        if pago:
+            pago.monto = total
+            db.session.commit()
+        return total

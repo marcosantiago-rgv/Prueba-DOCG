@@ -131,6 +131,7 @@ def get_default_variable_values(table_name):
 def get_url_after_add(table_name):
     columns = {
         "ordenes_de_compra": "dynamic.double_table_view",
+        "pago": "dynamic.double_table_view",
     }
     columns = columns.get(table_name, 'dynamic.table_view')
     return columns

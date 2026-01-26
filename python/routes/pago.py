@@ -28,31 +28,29 @@ def aprobar(id):
 
 @pago_bp.route('/confirmar_pago/<id>', methods=['GET', 'POST'])
 def confirmar_pago(id):
- 
     try:
-        pago_obj = Pago.query.get(uuid.UUID(id) if isinstance(id, str) else id)
+        pago_id = uuid.UUID(id) if isinstance(id, str) else id
+        pago_obj = Pago.query.get(pago_id)
         
         if pago_obj and pago_obj.estatus == 'Aprobado':
             pago_obj.estatus = "Pagado"
             
-            if pago_obj.id_gasto:
-                gasto_obj = Gasto.query.get(pago_obj.id_gasto)
+            for detalle in pago_obj.detalles_gastos:
+                gasto_obj = detalle.gasto 
                 if gasto_obj:
                     gasto_obj.estatus = "Pagado"
 
-            # 3. Registro Bancario
             nuevo_movimiento = MovimientoBancario(
                 id_cuenta=pago_obj.id_cuenta,
                 tipo='Egreso',
                 monto=pago_obj.monto,
-                descripcion=f"Pago Liquidado #{pago_obj.id_visualizacion}",
+                descripcion=f"Liquidación Pago #{pago_obj.id_visualizacion} (Múltiples Gastos)",
                 fecha=datetime.utcnow().date(),
                 id_visualizacion=generar_id_visual(MovimientoBancario),
                 id_usuario=session.get('id_usuario')
             )
             db.session.add(nuevo_movimiento)
             
-            # 4. Actualizar Saldo Real
             db.session.flush() 
             cuenta_obj = CuentaBanco.query.get(pago_obj.id_cuenta)
             if cuenta_obj:
@@ -61,7 +59,7 @@ def confirmar_pago(id):
                 )
             
             db.session.commit()
-            flash('Pago realizado exitosamente')
+            flash('Pago y gastos liquidados exitosamente', 'success')
             
     except Exception as e:
         db.session.rollback()
@@ -76,13 +74,12 @@ def cancelar(id):
         if pago_obj:
             pago_obj.estatus = "Cancelado" 
             
-            if pago_obj.id_gasto:
-                gasto_obj = Gasto.query.get(pago_obj.id_gasto)
-                if gasto_obj:
-                    gasto_obj.estatus = "Aprobado"
+            for detalle in pago_obj.detalles_gastos:
+                if detalle.gasto:
+                    detalle.gasto.estatus = "Aprobado"
             
             db.session.commit()
-            flash('Pago cancelado.')
+            flash('Pago cancelado y gastos liberados.')
     except Exception as e:
         db.session.rollback()
         flash(f'Error: {str(e)}', 'danger')

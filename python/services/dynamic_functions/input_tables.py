@@ -2,6 +2,8 @@ from datetime import timedelta
 from python.services.system.helper_functions import *
 from python.models.modelos import *
 from sqlalchemy import or_, and_, func
+from python.services.finanzas_service import FinanzasService
+
 
 ###############
 #  Table View Input
@@ -18,6 +20,16 @@ def get_variables_table_view_input(table_name):
             "required_fields":['cantidad_recibida'],
             "details":["id_visualizacion","proveedor",'importe_total'],            
             "url_confirm":"ordenes_de_compra.confirmar",
+        },
+        "pago": {
+            "columns": ["id_visualizacion", "descripcion", "monto_aplicado"],
+            "table_title": "Gastos en este Pago",
+            "query_table": "gastos_seleccionados",
+            "table_name": "gastos_disponibles",
+            "edit_fields": ['monto_aplicado'],
+            "required_fields": ['monto_aplicado'],
+            "details": ["id_visualizacion", "monto", "referencia"],
+            "url_confirm": "pago.aprobar",
         },
     }
     columns=columns.get(table_name,'')
@@ -81,4 +93,9 @@ def get_update_validation(table_name,record,column,value):
             validation['status']=0
             validation['message']="La cantidad recibida no puede ser mayor a la cantidad restante por entregar."
             validation['value_warning']=cantidad_restante  
+    elif table_name == 'pagos_gastos' and column == 'monto_aplicado':
+        record.monto_aplicado = float(value)
+        FinanzasService.recalcular_total_pago(record.id_pago)
+        
+        validation['status'] = 1
     return validation

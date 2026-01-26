@@ -241,8 +241,8 @@ def get_columns(table_name, section):
             "pdf": ["nombre", "banco", "saldo_actual", "moneda"]
         },
         "gasto": {
-            "main_page": ["id_visualizacion", "id_categoria_nombre", "descripcion", "monto", "fecha", "estatus"],
-            "modal": ["id", "id_visualizacion", "id_categoria_nombre", "descripcion", "monto", "fecha", "archivo_comprobante", "estatus"],
+            "main_page": ["id_visualizacion", "id_categoria_nombre","id_proveedor_nombre", "descripcion", "monto", "fecha", "estatus"],
+            "modal": ["id", "id_visualizacion", "id_categoria_nombre","id_proveedor_nombre", "descripcion", "monto", "fecha", "archivo_comprobante", "estatus"],
             "pdf": ["id_visualizacion", "descripcion", "monto", "fecha"]
         },
         "categoria_gasto": {
@@ -348,7 +348,8 @@ def get_table_relationships(table_name):
     relationships = {
         "ordenes_de_compra": ["productos_en_ordenes_de_compra"],
         "productos_en_ordenes_de_compra": ["entrega_de_productos_en_ordenes_de_compra"],
-        "gasto": ["pago"]
+        "gasto": ["pago"],
+        "pago": ["pagos_gastos"],
     }
     relationships = relationships.get(table_name, [])
     if table_name not in ('archivos', 'usuarios', 'roles', 'logs_auditoria', 'rutas', 'categorias_de_reportes'):

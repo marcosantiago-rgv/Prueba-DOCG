@@ -31,6 +31,15 @@
     {{ option.id_visualizacion ~ ' - ' ~ option.nombre }}
 {% endmacro %}
 
+{% macro id_categoria_gasto(option) %}
+    {{ option.id_visualizacion ~ ' - ' ~ option.nombre }}
+{% endmacro %}
+
+{% macro id_gasto(option) %}
+    {{ option.id_visualizacion ~ ' - ' ~ option.descripcion ~ ' - ' ~ option.proveedor.nombre ~ ' - ' ~ option.fecha  }}
+{% endmacro %}
+
+
 <!--Dynamic two table variables-->
 {% set textarea_columns = ['notas','descripcion','sugerencias','motivo'] %}
 {% set number_colums = ['cantidad','cantidad_recibida','sub_total','importe','importe_ajuste','precio_unitario','cantidad_ordenada','descuento_porcentaje','subtotal','valor_unitario','impuesto'] %}
