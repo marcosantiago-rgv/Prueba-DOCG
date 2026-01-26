@@ -1,7 +1,7 @@
 # title format replacements
 from python.models import inventario
 
-
+# todas las palabras que se van a reemplazar en los títulos de las tablas y vistas solo front  de back a front
 TITLE_FORMATS = {
     "id_visualizacion": 'ID',
     "creacion": "creación",

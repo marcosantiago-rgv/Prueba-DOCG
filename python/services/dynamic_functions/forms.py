@@ -6,6 +6,8 @@ from datetime import timedelta
 from python.services.dynamic_functions.input_tables import *
 from python.services.dynamic_functions.double_tables import *
 
+# Es  para decirle que cuando entre al formulario y encuentre estas variables genere un dropdown con los datos o valores que estan aqui
+
 
 def get_foreign_options():
     foreign_options = {
@@ -19,8 +21,11 @@ def get_foreign_options():
         "dias_de_entrega": ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'],
 
         "id_producto": Productos.query.filter_by(estatus="Activo"),
+        # solomostrara todos los almacenes activos en el dropdown
         "id_almacen": Almacen.query.filter_by(estatus="Activo"),
+        # solomostrara los almacenes origen activos en el dropdown
         "id_almacen_origen": Almacen.query.filter_by(estatus="Activo"),
+        # solomostrara los almacenes destino activos en el dropdown
         "id_almacen_destino": Almacen.query.filter_by(estatus="Activo"),
         "id_proveedor": Proveedores.query.filter_by(estatus="Activo"),
         "proveedores": Proveedores.query.filter_by(estatus="Activo"),
@@ -49,9 +54,11 @@ def get_form_options(table_name):
     return options
 
 
+# permite hacer varias selecciones en el dropdown de un formulario
 def get_multiple_choice_data():
     multiple_choice_data = {}
     options = {
+        # en este caso cuando crear proveedores sale el dropdown dias de entrega
         "dias_de_entrega": ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'],
     }
     for i in options:
@@ -62,6 +69,7 @@ def get_multiple_choice_data():
     return multiple_choice_data
 
 
+# le dices que campos ignore y no los muestre en el formulario de agregar o editar
 def get_ignored_columns(table_name):
     columnas_generales = {'fecha_de_creacion', 'estatus', 'id_usuario',
                           'id_visualizacion', 'fecha_de_actualizacion', 'id_usuario'}
@@ -70,19 +78,21 @@ def get_ignored_columns(table_name):
         "archivos": {'tabla_origen', 'id_registro', 'nombre', 'ruta_s3'},
         "ordenes_de_compra": {'importe_total', 'subtotal', 'descuentos', 'fecha_entrega_real'},
 
-        "almacen": set(),
-        "productos_inventario": set(),
+        # "almacen": set(),
+        # "productos_inventario": set(),
 
         # En transferencia de inventario ya no ocultamos el almacén de origen
         # para evitar que el campo requerido quede en NULL al guardar
-        "transferencia_inventario": set(),
+        # "transferencia_inventario": set(),
 
-        "cuenta_banco": {'saldo_actual'}
+        "cuenta_banco": {'saldo_actual'},
 
 
     }
     columns = columns.get(table_name, columnas_generales) | columnas_generales
     return columns
+
+# le dices que campos ignore y no los muestre en el formulario de editar
 
 
 def get_ignored_columns_edit(table_name, estatus):
@@ -92,7 +102,7 @@ def get_ignored_columns_edit(table_name, estatus):
         "usuarios": {'default': {'codigo_unico', 'contrasena', 'contrasena_api', 'intentos_de_inicio_de_sesion', 'ultima_sesion', 'ultimo_cambio_de_contrasena', 'codigo_unico_expira', 'codigo_unico_login'}},
         "archivos": {'default': {'tabla_origen', 'id_registro', 'nombre', 'ruta_s3'}},
         "ordenes_de_compra": {'default': {'importe_total', 'importe_pagado', 'subtotal', 'descuentos', 'estatus_de_pago', 'fecha_entrega_real'}},
-        "cuenta_banco": {'default': {'saldo_actual'}}
+        "cuenta_banco": {'default': {'saldo_actual'}},
 
     }
     table_dict = tables.get(table_name, columnas_generales)
@@ -104,6 +114,7 @@ def get_ignored_columns_edit(table_name, estatus):
     return columns
 
 
+# Aqui le dices que variables ya no son obligatorias en el formulario de agregar o editar ya no deberia aparcer el * en el formulario
 def get_non_mandatory_columns(table_name):
     columnas_generales = {'descripcion', 'notas', 'fecha_fin'}
     columns = {
@@ -120,6 +131,7 @@ def get_non_mandatory_columns(table_name):
     return columns
 
 
+# Aqui le dices que variables van a tener un valor por default al momento de crear un nuevo registro
 def get_default_variable_values(table_name):
     default_values = {
         "ordenes_de_compra": {"fecha_orden": datetime.today().strftime("%Y-%m-%d"), "descuentos": 0},
@@ -128,7 +140,9 @@ def get_default_variable_values(table_name):
     return default_values
 
 
+# Aqui le dices a donde redirigir despues de agregar un nuevo registro
 def get_url_after_add(table_name):
+
     columns = {
         "ordenes_de_compra": "dynamic.double_table_view",
     }
@@ -141,6 +155,7 @@ def get_url_after_add(table_name):
 #         return ['Cancelado', 'Pagado']
 #     status = ['Cancelado', 'Cancelada', 'Recibida', 'Finalizada', 'Entregada', 'Realizada', 'Realizado',
 #               'Pagado', 'Pagado parcial', 'Aprobada', 'Aprobado', 'Recibida parcial', 'Pagado parcial', 'En proceso']
+# Aqui lke dices los estatus en los que no se podra editar un registro cuando tengan estos estatus ya registrados
 def get_non_edit_status(table_name):
     general_status = {'Cancelado', 'Cancelada', 'Recibida', 'Finalizada', 'Entregada', 'Realizada', 'Realizado',
                       'Pagado', 'Pagado parcial', 'Aprobada', 'Aprobado', 'Recibida parcial', 'Pagado parcial', 'En proceso'}
@@ -151,12 +166,14 @@ def get_non_edit_status(table_name):
     return status
 
 
-def get_no_edit_access():
+def get_no_edit_access():  # Aqui le dices en que tablas no se permitira editar ningun registro sin importar el estatus que tengan
+
     tables = ['productos_en_ordenes_de_compra', 'productos_en_ordenes_de_ventas', 'entrega_de_productos_en_ordenes_de_compra',
               'recetas', 'gastos_y_compras_en_pagos', 'productos_en_transferencias_de_inventario']
     return tables
 
 
+# filtrar el valor de un valor ejemplo proveedor solo muestre ubuicacuibes actuivas de esse proveedor
 def get_form_filters(table_name):
     filters = {
         "nombre_de_tabla": {'id_a_filtrar': 'id_filtro'},
