@@ -46,8 +46,8 @@ class Proveedores(db.Model, BaseMixin, AuditMixin):
     sitio_web = db.Column(db.String(255))
     estatus = db.Column(db.String(255), default="Activo")
 
-    id_producto = db.relationship(
-        'Productos', secondary=productos_proveedores, backref=db.backref('proveedores', lazy='dynamic'))
+    # id_producto = db.relationship(
+    #     'Productos', secondary=productos_proveedores, backref=db.backref('proveedores', lazy='dynamic'))
 
 
 class Ubicaciones(db.Model, BaseMixin, AuditMixin):
