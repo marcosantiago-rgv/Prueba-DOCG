@@ -26,8 +26,9 @@ class Pago(db.Model, BaseMixin, AuditMixin):
     cuenta = db.relationship("CuentaBanco", backref="todos_los_pagos", lazy=True)
     
 class PagosGastos(db.Model, BaseMixin, AuditMixin):
-    __tablename__ = 'pagos_gastos'
+    #__tablename__ = 'pagos_gastos'
     id_pago = db.Column(db.UUID, db.ForeignKey("pago.id"), nullable=False)
     id_gasto = db.Column(db.UUID, db.ForeignKey("gasto.id"), nullable=False)
     monto_aplicado = db.Column(db.Float, nullable=False, default=0.00)
     gasto = db.relationship("Gasto", backref="pagos_asociados", lazy=True)
+

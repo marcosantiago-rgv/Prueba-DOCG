@@ -1,7 +1,7 @@
 import uuid 
 from flask import Blueprint, flash, redirect, url_for, request, session
 from python.models import db
-from python.models.modelos import Gasto, Pago, CuentaBanco, MovimientoBancario
+from python.models.modelos import Gasto, Pago, CuentaBanco, MovimientoBancario, PagosGastos
 from datetime import datetime
 from sqlalchemy import func
 from python.services.finanzas_service import FinanzasService
@@ -32,7 +32,6 @@ def generar_id_visual(modelo):
 def pagar_rapido(id):
     try:
         gasto_obj = Gasto.query.get(uuid.UUID(id) if isinstance(id, str) else id)
-        
         cuenta_obj = CuentaBanco.query.filter_by(estatus='Activo').first()
         
         if not gasto_obj or not cuenta_obj:
@@ -40,7 +39,6 @@ def pagar_rapido(id):
             return redirect(url_for('dynamic.table_view', table_name='gasto'))
 
         nuevo_pago = Pago(
-            id_gasto=gasto_obj.id,
             id_cuenta=cuenta_obj.id,
             monto=gasto_obj.monto,
             fecha=datetime.utcnow().date(),
@@ -48,6 +46,15 @@ def pagar_rapido(id):
             id_visualizacion=generar_id_visual(Pago),
             id_usuario=session.get('id_usuario')
         )
+        db.session.add(nuevo_pago)
+        db.session.flush()
+
+        nueva_relacion = PagosGastos(
+            id_pago=nuevo_pago.id,
+            id_gasto=gasto_obj.id,
+            monto_aplicado=gasto_obj.monto
+        )
+        db.session.add(nueva_relacion)
         
         gasto_obj.estatus = "Pagado"
         
@@ -60,19 +67,16 @@ def pagar_rapido(id):
             id_visualizacion=generar_id_visual(MovimientoBancario),
             id_usuario=session.get('id_usuario')
         )
-        
-        db.session.add(nuevo_pago)
         db.session.add(nuevo_movimiento)
         
         db.session.flush() 
-
         cuenta_obj.saldo_actual = FinanzasService.obtener_saldo_calculado(
             cuenta_obj.id, 
             cuenta_obj.saldo_inicial
         )
         
         db.session.commit()
-        flash('Pago procesado', 'success')
+        flash('Pago procesado correctamente', 'success')
 
     except Exception as e:
         db.session.rollback()

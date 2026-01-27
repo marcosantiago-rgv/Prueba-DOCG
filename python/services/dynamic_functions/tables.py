@@ -162,8 +162,12 @@ def get_columns(table_name, section):
             "pdf": ["nombre", "descripcion"]
         },
         "pago": {
-            "main_page": ["id_visualizacion", "id_gasto_descripcion", "id_cuenta_nombre", "monto", "fecha", "estatus"],
-            "modal": ["id", "id_visualizacion", "id_gasto_descripcion", "id_cuenta_nombre", "monto", "fecha", "referencia", "estatus"],
+            "main_page": ["id_visualizacion", "id_cuenta_nombre", "monto", "fecha", "estatus"],
+            "modal": ["id", "id_visualizacion", "id_cuenta_nombre", "monto", "fecha", "referencia", "estatus"],
+        },
+        "pagos_gastos": {
+            "main_page": ["id_gasto_descripcion", "monto_aplicado"],
+            "modal": ["id", "id_pago", "id_gasto_descripcion", "monto_aplicado"],
         },
 
     }

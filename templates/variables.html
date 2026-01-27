@@ -8,7 +8,7 @@
 {% set percentage_format_columns = [] %}
 {% set money_format_columns =
 ['importe','descuentos','precio_unitario','sub_total','impuesto','importe_total','monto','importe_pagado',
-'saldo_inicial' , 'saldo_actual','importe_total','importe_restante','subtotal'] %}
+'saldo_inicial' , 'saldo_actual','importe_total','importe_restante','subtotal','monto_aplicado'] %}
 {% set purple_badge_values = [] %}
 {% set primary_badge_values = ['En revisión'] %}
 {% set success_badge_values = [] %}
@@ -41,11 +41,14 @@
     {{ option.id_visualizacion ~ ' - ' ~ option.descripcion ~ ' - ' ~ option.proveedor.nombre ~ ' - ' ~ option.fecha  }}
 {% endmacro %}
 
+{% macro id_gasto_pago(option) %}
+    {{ option.monto }}
+{% endmacro %}
 
 <!--Dynamic two table variables-->
 {% set textarea_columns = ['notas','descripcion','sugerencias','motivo'] %}
 {% set number_colums =
-['cantidad','cantidad_recibida','sub_total','importe','importe_ajuste','precio_unitario','cantidad_ordenada','descuento_porcentaje','subtotal','valor_unitario','impuesto']
+['cantidad','cantidad_recibida','sub_total','importe','importe_ajuste','precio_unitario','cantidad_ordenada','descuento_porcentaje','subtotal','valor_unitario','impuesto', 'monto_aplicado']
 %}
 {% set text_columns = ['folio_fiscal'] %}
 

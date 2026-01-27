@@ -93,9 +93,21 @@ def get_update_validation(table_name,record,column,value):
             validation['status']=0
             validation['message']="La cantidad recibida no puede ser mayor a la cantidad restante por entregar."
             validation['value_warning']=cantidad_restante  
+            
     elif table_name == 'pagos_gastos' and column == 'monto_aplicado':
+        gasto_referencia = Gasto.query.get(record.id_gasto)
+        limite_del_recibo = gasto_referencia.monto
+        
+        if float(value) > limite_del_recibo:
+            validation['status'] = 0
+            validation['message'] = f"Error: No puedes aplicar ${value}. El recibo original es de ${limite_del_recibo}."
+            validation['value_warning'] = limite_del_recibo
+            return validation
+
         record.monto_aplicado = float(value)
-        FinanzasService.recalcular_total_pago(record.id_pago)
+        
+        FinanzasService.actualizar_monto_total_del_pago(record.id_pago)
         
         validation['status'] = 1
+
     return validation

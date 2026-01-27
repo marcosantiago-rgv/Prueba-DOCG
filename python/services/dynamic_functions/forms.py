@@ -86,7 +86,7 @@ def get_ignored_columns(table_name):
         # "transferencia_inventario": set(),
 
         "cuenta_banco": {'saldo_actual'},
-
+        "pago": {'monto'}
 
     }
     columns = columns.get(table_name, columnas_generales) | columnas_generales
