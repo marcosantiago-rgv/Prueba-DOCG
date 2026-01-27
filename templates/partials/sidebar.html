@@ -44,7 +44,7 @@
 
 
                 <!-- inventario -->
-                {% if can_access('/dynamic/almacen/view') or can_access('/dynamic/existencias/view') or
+                {% if can_access('/dynamic/almacen/view') or can_access('/dynamic/existencia/view') or
                 can_access('/dynamic/productos_inventario/view') %}
                 <li class="menu nav-item" style="order: 6;">
                     <a href="javascript:;" class="nav-link group items-center justify-between"
@@ -73,14 +73,13 @@
 
                     <!-- Submenu for inventory -->
                     <ul x-cloak x-show="activeMenu === 'inventario'" x-collapse class="sub-menu flex flex-col gap-1">
-                        {% if can_access('/dynamic/productos_inventario/view') %}
+                        <!-- {% if can_access('/dynamic/existencia/view') %}
                         <li>
-                            <a :class="{'active': activeItem === 'productos_inventario'}"
-                                href="/dynamic/productos_inventario/view"
-                                @click="activeItem = 'productos_inventario'">Existencias</a>
-                            <!-- @click="activeItem = 'productos_inventario'">Productos En Inventario</a> -->
+                            <a :class="{'active': activeItem === 'existencia'}" href="/dynamic/existencia/view"
+                                @click="activeItem = 'existencia'">Existencias</a>
                         </li>
-                        {% endif %}
+                        {% endif %} -->
+
 
                         {% if can_access('/dynamic/almacen/view') %}
                         <li>
@@ -88,12 +87,20 @@
                         </li>
                         {% endif %}
 
-                        <!-- {% if can_access('/dynamic/existencias/view') %}
+
+                        {% if can_access('/dynamic/productos_en_ordenes_de_compra/view') %}
                         <li>
-                            <a :class="{'active': activeItem === 'existencias'}"
-                                href="/dynamic/existencias/view">Existencias</a>
+                            <a :class="{'active': activeItem === 'productos_en_ordenes_de_compra'}"
+                                href="/dynamic/productos_en_ordenes_de_compra/view">Productos en existencia</a>
+                        </li>
+                        {% endif %}
+                        <!-- {% if can_access('/dynamic/ordenes_de_compra/view') %}
+                        <li>
+                            <a :class="{'active': activeItem === 'ordenes_de_compra'}"
+                                href="/dynamic/ordenes_de_compra/view"> Productos Ordenes de compra</a>
                         </li>
                         {% endif %} -->
+
 
                         {% if can_access('/dynamic/transferencia_inventario/view') %}
                         <li>
@@ -152,10 +159,13 @@
                         :class="{'active' : activeMenu === 'finanzas'}"
                         @click="activeMenu === 'finanzas' ? activeMenu = null : activeMenu = 'finanzas'">
                         <div class="flex items-center">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5"/>
-                            <path d="M12 6V18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-                            <path d="M15 9.5C15 8.11929 13.6569 7 12 7C10.3431 7 9 8.11929 9 9.5C9 10.8807 10.3431 12 12 12C13.6569 12 15 13.1193 15 14.5C15 15.8807 13.6569 17 12 17C10.3431 17 9 15.8807 9 14.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5" />
+                                <path d="M12 6V18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                                <path
+                                    d="M15 9.5C15 8.11929 13.6569 7 12 7C10.3431 7 9 8.11929 9 9.5C9 10.8807 10.3431 12 12 12C13.6569 12 15 13.1193 15 14.5C15 15.8807 13.6569 17 12 17C10.3431 17 9 15.8807 9 14.5"
+                                    stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
                             </svg>
 
                             <span class="pl-1.5">Finanzas</span>

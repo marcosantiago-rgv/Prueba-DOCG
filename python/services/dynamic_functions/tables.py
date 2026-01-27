@@ -77,17 +77,15 @@ def get_columns(table_name, section):
             "pdf": ["nombre", "ubicacion", "descripcion", "estatus"],
         },
 
-        "existencias": {
+        # campo que viene de laque se muestra en la tabla principal, modal y pdf
+        "existencia": {
             "main_page": ["id_visualizacion", "id_producto_nombre", "id_almacen_nombre", "cantidad",
                           ],
             "modal": ["id", "id_visualizacion", "id_producto_nombre", "id_almacen_nombre", "cantidad",
                       # "id_usuario","fecha_de_creacion","fecha_de_actualizacion",
                       ],
-            "pdf": [
-                "id_producto_nombre",
-                "id_almacen_nombre",
-                "cantidad",
-            ],
+            "pdf": ["id_producto_nombre", "id_almacen_nombre", "cantidad",
+                    ],
         },
 
         "productos": {
@@ -112,20 +110,33 @@ def get_columns(table_name, section):
         },
 
         "transferencia_inventario": {
-            "main_page": ["id_visualizacion", "id_producto_nombre", "id_almacen_origen_nombre", "id_almacen_destino_nombre", "cantidad", "fecha", "estatus",
+            # Vista a nivel cabecera (no por producto)
+            "main_page": ["id_visualizacion", "id_almacen_origen_nombre", "id_almacen_destino_nombre", "fecha", "estatus",
                           ],
-            "modal": ["id", "id_visualizacion", "id_producto_nombre", "id_almacen_origen_nombre", "id_almacen_destino_nombre", "cantidad", "fecha", "estatus", "id_usuario", "fecha_de_creacion", "fecha_de_actualizacion",
+            "modal": ["id", "id_visualizacion", "id_almacen_origen_nombre", "id_almacen_destino_nombre", "fecha", "estatus", "id_usuario", "fecha_de_creacion", "fecha_de_actualizacion",
                       ],
-            "pdf": ["id_visualizacion", "id_producto_nombre", "id_almacen_origen_nombre", "id_almacen_destino_nombre", "cantidad", "fecha", "estatus",
-                    ],
+            "pdf": ["id_visualizacion", "id_almacen_origen_nombre", "id_almacen_destino_nombre", "fecha", "estatus",],
         },
+
+
+
+
+
+
+
+
+
+
+
+
+
         "ordenes_de_compra": {
-            "main_page": ["id_visualizacion", "id_proveedor_nombre", "fecha_orden", "fecha_entrega_estimada", "fecha_entrega_real", "importe_total", "notas", "estatus"],
+            "main_page": ["id_almacen_nombre", "id_visualizacion", "id_proveedor_nombre", "fecha_orden", "fecha_entrega_estimada", "fecha_entrega_real", "importe_total", "notas", "estatus"],
             "modal": {"informacion_general": ["id", "id_visualizacion", "id_proveedor_nombre", "fecha_orden", "fecha_entrega_estimada", "fecha_entrega_real", "estatus"], "financiero": ["subtotal", "descuentos", "importe_total"], "detalles": ["notas"], "sistema": ["id_usuario_correo_electronico", "fecha_de_creacion", "fecha_de_actualizacion"]},
             "pdf": ["id_visualizacion", "id_proveedor_nombre", "fecha_orden", "fecha_entrega_estimada", "fecha_entrega_real", "subtotal", "descuentos", "importe_total", "notas", "estatus", "id_usuario_correo_electronico", "fecha_de_creacion", "fecha_de_actualizacion"]
         },
         "productos_en_ordenes_de_compra": {
-            "main_page": ["id_orden_de_compra_id_visualizacion", "id_producto_nombre", "cantidad_ordenada", "cantidad_recibida", "precio_unitario", "subtotal", "descuento_porcentaje", "importe_total", "fecha_entrega_estimada", "notas", "estatus"],
+            "main_page": ["id_orden_de_compra_id_visualizacion", "id_producto_nombre", "cantidad_ordenada", "cantidad_recibida", "precio_unitario", "subtotal", "descuento_porcentaje", "importe_total", "fecha_entrega_estimada", "notas", "estatus",],
             "modal": {"informacion_general": ["id", "id_orden_de_compra_id_visualizacion", "id_producto_nombre", "cantidad_ordenada", "cantidad_recibida", "fecha_entrega_estimada", "estatus"], "financiero": ["precio_unitario", "subtotal", "descuento_porcentaje", "importe_total"], "detalles": ["notas", "archivo_cotizacion"], "sistema": ["id_usuario_correo_electronico", "fecha_de_creacion", "fecha_de_actualizacion"]},
             "pdf": ["id_orden_de_compra", "id_producto_nombre", "cantidad_ordenada", "cantidad_recibida", "precio_unitario", "subtotal", "descuento_porcentaje", "importe_total", "fecha_entrega_estimada", "notas", "estatus", "id_usuario_correo_electronico", "fecha_de_creacion", "fecha_de_actualizacion"]
         },
@@ -152,8 +163,8 @@ def get_columns(table_name, section):
             "pdf": ["nombre", "banco", "saldo_actual", "moneda"]
         },
         "gasto": {
-            "main_page": ["id_visualizacion", "id_categoria_nombre","id_proveedor_nombre", "descripcion", "monto", "fecha", "estatus"],
-            "modal": ["id", "id_visualizacion", "id_categoria_nombre","id_proveedor_nombre", "descripcion", "monto", "fecha", "archivo_comprobante", "estatus"],
+            "main_page": ["id_visualizacion", "id_categoria_nombre", "id_proveedor_nombre", "descripcion", "monto", "fecha", "estatus"],
+            "modal": ["id", "id_visualizacion", "id_categoria_nombre", "id_proveedor_nombre", "descripcion", "monto", "fecha", "archivo_comprobante", "estatus"],
             "pdf": ["id_visualizacion", "descripcion", "monto", "fecha"]
         },
         "categoria_gasto": {
@@ -202,8 +213,8 @@ def get_estatus_options(table_name):
         'pago': ["En revisión", "Aprobado", "Pagado", "Cancelado"],
         # flujo para transferencias de inventario
         'transferencia_inventario': ["En revisión", "Aprobado", "Realizado"],
-        # Sin estatus para existencias (evita tabs de estatus que no aplican)
-        'existencias': [],
+        # Sin estatus para existencia (evita tabs de estatus que no aplican)
+        # 'existencia': [],
 
     }
     # en caso de que no esté definido, usamos estos por defecto
@@ -218,6 +229,7 @@ def get_open_status(table_name):
         # "productos_en_ordenes_de_compra": ['Pendiente', 'Recibida parcial'],
         "ordenes_de_compra": ['En revisión', 'Aprobada', 'Recibida parcial', 'Recibida'],
         "productos_en_ordenes_de_compra": ['Pendiente', 'Recibida parcial', 'Recibida'],
+        # "productos_en_ordenes_de_compra": ['Recibida'],
         "transferencia_inventario": ['En revisión', 'Aprobado'],
 
     }
@@ -244,12 +256,11 @@ def get_breadcrumbs(table_name):
         "productos_en_ordenes_de_compra": ['Compras', 'compras'],
         # "ubicaciones": ['Cátalogos', 'catalogos'],
 
-        # almacen,existencias,productos_inventario,transferencia_inventario es la seccion del modulo que se muestra en el breadcrumb Inventario y 'inventario' es el menú que se marca como activo
+        # almacen,existencia,productos_inventario,transferencia_inventario es la seccion del modulo que se muestra en el breadcrumb Inventario y 'inventario' es el menú que se marca como activo
         "almacen": ['Inventario', 'inventario'],
-        "existencias": ['Inventario', 'inventario'],
+        "existencia": ['Inventario', 'inventario'],
         "productos_inventario": ['Inventario', 'inventario'],
         "transferencia_inventario": ['Inventario', 'inventario'],
-
 
         # "ordenes_de_compra": ['Compras', 'ordenes_de_compras'],
         # "productos_en_ordenes_de_compra": ['Compras', 'ordenes_de_compras'],
@@ -293,8 +304,8 @@ def get_calendar_date_variable(table_name):
 def get_variable_tabs(table_name):
     tabs = {
         "gasto": "estatus",
-        # Para existencias no usamos estatus; agrupamos, por ejemplo, por producto
-        "existencias": "id_producto",
+        # Para existencia no usamos estatus; agrupamos, por ejemplo, por producto
+        "existencia": "id_producto",
     }
     tabs = tabs.get(table_name, 'estatus')
     return tabs

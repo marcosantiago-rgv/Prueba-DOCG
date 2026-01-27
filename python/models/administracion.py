@@ -11,8 +11,9 @@ class OrdenesDeCompra(db.Model, BaseMixin, AuditMixin):
 
     id_proveedor = db.Column(db.UUID, db.ForeignKey(
         "proveedores.id"), nullable=False)
-    # id_ubicacion = db.Column(db.UUID, db.ForeignKey(
-    #     "ubicaciones.id"), nullable=False)
+    # Agregamos almacen para que detecte el lugar entra y sale
+    id_almacen = db.Column(db.UUID, db.ForeignKey(
+        "almacen.id"), nullable=False)
 
     fecha_orden = db.Column(db.Date, nullable=False)
     fecha_entrega_estimada = db.Column(db.Date)
@@ -26,12 +27,11 @@ class OrdenesDeCompra(db.Model, BaseMixin, AuditMixin):
     # e.g., En revisión, Aprobada, Recibida, Cancelada
     estatus = db.Column(db.String(255), default="En revisión")
 
-    # proveedor = db.relationship(
-    #     "Proveedores", backref="ordenes_de_compra", lazy=True)
-    # ubicacion = db.relationship("Ubicaciones", backref="ordenes_de_compra", lazy=True)
-
     proveedor = db.relationship(
         "Proveedores", backref="ordenes_de_compra", lazy=True)
+
+    almacen = db.relationship(  # Nos permite saber a que almacen se le asigno la orden de compra con un orden.almacen.nombre
+        "Almacen", backref="ordenes_de_compra", lazy=True)
 
 
 class ProductosEnOrdenesDeCompra(db.Model, BaseMixin, AuditMixin):
@@ -72,11 +72,11 @@ class EntregaDeProductosEnOrdenesDeCompra(db.Model, BaseMixin, AuditMixin):
         "ProductosEnOrdenesDeCompra", backref="entrega_de_productos_en_ordenes_de_compra", lazy=True)
 
 
-class Inventario(db.Model, BaseMixin, AuditMixin):
+# class Inventario(db.Model, BaseMixin, AuditMixin):
 
-    id_producto = db.Column(db.UUID, db.ForeignKey(
-        "productos.id"), nullable=False)
+#     id_producto = db.Column(db.UUID, db.ForeignKey(
+#         "productos.id"), nullable=False)
 
-    cantidad = db.Column(db.Float, nullable=False, default=0)
+#     cantidad = db.Column(db.Float, nullable=False, default=0)
 
-    producto = db.relationship("Productos", backref="inventario", lazy=True)
+#     producto = db.relationship("Productos", backref="inventario", lazy=True)
