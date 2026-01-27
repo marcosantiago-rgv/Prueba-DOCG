@@ -826,7 +826,7 @@ def double_table_view(table_name, id):
 @dynamic_bp.route("/<string:table_name>/double_table/data/<string:table>/<id>", methods=["GET", "POST"])
 @login_required
 @roles_required()
-def double_table_view_data(table, table_name, id):
+def double_table_view_data(table_name, table, id):
     variables = get_variables_double_table_view(table_name)
     if table == 'first':
         sql_name = variables.get('query_first_table')
@@ -899,7 +899,7 @@ def double_table_add(main_table_name, first_table, second_table, id_main_record,
 
 @dynamic_bp.route("/<string:main_table_name>/double_table/delete/<string:table_name>/<id_main_record>/<id>", methods=["POST"])
 @login_required
-def delete_double_table(main_table_name, table_name, id, id_main_record):
+def delete_double_table(main_table_name, table_name, id_main_record, id):
     if request.method == "POST":
         try:
             model = get_model_by_name(table_name)

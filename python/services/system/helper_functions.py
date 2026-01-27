@@ -37,11 +37,15 @@ def get_model_by_name(table_name):
     Si no se encuentra, retorna None.
     """
     # Mapeo especial para productos_inventario
-    if table_name == "productos_inventario":
-        return get_model_by_name("productos")
-    # Mapeo especial para existencias (tabla fisica "existencia")
-    if table_name == "existencias":
-        return get_model_by_name("existencia")
+    # if table_name == "productos_inventario":
+    #     return get_model_by_name("productos")
+    # # Mapeo especial para existencias (tabla fisica "existencia")
+    # if table_name == "existencias":
+    #     return get_model_by_name("existencia")
+    # for model in get_all_models():
+    #     if model.__tablename__ == table_name:
+    #         return model
+    # return None
     for model in get_all_models():
         if model.__tablename__ == table_name:
             return model
@@ -345,19 +349,31 @@ def record_to_ordered_list(model, joins, record, columns_order):
 
 
 def record_to_ordered_dict(model, record, columns_order):
+    """Build a sectioned, order-safe payload for modal rendering.
+
+    Expected output format:
+
+        [
+            {
+                "section": "informacion_general",
+                "fields": [
+                    {"key": "id", "value": 1},
+                    {"key": "periodo", "value": "2025"},
+                ],
+            },
+            ...
+        ]
+
+    ``columns_order`` can be either:
+    - A dict of sections -> list of columns (new tables), or
+    - A flat list of columns (legacy config). In that case, we
+      wrap it into a single "informacion_general" section so
+      the modal still renders correctly.
     """
-    Returns an ORDER-SAFE payload:
-    [
-        {
-            "section": "informacion_general",
-            "fields": [
-                {"key": "id", "value": 1},
-                {"key": "periodo", "value": "2025"}
-            ]
-        },
-        ...
-    ]
-    """
+
+    # Normalize legacy list configuration to a single section
+    if isinstance(columns_order, list):
+        columns_order = {"informacion_general": columns_order}
 
     # ---------------------------
     # Handle Row vs Model instance
