@@ -50,7 +50,7 @@ def get_variables_double_table_view(table_name):
             "edit_fields": ["cantidad"],
             "required_fields": ["cantidad"],
             "details": ["id_visualizacion", "almacen_origen.nombre", "almacen_destino.nombre", "fecha", "estatus"],
-            "url_confirm": "transferencia_inventario.confirmar",
+            "url_confirm": "transferencias.aprobar_transferencia",
             "default_sort_field": "fecha_de_creacion"
         }
 
@@ -95,19 +95,42 @@ def add_record_double_table(main_table_name, second_table, id_main_record, id_re
         )
         return new_record
     elif main_table_name == 'transferencia_inventario':
-        existencia = Existencia.query.get(id_record)
-        if not existencia:
-            raise Exception('Existencia no encontrada')
-        # Inicializar la cantidad con la cantidad disponible en el almacén origen
-        cantidad_disponible = existencia.cantidad if existencia.cantidad is not None else 0
+        # Buscar el producto en productos_en_ordenes_de_compra
+        producto_orden = ProductosEnOrdenesDeCompra.query.get(id_record)
+        if not producto_orden:
+            print(
+                f"[ERROR] Producto en orden de compra no encontrado para id: {id_record}")
+            raise Exception('Producto en orden de compra no encontrado')
+        cantidad_disponible = (
+            producto_orden.cantidad_ordenada or 0) - (producto_orden.cantidad_recibida or 0)
+        if cantidad_disponible <= 0:
+            print(
+                f"[ERROR] No hay cantidad disponible para transferir del producto {producto_orden.id_producto}")
+            raise Exception('No hay cantidad disponible para transferir')
+
+        model = get_model_by_name(second_table)
+        existe = model.query.filter_by(
+            id_transferencia=id_main_record, id_producto=producto_orden.id_producto).first()
+        if existe:
+            print(
+                f"[INFO] Producto ya existe en la transferencia: {existe.id}")
+            return existe
+
         new_record = model(
             id_transferencia=id_main_record,
-            id_producto=existencia.id_producto,
+            id_producto=producto_orden.id_producto,
             cantidad=cantidad_disponible,
             id_usuario=session['id_usuario']
         )
         db.session.add(new_record)
-        db.session.commit()
+        try:
+            db.session.commit()
+            print(
+                f"[OK] Producto de orden de compra agregado a transferencia: {new_record.id_producto} cantidad: {cantidad_disponible}")
+        except Exception as e:
+            db.session.rollback()
+            print(f"[ERROR] No se pudo agregar producto a transferencia: {e}")
+            raise
         return new_record
     else:
         raise Exception('Tipo de tabla no soportado')
