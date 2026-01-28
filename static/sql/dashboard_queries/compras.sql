@@ -1,3 +1,4 @@
+
 select
     id_visualizacion,
     importe_total

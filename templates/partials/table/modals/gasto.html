@@ -1,0 +1,43 @@
+<div class="flex justify-end items-center gap-2" x-data x-show="true">
+    
+    {% if can_access('/gasto/aprobar') %}
+    <template x-if="$store.modalData.record.estatus === 'En revisión'">
+        <button type="button"
+            @click.stop.prevent="window.location.href = `/gasto/aprobar/${encodeURIComponent($store.modalData.record.id)}`"
+            class="btn border text-primary border-transparent rounded-md transition-all duration-300 hover:text-white hover:bg-primary bg-primary/10 px-4 py-2 text-sm font-semibold">
+            Aprobar
+        </button>
+    </template>
+    {% endif %}
+
+    {% if can_access('/gasto/ir_a_pagos') %}
+    <template x-if="['Aprobado', 'Pagado parcial'].includes($store.modalData.record.estatus)">
+        <button type="button"
+            @click.stop.prevent="window.location.href = `/gasto/ir_a_pagos/${$store.modalData.record.id}`"
+            class="btn border text-primary border-transparent rounded-md transition-all duration-300 hover:text-white hover:bg-primary bg-primary/10 px-4 py-2 text-sm font-semibold">
+            Pagar
+        </button>
+    </template>
+    {% endif %}
+
+    {% if can_access('/gasto/pagar_rapido') %}
+    <template x-if="['Aprobado', 'Pagado parcial'].includes($store.modalData.record.estatus)">
+        <button type="button"
+            @click.stop.prevent="window.location.href = `/gasto/pagar_rapido/${encodeURIComponent($store.modalData.record.id)}`"
+            class="btn border text-primary border-transparent rounded-md transition-all duration-300 hover:text-white hover:bg-primary bg-primary/10 px-4 py-2 text-sm font-semibold">
+            Pago Rápido
+        </button>
+    </template>
+    {% endif %}
+
+    {% if can_access('/gasto/cancelar') %}
+    <template x-if="['En revisión', 'Aprobado'].includes($store.modalData.record.estatus)">
+        <button type="button"
+            @click.stop.prevent="window.location.href = `/gasto/cancelar/${encodeURIComponent($store.modalData.record.id)}`"
+            class="btn border text-danger border-transparent rounded-md transition-all duration-300 hover:text-white hover:bg-danger bg-primary/10 px-4 py-2 text-sm font-semibold">
+            Cancelar
+        </button>
+    </template>
+    {% endif %}
+
+</div>

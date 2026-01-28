@@ -13,25 +13,44 @@
 {% else %}
     <div id="table-data" data-table="/dynamic/{{ table_name }}/data" data-columns='{{ columns|tojson }}' hidden></div>
 {% endif %}
-<div class="flex flex-col h-[calc(100vh-188px)] sm:h-[calc(100vh-204px)]"  x-data="calendarComponent()" x-init="init()">
-    <div class="grid grid-cols-1 gap-5">
+<div class="flex flex-col h-[calc(100vh-188px)] sm:h-[calc(100vh-204px)]"
+     x-data="calendarComponent()" x-init="init()">
+
+    <div class="grid grid-cols-1">
+
         {% if table_name not in vars.no_tabs and not report %}
             {% include 'partials/table/system/dynamic_tabs.html' %}
             {% set height=470 %}
         {% else %}
             {% set height=400 %}
         {% endif %}
-        <div class="sticky top-0 bg-white dark:bg-dark dark:border-gray/20 border-2 border-lightgray/10 p-5 rounded-lg">
-            <div class="overflow-auto space-y-4" x-data="tabla" x-init="initData(); initDatePicker(); $watch('searchInput', value => { search(value) });selectedIds = [];document.querySelectorAll('input[type=checkbox]').forEach(cb => cb.checked = false);">
+
+        <!-- SPACER BETWEEN TABS & TABLE -->
+        <div class="h-4 bg-primary/10"></div>
+
+        <!-- TABLE CONTAINER -->
+        <div class="sticky top-0 bg-white dark:bg-dark dark:border-gray/20 
+                    border-2 border-lightgray/10 p-5 rounded-lg">
+
+            <div class="overflow-auto space-y-4"
+                 x-data="tabla"
+                 x-init="initData(); initDatePicker();
+                         $watch('searchInput', value => { search(value) });
+                         selectedIds = [];
+                         document.querySelectorAll('input[type=checkbox]').forEach(cb => cb.checked = false);">
+
                 {% include 'partials/table/system/table_title.html' %}
                 {% include 'partials/table/system/table.html' %}
                 {% include 'partials/table/system/pagination.html' %}
+
                 <div id="calendar_wrapper" style="display:none">
                     <div id="calendar_view"></div>
                 </div>
+
             </div>
         </div>
-            {% include 'partials/table/modals/dynamic_modal.html' %}
+
+        {% include 'partials/table/modals/dynamic_modal.html' %}
     </div>
 </div>
 {% include "./partials/system/loader.html" %}

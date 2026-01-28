@@ -14,7 +14,7 @@
 {% endif %}
 <!-- Elemento oculto para pasar data al JS: nombre de tabla y columnas -->
 <div class="flex flex-col h-[calc(100vh-188px)] sm:h-[calc(100vh-204px)]"  x-data="calendarComponent();" x-init="init()">
-    <div class="grid grid-cols-1 gap-5">
+    <div class="grid grid-cols-1">
         <div x-data="{ activeDefTab: '{{ activeDefTab }}' }" id="tabs">
             <ul class="flex flex-wrap text-xs text-center dark:border-gray/20 border-b border-lightgray/10">
                 {% for tab in tabs %}
@@ -28,6 +28,7 @@
                 {% endfor %}
             </ul>
         </div>
+        <div class="h-4 bg-primary/10"></div>     
         <div class="sticky top-0 bg-white dark:bg-dark dark:border-gray/20 border-2 border-lightgray/10 p-5 rounded-lg">
             <div class="overflow-auto space-y-4" x-data="tabla" x-init="initData(); initDatePicker(); $watch('searchInput', value => { search(value) });selectedIds = [];document.querySelectorAll('input[type=checkbox]').forEach(cb => cb.checked = false);">
                 {% include 'partials/table/system/table_title.html' %}                
