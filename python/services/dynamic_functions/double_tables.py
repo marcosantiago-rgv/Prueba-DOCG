@@ -87,12 +87,30 @@ def add_record_double_table(main_table_name, second_table, id_main_record, id_re
         gasto_original = Gasto.query.get(id_record)
         if not gasto_original:
             raise Exception('Gasto no encontrado')
+        
+        total_pagado_previo = db.session.query(func.sum(PagosGastos.monto_aplicado)).filter(
+            PagosGastos.id_gasto == id_record
+        ).scalar() or 0
+        
+        saldo_pendiente = gasto_original.monto - total_pagado_previo
+        
+        if saldo_pendiente <= 0:
+            raise Exception('Este gasto ya ha sido liquidado en su totalidad')
+
         new_record = model(
             id_pago=id_main_record,
             id_gasto=id_record,
-            monto_aplicado=gasto_original.monto,
+            monto_aplicado=saldo_pendiente,
             id_usuario=session['id_usuario']
         )
+        
+        db.session.add(new_record)
+        db.session.flush() 
+
+        FinanzasService.recalcular_total_pago(id_main_record)
+        FinanzasService.actualizar_estatus_gasto(id_record) 
+        
+        db.session.commit() 
         return new_record
     elif main_table_name == 'transferencia_inventario':
         existencia = Existencia.query.get(id_record)
