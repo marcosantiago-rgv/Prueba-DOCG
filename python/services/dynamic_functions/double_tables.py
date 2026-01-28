@@ -39,8 +39,8 @@ def get_variables_double_table_view(table_name):
             "url_confirm": "pago.aprobar"
         },
         "transferencia_inventario": {
-            "columns_first_table": ["nombre", "cantidad", "unidad_de_medida"],
-            "columns_second_table": ["nombre", "cantidad", "unidad_de_medida", "fecha_de_creacion"],
+            "columns_first_table": ["nombre", "cantidad", "unidad_de_medida", "fecha_de_creacion"],
+            "columns_second_table": ["nombre", "cantidad", "unidad_de_medida"],
             "title_first_table": "Productos en almacén origen",
             "title_second_table": "Productos a transferir",
             "query_first_table": "productos_en_disponibles",
@@ -61,12 +61,12 @@ def get_variables_double_table_view(table_name):
 
 def add_record_double_table(main_table_name, second_table, id_main_record, id_record):
     model = get_model_by_name(second_table)
-    from python.models import db
     if main_table_name == 'ordenes_de_compra':
         orden = OrdenesDeCompra.query.get(id_main_record)
         # Validar si ya existe el producto en la orden
         existe = model.query.filter_by(
-            id_orden_de_compra=id_main_record, id_producto=id_record).first()
+            id_orden_de_compra=id_main_record, id_producto=id_record
+        ).first()
         if existe:
             return existe  # Ya existe, no crear duplicado
         if not orden:
@@ -80,7 +80,7 @@ def add_record_double_table(main_table_name, second_table, id_main_record, id_re
             descuento_porcentaje=0,
             subtotal=0,
             fecha_entrega_estimada=orden.fecha_entrega_estimada,
-            id_usuario=session['id_usuario']
+            id_usuario=session.get('id_usuario')
         )
         return new_record
     elif main_table_name == 'pago':
@@ -91,7 +91,7 @@ def add_record_double_table(main_table_name, second_table, id_main_record, id_re
             id_pago=id_main_record,
             id_gasto=id_record,
             monto_aplicado=gasto_original.monto,
-            id_usuario=session['id_usuario']
+            id_usuario=session.get('id_usuario')
         )
         return new_record
     elif main_table_name == 'transferencia_inventario':
@@ -101,14 +101,13 @@ def add_record_double_table(main_table_name, second_table, id_main_record, id_re
             print(
                 f"[ERROR] Producto en orden de compra no encontrado para id: {id_record}")
             raise Exception('Producto en orden de compra no encontrado')
-        cantidad_disponible = (
-            producto_orden.cantidad_ordenada or 0) - (producto_orden.cantidad_recibida or 0)
+
+        cantidad_disponible = producto_orden.cantidad_recibida or 0
         if cantidad_disponible <= 0:
             print(
-                f"[ERROR] No hay cantidad disponible para transferir del producto {producto_orden.id_producto}")
-            raise Exception('No hay cantidad disponible para transferir')
+                f"[ERROR] No hay cantidad recibida para transferir del producto {producto_orden.id_producto}")
+            raise Exception('No hay cantidad recibida para transferir')
 
-        model = get_model_by_name(second_table)
         existe = model.query.filter_by(
             id_transferencia=id_main_record, id_producto=producto_orden.id_producto).first()
         if existe:
