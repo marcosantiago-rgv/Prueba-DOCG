@@ -273,6 +273,7 @@ def get_table_relationships(table_name):
         "productos_en_ordenes_de_compra": ["entrega_de_productos_en_ordenes_de_compra"],
         "gasto": ["pago"],
         "pago": ["pagos_gastos"],
+        'proveedores': ['resumen', 'ordenes_de_compra', 'gasto', 'productos']
     }
     relationships = relationships.get(table_name, [])
     if table_name not in ('archivos', 'usuarios', 'roles', 'logs_auditoria', 'rutas', 'categorias_de_reportes'):
@@ -351,6 +352,14 @@ def get_summary_data(table_name):
             'primary': ["column_name"],
             'data': {"section_name": ["column_name"], "section_name": ["variacolumn_namebles"]}
         },
+        'proveedores': {
+            'primary': ["nombre", "razon_social", "rfc", "email"],
+            'data': {
+                "informacion_general": ["razon_social", "rfc", "condiciones_pago", "sitio_web"],
+                "contacto_principal": ["persona_contacto", "email_contacto", "telefono_contacto"],
+                "logistica": ["dias_de_entrega", "estatus"]
+            }
+        },
     }
     data = data.get(table_name, '')
     return data
@@ -358,10 +367,15 @@ def get_summary_data(table_name):
 
 def get_summary_kpis(table_name, id_parent_record):
     data = {
-        "table_name": {
-            "section_name": {
-                "kp_name": get_kpi(table_name, "sql_name", {"variable": id_parent_record})
+        'proveedores': {
+            "indicadores_financieros": {
+                "total_facturado": get_kpi('proveedores', 'total_gastos', {"id_proveedor": id_parent_record}),
+                "saldo_por_pagar": get_kpi('proveedores', 'pagos_pendientes', {"id_proveedor": id_parent_record})
             },
+            "indicadores_operativos": {
+                "ordenes_de_compras_pendientes": get_kpi('proveedores', 'ordenes_activas', {"id_proveedor": id_parent_record}),
+                "cumplimiento_entregas": get_kpi('proveedores', 'cumplimiento_entregas', {"id_proveedor": id_parent_record})
+            }
         }
     }
     data = data.get(table_name, '')
