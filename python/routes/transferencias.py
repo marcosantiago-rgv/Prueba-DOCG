@@ -20,37 +20,24 @@ def listar_transferencias():
 @login_required
 @roles_required()
 def nueva_transferencia():
-    productos = Productos.query.all()
     almacenes = Almacen.query.all()
     if request.method == 'POST':
         id_almacen_origen = request.form['almacen_origen']
         id_almacen_destino = request.form['almacen_destino']
-        id_producto = request.form['producto']
-        cantidad = float(request.form['cantidad'])
 
-        # Creamos la cabecera de la transferencia
+        # Creamos solo la cabecera de la transferencia
         transferencia = TransferenciaInventario(
             id_almacen_origen=id_almacen_origen,
             id_almacen_destino=id_almacen_destino,
             estatus='En revisión',
         )
         db.session.add(transferencia)
-        db.session.flush()  # obtenemos transferencia.id sin cerrar la transacción
-
-        # Por ahora agregamos un solo producto como detalle.
-        # Más adelante se puede extender el formulario para enviar N productos.
-        detalle = DetalleTransferenciaInventario(
-            id_transferencia=transferencia.id,
-            id_producto=id_producto,
-            cantidad=cantidad,
-        )
-        db.session.add(detalle)
         db.session.commit()
-        flash('Transferencia registrada en revisión.')
-        return redirect(url_for('transferencias.listar_transferencias'))
+        flash('Cabecera de transferencia creada. Ahora selecciona los productos a transferir.', 'success')
+        # Redirigir al double table view para agregar productos a la transferencia
+        return redirect(url_for('dynamic.double_table_view', table_name='transferencia_inventario', id=transferencia.id))
     return render_template(
         'inventario/nueva_transferencia.html',
-        productos=productos,
         almacenes=almacenes,
         activeMenu='inventario',
         activeItem='transferencias',
