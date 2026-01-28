@@ -79,21 +79,6 @@ def get_update_validation(table_name,record,column,value):
             )
         orden.descuentos=abs(record.importe_total-record.subtotal)
         validation['status']=1
-    elif table_name=='productos_en_ordenes_de_compra' and column=='cantidad_recibida':
-        cantidad_recibida_anteriormente=(
-                db.session.query(
-                    func.sum(EntregaDeProductosEnOrdenesDeCompra.cantidad_recibida)
-                )
-                .filter(EntregaDeProductosEnOrdenesDeCompra.id_producto_en_orden_de_compra == record.id)
-                .scalar()
-                or 0  
-            )
-        cantidad_restante=record.cantidad_ordenada-cantidad_recibida_anteriormente
-        if float(value)>cantidad_restante:
-            validation['status']=0
-            validation['message']="La cantidad recibida no puede ser mayor a la cantidad restante por entregar."
-            validation['value_warning']=cantidad_restante  
-            
     elif table_name == 'pagos_gastos' and column == 'monto_aplicado':
         gasto_referencia = Gasto.query.get(record.id_gasto)
         limite_del_recibo = gasto_referencia.monto
@@ -105,8 +90,15 @@ def get_update_validation(table_name,record,column,value):
             return validation
 
         record.monto_aplicado = float(value)
+        db.session.add(record)
         
-        FinanzasService.actualizar_monto_total_del_pago(record.id_pago)
+        db.session.flush() 
+        
+        FinanzasService.recalcular_total_pago(record.id_pago)
+        
+        FinanzasService.actualizar_estatus_gasto(record.id_gasto)
+        
+        db.session.commit()
         
         validation['status'] = 1
 

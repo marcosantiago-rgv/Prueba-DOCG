@@ -36,9 +36,8 @@ def confirmar_pago(id):
             pago_obj.estatus = "Pagado"
             
             for detalle in pago_obj.detalles_gastos:
-                gasto_obj = detalle.gasto 
-                if gasto_obj:
-                    gasto_obj.estatus = "Pagado"
+                if detalle.gasto:
+                    FinanzasService.actualizar_estatus_gasto(detalle.gasto.id)
 
             nuevo_movimiento = MovimientoBancario(
                 id_cuenta=pago_obj.id_cuenta,
@@ -59,7 +58,9 @@ def confirmar_pago(id):
                 )
             
             db.session.commit()
-            flash('Pago y gastos liquidados exitosamente', 'success')
+            flash('Pago y gastos procesados con estatus real', 'success')
+        else:
+            flash('El pago no está en estatus Aprobado o no existe', 'warning')
             
     except Exception as e:
         db.session.rollback()

@@ -1,4 +1,4 @@
-from python.models.modelos import MovimientoBancario, Pago, PagosGastos
+from python.models.modelos import MovimientoBancario, Pago, PagosGastos, Gasto
 from python.models import db
 from sqlalchemy import func
 
@@ -26,6 +26,8 @@ class FinanzasService:
     @staticmethod
     def recalcular_total_pago(pago_id):
         """Suma los montos de la tabla intermedia y actualiza la cabecera del Pago"""
+        db.session.flush() 
+        
         total = db.session.query(func.sum(PagosGastos.monto_aplicado)).filter(
             PagosGastos.id_pago == pago_id
         ).scalar() or 0
@@ -33,5 +35,22 @@ class FinanzasService:
         pago = Pago.query.get(pago_id)
         if pago:
             pago.monto = total
-            db.session.commit()
+            db.session.add(pago) 
         return total
+    @staticmethod
+    def actualizar_estatus_gasto(id_gasto):
+        db.session.flush() 
+        
+        gasto = Gasto.query.get(id_gasto)
+        total_pagado = db.session.query(func.sum(PagosGastos.monto_aplicado)).filter(
+            PagosGastos.id_gasto == id_gasto
+        ).scalar() or 0
+
+        if total_pagado <= 0:
+            gasto.estatus = 'Pendiente'
+        elif total_pagado < gasto.monto:
+            gasto.estatus = 'Pagado parcial'
+        else:
+            gasto.estatus = 'Pagado'
+            
+        db.session.add(gasto)
