@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from python.models.modelos import db, Productos, Almacen, Existencia
-from python.models.transferencias import TransferenciaInventario
+from python.models.transferencias import TransferenciaInventario, DetalleTransferenciaInventario
 from python.services.system.authentication import login_required, roles_required
 
 transferencias_bp = Blueprint(
@@ -20,27 +20,24 @@ def listar_transferencias():
 @login_required
 @roles_required()
 def nueva_transferencia():
-    productos = Productos.query.all()
     almacenes = Almacen.query.all()
     if request.method == 'POST':
-        id_producto = request.form['producto']
         id_almacen_origen = request.form['almacen_origen']
         id_almacen_destino = request.form['almacen_destino']
-        cantidad = float(request.form['cantidad'])
+
+        # Creamos solo la cabecera de la transferencia
         transferencia = TransferenciaInventario(
-            id_producto=id_producto,
             id_almacen_origen=id_almacen_origen,
             id_almacen_destino=id_almacen_destino,
-            cantidad=cantidad,
-            estatus='En revisión'
+            estatus='En revisión',
         )
         db.session.add(transferencia)
         db.session.commit()
-        flash('Transferencia registrada en revisión.')
-        return redirect(url_for('transferencias.listar_transferencias'))
+        flash('Cabecera de transferencia creada. Ahora selecciona los productos a transferir.', 'success')
+        # Redirigir al double table view para agregar productos a la transferencia
+        return redirect(url_for('dynamic.double_table_view', table_name='transferencia_inventario', id=transferencia.id))
     return render_template(
         'inventario/nueva_transferencia.html',
-        productos=productos,
         almacenes=almacenes,
         activeMenu='inventario',
         activeItem='transferencias',
@@ -92,33 +89,44 @@ def realizar_transferencia(id):
     if transferencia.estatus != 'Aprobado':
         flash('Solo se pueden realizar transferencias aprobadas.')
         return redirect(url_for('dynamic.table_view', table_name='transferencia_inventario'))
-    # Actualiza existencias
+    # Actualiza existencias para cada producto de la transferencia
     from python.models.inventario import Existencia
-    # Buscar existencia en almacén origen
-    existencia_origen = Existencia.query.filter_by(
-        id_producto=transferencia.id_producto, id_almacen=transferencia.id_almacen_origen).first()
 
-    # Opción 1: permitir realizar aunque no exista registro o no haya stock suficiente
-    # Si no existe la fila de existencias en el almacén origen, la creamos en 0
-    if not existencia_origen:
-        existencia_origen = Existencia(
-            id_producto=transferencia.id_producto,
+    for detalle in transferencia.detalles:
+        # Buscar existencia en almacén origen para este producto
+        existencia_origen = Existencia.query.filter_by(
+            id_producto=detalle.id_producto,
             id_almacen=transferencia.id_almacen_origen,
-            cantidad=0,
-        )
-        db.session.add(existencia_origen)
+        ).first()
 
-    # Descontamos la cantidad solicitada, permitiendo que quede en negativo si aplica
-    existencia_origen.cantidad -= transferencia.cantidad
-    # Buscar existencia en almacén destino
-    existencia_destino = Existencia.query.filter_by(
-        id_producto=transferencia.id_producto, id_almacen=transferencia.id_almacen_destino).first()
-    if existencia_destino:
-        existencia_destino.cantidad += transferencia.cantidad
-    else:
-        existencia_destino = Existencia(id_producto=transferencia.id_producto,
-                                        id_almacen=transferencia.id_almacen_destino, cantidad=transferencia.cantidad)
-        db.session.add(existencia_destino)
+        # Si no existe la fila de existencias en el almacén origen, la creamos en 0
+        if not existencia_origen:
+            existencia_origen = Existencia(
+                id_producto=detalle.id_producto,
+                id_almacen=transferencia.id_almacen_origen,
+                cantidad=0,
+            )
+            db.session.add(existencia_origen)
+
+        # Descontamos la cantidad solicitada
+        existencia_origen.cantidad -= detalle.cantidad
+
+        # Buscar existencia en almacén destino
+        existencia_destino = Existencia.query.filter_by(
+            id_producto=detalle.id_producto,
+            id_almacen=transferencia.id_almacen_destino,
+        ).first()
+
+        if existencia_destino:
+            existencia_destino.cantidad += detalle.cantidad
+        else:
+            existencia_destino = Existencia(
+                id_producto=detalle.id_producto,
+                id_almacen=transferencia.id_almacen_destino,
+                cantidad=detalle.cantidad,
+            )
+            db.session.add(existencia_destino)
+
     transferencia.estatus = 'Realizado'
     db.session.commit()
     flash('Transferencia realizada.')

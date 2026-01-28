@@ -4,48 +4,66 @@ from python.models.modelos import *
 from sqlalchemy import or_, and_, func
 from python.services.finanzas_service import FinanzasService
 ###############
-#  Duuble Table View 
+#  Duuble Table View
 ###################
+
 
 def get_variables_double_table_view(table_name):
     columns = {
         "ordenes_de_compra": {
-            "columns_first_table":["nombre"],
-            "columns_second_table":["nombre","cantidad_ordenada","precio_unitario","subtotal","descuento_porcentaje","importe_total","fecha_entrega_estimada","archivo_cotizacion"],
-            "title_first_table":"Productos",
-            "title_second_table":"Productos en orden de compra",
-            "query_first_table":"productos",
-            "query_second_table":"productos_en_orden_de_compra",
-            "model_first_table":"productos",
-            "model_second_table":"productos_en_ordenes_de_compra",
-            "edit_fields":['precio_unitario','cantidad_ordenada','descuento_porcentaje','subtotal','fecha_entrega_estimada'],
-            "required_fields":['precio_unitario','cantidad_ordenada','descuento_porcentaje','subtotal','fecha_entrega_estimada'],
-            "details":["id_visualizacion","proveedor.nombre",'importe_total'],
-            "url_confirm":"ordenes_de_compra.confirmar"            
+            "columns_first_table": ["nombre"],
+            "columns_second_table": ["nombre", "cantidad_ordenada", "precio_unitario", "subtotal", "descuento_porcentaje", "importe_total", "fecha_entrega_estimada", "archivo_cotizacion"],
+            "title_first_table": "Productos",
+            "title_second_table": "Productos en orden de compra",
+            "query_first_table": "productos",
+            "query_second_table": "productos_en_orden_de_compra",
+            "model_first_table": "productos",
+            "model_second_table": "productos_en_ordenes_de_compra",
+            "edit_fields": ['precio_unitario', 'cantidad_ordenada', 'descuento_porcentaje', 'subtotal', 'fecha_entrega_estimada'],
+            "required_fields": ['precio_unitario', 'cantidad_ordenada', 'descuento_porcentaje', 'subtotal', 'fecha_entrega_estimada'],
+            "details": ["id_visualizacion", "proveedor.nombre", 'importe_total'],
+            "url_confirm": "ordenes_de_compra.confirmar"
         },
         "pago": {
             "columns_first_table": ["id_visualizacion", "descripcion", "monto"],
             "columns_second_table": ["id_visualizacion", "descripcion", "monto_aplicado"],
             "title_first_table": "Gastos Disponibles",
             "title_second_table": "Gastos asociados al Pago",
-            "query_first_table": "gastos_disponibles", 
-            "query_second_table": "gastos_seleccionados",   
+            "query_first_table": "gastos_disponibles",
+            "query_second_table": "gastos_seleccionados",
             "model_first_table": "gasto",
             "model_second_table": "pagos_gastos",
             "edit_fields": ['monto_aplicado'],
             "required_fields": ['monto_aplicado'],
             "details": ["id_visualizacion", "cuenta.nombre", "monto", "referencia"],
-            "url_confirm": "pago.aprobar" 
+            "url_confirm": "pago.aprobar"
+        },
+        "transferencia_inventario": {
+            # "columns_first_table": ["nombre"],
+            "columns_first_table": ["nombre", "cantidad", "unidad_de_medida"],
+            "columns_second_table": ["nombre", "cantidad", "unidad_de_medida"],
+            "title_first_table": "Productos en almacén origen",
+            "title_second_table": "Productos a transferir",
+            "query_first_table": "productos_en_disponibles",
+            "query_second_table": "detalle_transferencia_inventario",
+            # "model_first_table": "ProductosEnOrdenesDeCompra",
+            "model_first_table": "existencia",
+            "model_second_table": "detalle_transferencia_inventario",
+            "edit_fields": ["cantidad"],
+            "required_fields": ["cantidad"],
+            "details": ["id_visualizacion", "almacen_origen.nombre", "almacen_destino.nombre", "fecha", "estatus"],
+            "url_confirm": "transferencia_inventario.confirmar"
         },
     }
-    columns=columns.get(table_name,'')
+    columns = columns.get(table_name, '')
     return columns
 
-def add_record_double_table(main_table_name,second_table,id_main_record,id_record):
-    model=get_model_by_name(second_table)
-    if main_table_name=='ordenes_de_compra':
-        orden=OrdenesDeCompra.query.get(id_main_record)
-        new_record=model(
+
+def add_record_double_table(main_table_name, second_table, id_main_record, id_record):
+    model = get_model_by_name(second_table)
+    if main_table_name == 'ordenes_de_compra':
+        orden = OrdenesDeCompra.query.get(id_main_record)
+        new_record = model(
             id_orden_de_compra=id_main_record,
             id_producto=id_record,
             precio_unitario=0,
@@ -64,29 +82,42 @@ def add_record_double_table(main_table_name,second_table,id_main_record,id_recor
             monto_aplicado=gasto_original.monto,
             id_usuario=session['id_usuario']
         )
+    elif main_table_name == 'transferencia_inventario':
+        # id_main_record: id de la transferencia, id_record: id de existencia (producto en almacén origen)
+        existencia = Existencia.query.get(id_record)
+        new_record = model(
+            id_transferencia=id_main_record,
+            id_producto=existencia.id_producto,
+            cantidad=0,
+            id_usuario=session['id_usuario']
+        )
     return new_record
 
-def validate_delete(table_name,id):
-    if table_name=='table_name':
-        record=table_name.query.get(id)
-        if record.column=='':
+
+def validate_delete(table_name, id):
+    if table_name == 'table_name':
+        record = table_name.query.get(id)
+        if record.column == '':
             return False
     return True
 
-def on_add_double_table(table_name,id):
-    if table_name=='ejemplo':
-        orden=OrdenesDeVenta.query.get(id)
+
+def on_add_double_table(table_name, id):
+    if table_name == 'ejemplo':
+        orden = OrdenesDeVenta.query.get(id)
     if table_name == 'pago':
         FinanzasService.recalcular_total_pago(id)
 
-def on_update_double_table(table_name,id):
-    if table_name=='ejemplo':
-        orden=OrdenesDeVenta.query.get(id)
+
+def on_update_double_table(table_name, id):
+    if table_name == 'ejemplo':
+        orden = OrdenesDeVenta.query.get(id)
     if table_name == 'pago':
         FinanzasService.recalcular_total_pago(id)
 
-def on_delete_double_table(table_name,id):
-    if table_name=='ejemplo':
-        orden=OrdenesDeVenta.query.get(id)
+
+def on_delete_double_table(table_name, id):
+    if table_name == 'ejemplo':
+        orden = OrdenesDeVenta.query.get(id)
     if table_name == 'pago':
         FinanzasService.recalcular_total_pago(id)

@@ -146,9 +146,10 @@ def get_url_after_add(table_name):
     columns = {
         "ordenes_de_compra": "dynamic.double_table_view",
         "pago": "dynamic.double_table_view",
+        # le decimos que despues de agregar la cabcera de transferencia de inventario redirija al double table view para agregar los productos a transferir
+        "transferencia_inventario": "dynamic.double_table_view",
     }
-    columns = columns.get(table_name, 'dynamic.table_view')
-    return columns
+    return columns.get(table_name, 'dynamic.table_view')
 
 
 # def get_non_edit_status(table_name=None):
