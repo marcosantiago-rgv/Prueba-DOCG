@@ -164,11 +164,11 @@ class Rutas(db.Model, BaseMixin, AuditMixin):
     categoria = db.Column(db.String(255))
     nombre = db.Column(db.String(255))
     ruta = db.Column(db.String(255))
-    # roles = db.relationship(
-    #     "Roles",
-    #     secondary=relacion_rutas_roles,
-    #     backref=db.backref("rutas", lazy="dynamic")  # ← este es el cambio
-    # )
+    roles = db.relationship(
+        "Roles",
+        secondary=relacion_rutas_roles,
+        backref=db.backref("rutas", lazy="dynamic")  # ← este es el cambio
+    )
 
 
 class Archivos(db.Model, AuditMixin):

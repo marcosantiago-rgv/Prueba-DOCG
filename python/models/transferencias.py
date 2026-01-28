@@ -46,6 +46,8 @@ class DetalleTransferenciaInventario(db.Model, BaseMixin, AuditMixin):
         db.UUID, db.ForeignKey("productos.id"), nullable=False
     )
     cantidad = db.Column(db.Float, nullable=False, default=0)
+    fecha_de_creacion = db.Column(
+        db.DateTime, nullable=False, default=datetime.utcnow)
 
     transferencia = db.relationship(
         "TransferenciaInventario",

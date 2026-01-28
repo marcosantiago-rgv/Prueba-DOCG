@@ -39,21 +39,21 @@ def get_variables_double_table_view(table_name):
             "url_confirm": "pago.aprobar"
         },
         "transferencia_inventario": {
-            # "columns_first_table": ["nombre"],
             "columns_first_table": ["nombre", "cantidad", "unidad_de_medida"],
-            "columns_second_table": ["nombre", "cantidad", "unidad_de_medida"],
+            "columns_second_table": ["nombre", "cantidad", "unidad_de_medida", "fecha_de_creacion"],
             "title_first_table": "Productos en almacén origen",
             "title_second_table": "Productos a transferir",
             "query_first_table": "productos_en_disponibles",
             "query_second_table": "detalle_transferencia_inventario",
-            # "model_first_table": "ProductosEnOrdenesDeCompra",
             "model_first_table": "existencia",
             "model_second_table": "detalle_transferencia_inventario",
             "edit_fields": ["cantidad"],
             "required_fields": ["cantidad"],
             "details": ["id_visualizacion", "almacen_origen.nombre", "almacen_destino.nombre", "fecha", "estatus"],
-            "url_confirm": "transferencia_inventario.confirmar"
-        },
+            "url_confirm": "transferencia_inventario.confirmar",
+            "default_sort_field": "fecha_de_creacion"
+        }
+
     }
     columns = columns.get(table_name, '')
     return columns
@@ -61,8 +61,16 @@ def get_variables_double_table_view(table_name):
 
 def add_record_double_table(main_table_name, second_table, id_main_record, id_record):
     model = get_model_by_name(second_table)
+    from python.models import db
     if main_table_name == 'ordenes_de_compra':
         orden = OrdenesDeCompra.query.get(id_main_record)
+        # Validar si ya existe el producto en la orden
+        existe = model.query.filter_by(
+            id_orden_de_compra=id_main_record, id_producto=id_record).first()
+        if existe:
+            return existe  # Ya existe, no crear duplicado
+        if not orden:
+            raise Exception('Orden de compra no encontrada')
         new_record = model(
             id_orden_de_compra=id_main_record,
             id_producto=id_record,
@@ -74,24 +82,35 @@ def add_record_double_table(main_table_name, second_table, id_main_record, id_re
             fecha_entrega_estimada=orden.fecha_entrega_estimada,
             id_usuario=session['id_usuario']
         )
+        return new_record
     elif main_table_name == 'pago':
         gasto_original = Gasto.query.get(id_record)
+        if not gasto_original:
+            raise Exception('Gasto no encontrado')
         new_record = model(
             id_pago=id_main_record,
             id_gasto=id_record,
             monto_aplicado=gasto_original.monto,
             id_usuario=session['id_usuario']
         )
+        return new_record
     elif main_table_name == 'transferencia_inventario':
-        # id_main_record: id de la transferencia, id_record: id de existencia (producto en almacén origen)
         existencia = Existencia.query.get(id_record)
+        if not existencia:
+            raise Exception('Existencia no encontrada')
+        # Inicializar la cantidad con la cantidad disponible en el almacén origen
+        cantidad_disponible = existencia.cantidad if existencia.cantidad is not None else 0
         new_record = model(
             id_transferencia=id_main_record,
             id_producto=existencia.id_producto,
-            cantidad=0,
+            cantidad=cantidad_disponible,
             id_usuario=session['id_usuario']
         )
-    return new_record
+        db.session.add(new_record)
+        db.session.commit()
+        return new_record
+    else:
+        raise Exception('Tipo de tabla no soportado')
 
 
 def validate_delete(table_name, id):

@@ -14,7 +14,8 @@ from datetime import datetime
 import numpy as np
 import os
 
-working_directory='/Users/jisbe/OneDrive/Documents/REPO-EQMJ/Prueba-DOCG/'
+# working_directory = '/Users/jisbe/OneDrive/Documents/REPO-EQMJ/Prueba-DOCG/'
+working_directory = r"C:\Users\Marco Antonio\Documents\GitHub\Prueba-DOCG"
 
 # Users/Marco Antonio/Documents/GitHub/Prueba-DOCG/
 os.chdir(working_directory)
@@ -160,5 +161,5 @@ actions = {'aprobar', 'cancelar', 'recibir', 'confirmar', 'cerrar'}
 crear_ruta('ordenes_de_compra', actions)
 
 
-#actions = {'inicio'}
+# actions = {'inicio'}
 crear_ruta('dashboards', actions)
