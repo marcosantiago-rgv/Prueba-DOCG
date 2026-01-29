@@ -66,24 +66,16 @@ function generar_grafica_categorias(nombre_grafica, tipo_grafica, x_key, y_key, 
 // funcion para hacer grafica de Transferencias de inventario por día
 // Mismo estilo visual que "Tendencias de Gastos Diarios"
 
+
+// Nueva función: gráfica de barras por almacén origen
 function cargar_transferencias_inventario_productos() {
-    const inicioInput = document.getElementById('transferencias_inicio');
-    const finInput = document.getElementById('transferencias_fin');
-
-    const inicio = inicioInput ? inicioInput.value : '';
-    const fin = finInput ? finInput.value : '';
-
-    let path = '/dashboard_queries/transferencias_inventario';
-    const params = [];
-    if (inicio) params.push(`fecha_inicio=${inicio}`);
-    if (fin) params.push(`fecha_fin=${fin}`);
-    if (params.length) path += `?${params.join('&')}`;
-
     const container = document.querySelector('#grafica_transferencias_producto');
     if (container) {
         container.innerHTML = '<div class="flex justify-center items-center h-64"><div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div></div>';
     }
 
+    // Usar la consulta agregada por almacén origen
+    const path = '/dashboard_queries/transferencias_por_almacen_origen';
     fetch(path)
         .then(response => {
             if (!response.ok) throw new Error(`Network response was not ok: ${response.statusText}`);
@@ -95,81 +87,34 @@ function cargar_transferencias_inventario_productos() {
                 if (typeof mostrarSinDatos === 'function') mostrarSinDatos('#grafica_transferencias_producto');
                 return;
             }
-
-            // Agrupar cantidad total transferida por fecha
-            const agregadosPorFecha = {};
-            rows.forEach(row => {
-                if (!row.fecha) return;
-                const fechaObj = new Date(row.fecha);
-                if (isNaN(fechaObj)) return;
-                const key = fechaObj.toISOString().split('T')[0];
-                const qty = Number(row.cantidad) || 0;
-                agregadosPorFecha[key] = (agregadosPorFecha[key] || 0) + qty;
-            });
-
-            const fechasOrdenadas = Object.keys(agregadosPorFecha).sort();
-            if (!fechasOrdenadas.length) {
-                if (typeof mostrarSinDatos === 'function') mostrarSinDatos('#grafica_transferencias_producto');
-                return;
-            }
-
-            const labels = fechasOrdenadas.map(f => {
-                const fecha = new Date(f);
-                return fecha.toLocaleDateString('es-MX', { day: '2-digit', month: 'short' });
-            });
-
-            let valores = fechasOrdenadas.map(f => agregadosPorFecha[f]);
-
-            // Forzar al menos un rango visible si todos los valores son cero
-            const maxValor = Math.max(...valores);
-            const minValor = Math.min(...valores);
-            let yMin = Math.floor(minValor / 10) * 10;
-            let yMax = Math.ceil(maxValor / 10) * 10;
-
-            if (!isFinite(yMax) || yMax <= 0) yMax = 10;
-            if (!isFinite(yMin) || yMin < 0) yMin = 0;
-            if (yMax === yMin) yMax = yMin + 10;
-
-            const options = {
-                series: [{ name: 'Transferencias', data: valores }],
-                chart: { type: 'line', height: 300, fontFamily: 'Inter, sans-serif', zoom: { enabled: false }, toolbar: { show: false }, animations: { enabled: true, speed: 800 } },
-                dataLabels: { enabled: false },
-                stroke: { curve: 'smooth', width: 3, lineCap: 'square' },
-                colors: ['#267DFF'],
-                markers: { size: 5, colors: ['#267DFF'], strokeColors: '#fff', strokeWidth: 2, hover: { size: 7 } },
-                labels: labels,
-                xaxis: {
-                    axisBorder: { show: false },
-                    axisTicks: { show: false },
-                    crosshairs: { show: true, position: 'back', stroke: { color: '#e0e6ed', width: 1, dashArray: 0 } },
-                    labels: { offsetY: 5, style: { fontSize: '14px', fontWeight: '600', colors: '#7780A1' } },
-                    tooltip: { enabled: false }
-                },
-                yaxis: {
-                    min: yMin,
-                    max: yMax,
-                    tickAmount: 5,
-                    labels: {
-                        formatter: val => new Intl.NumberFormat('es-MX', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(val),
-                        offsetX: -10,
-                        style: { fontSize: '14px', fontWeight: '600', colors: '#7780A1' }
+            // Evitar duplicados y leyenda/colores de categorías
+            const almacenes = rows.map(row => row.almacen_origen);
+            const totales = rows.map(row => Number(row.total_transferido) || 0);
+            // Limpiar el contenedor antes de renderizar la gráfica para quitar el loading
+            if (container) container.innerHTML = '';
+            renderizar_grafica(
+                '#grafica_transferencias_producto',
+                'bar',
+                [{ name: '', data: totales }],
+                almacenes,
+                {
+                    colors: ['#267DFF'],
+                    legend: { show: false },
+                    plotOptions: { bar: { distributed: false } },
+                    yaxis: {
+                        title: { text: 'Total transferido', style: { color: '#7780A1', fontSize: '12px', fontWeight: 400 } }
                     },
-                    title: { text: 'Cantidad transferida', style: { color: '#7780A1', fontSize: '12px', fontWeight: 400 } },
-                    opposite: false
-                },
-                grid: { borderColor: '#e0e6ed', strokeDashArray: 7, xaxis: { lines: { show: false } }, yaxis: { lines: { show: false } }, padding: { left: 25 } },
-                legend: { show: false },
-                tooltip: { shared: true, intersect: false, y: { formatter: val => `${val.toLocaleString('es-MX')} unidades` }, style: { fontSize: '12px', fontFamily: 'Inter, sans-serif' } }
-            };
-
-            if (window.transferenciasInventarioChart) window.transferenciasInventarioChart.destroy();
-
-            const chartElement = document.querySelector('#grafica_transferencias_producto');
-            if (!chartElement) return;
-            chartElement.innerHTML = '';
-
-            window.transferenciasInventarioChart = new ApexCharts(chartElement, options);
-            window.transferenciasInventarioChart.render();
+                    xaxis: {
+                        categories: almacenes,
+                        labels: { rotate: -45 }
+                    },
+                    tooltip: {
+                        y: {
+                            formatter: val => `${val.toLocaleString('es-MX')} unidades`
+                        }
+                    }
+                }
+            );
         })
         .catch(error => {
             console.error('Error cargando transferencias de inventario:', error);

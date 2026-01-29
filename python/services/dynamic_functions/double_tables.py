@@ -39,8 +39,8 @@ def get_variables_double_table_view(table_name):
             "url_confirm": "pago.aprobar"
         },
         "transferencia_inventario": {
-            "columns_first_table": ["nombre", "cantidad", "unidad_de_medida"],
-            "columns_second_table": ["nombre", "cantidad", "unidad_de_medida", "fecha_de_creacion"],
+            "columns_first_table": ["nombre", "cantidad", "unidad_de_medida", "fecha_de_creacion"],
+            "columns_second_table": ["nombre", "cantidad", "unidad_de_medida"],
             "title_first_table": "Productos en almacén origen",
             "title_second_table": "Productos a transferir",
             "query_first_table": "productos_en_disponibles",
@@ -50,7 +50,7 @@ def get_variables_double_table_view(table_name):
             "edit_fields": ["cantidad"],
             "required_fields": ["cantidad"],
             "details": ["id_visualizacion", "almacen_origen.nombre", "almacen_destino.nombre", "fecha", "estatus"],
-            "url_confirm": "transferencia_inventario.confirmar",
+            "url_confirm": "transferencias.aprobar_transferencia",
             "default_sort_field": "fecha_de_creacion"
         }
 
@@ -61,12 +61,12 @@ def get_variables_double_table_view(table_name):
 
 def add_record_double_table(main_table_name, second_table, id_main_record, id_record):
     model = get_model_by_name(second_table)
-    from python.models import db
     if main_table_name == 'ordenes_de_compra':
         orden = OrdenesDeCompra.query.get(id_main_record)
         # Validar si ya existe el producto en la orden
         existe = model.query.filter_by(
-            id_orden_de_compra=id_main_record, id_producto=id_record).first()
+            id_orden_de_compra=id_main_record, id_producto=id_record
+        ).first()
         if existe:
             return existe  # Ya existe, no crear duplicado
         if not orden:
@@ -80,52 +80,75 @@ def add_record_double_table(main_table_name, second_table, id_main_record, id_re
             descuento_porcentaje=0,
             subtotal=0,
             fecha_entrega_estimada=orden.fecha_entrega_estimada,
-            id_usuario=session['id_usuario']
+            id_usuario=session.get('id_usuario')
         )
         return new_record
     elif main_table_name == 'pago':
         gasto_original = Gasto.query.get(id_record)
         if not gasto_original:
             raise Exception('Gasto no encontrado')
-        
+
         total_pagado_previo = db.session.query(func.sum(PagosGastos.monto_aplicado)).filter(
             PagosGastos.id_gasto == id_record
         ).scalar() or 0
-        
+
         saldo_pendiente = gasto_original.monto - total_pagado_previo
-        
+
         if saldo_pendiente <= 0:
             raise Exception('Este gasto ya ha sido liquidado en su totalidad')
 
         new_record = model(
             id_pago=id_main_record,
             id_gasto=id_record,
+
             monto_aplicado=saldo_pendiente,
             id_usuario=session['id_usuario']
         )
-        
+
         db.session.add(new_record)
-        db.session.flush() 
+        db.session.flush()
 
         FinanzasService.recalcular_total_pago(id_main_record)
-        FinanzasService.actualizar_estatus_gasto(id_record) 
-        
-        db.session.commit() 
+        FinanzasService.actualizar_estatus_gasto(id_record)
+
+        db.session.commit()
         return new_record
     elif main_table_name == 'transferencia_inventario':
-        existencia = Existencia.query.get(id_record)
-        if not existencia:
-            raise Exception('Existencia no encontrada')
-        # Inicializar la cantidad con la cantidad disponible en el almacén origen
-        cantidad_disponible = existencia.cantidad if existencia.cantidad is not None else 0
+        # Buscar el producto en productos_en_ordenes_de_compra
+        producto_orden = ProductosEnOrdenesDeCompra.query.get(id_record)
+        if not producto_orden:
+            print(
+                f"[ERROR] Producto en orden de compra no encontrado para id: {id_record}")
+            raise Exception('Producto en orden de compra no encontrado')
+
+        cantidad_disponible = producto_orden.cantidad_recibida or 0
+        if cantidad_disponible <= 0:
+            print(
+                f"[ERROR] No hay cantidad recibida para transferir del producto {producto_orden.id_producto}")
+            raise Exception('No hay cantidad recibida para transferir')
+
+        existe = model.query.filter_by(
+            id_transferencia=id_main_record, id_producto=producto_orden.id_producto).first()
+        if existe:
+            print(
+                f"[INFO] Producto ya existe en la transferencia: {existe.id}")
+            return existe
+
         new_record = model(
             id_transferencia=id_main_record,
-            id_producto=existencia.id_producto,
+            id_producto=producto_orden.id_producto,
             cantidad=cantidad_disponible,
             id_usuario=session['id_usuario']
         )
         db.session.add(new_record)
-        db.session.commit()
+        try:
+            db.session.commit()
+            print(
+                f"[OK] Producto de orden de compra agregado a transferencia: {new_record.id_producto} cantidad: {cantidad_disponible}")
+        except Exception as e:
+            db.session.rollback()
+            print(f"[ERROR] No se pudo agregar producto a transferencia: {e}")
+            raise
         return new_record
     else:
         raise Exception('Tipo de tabla no soportado')

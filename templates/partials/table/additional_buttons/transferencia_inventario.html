@@ -1,10 +1,10 @@
 <!-- Automatiza el traslado rapido de inventario entre almacenes. y viceversa. -->
 
-{% if can_access('/dynamic/productos_inventario/view') %}
+{% if can_access('/dynamic/ordenes_de_compra/view') %}
 <div class="flex justify-end">
-    <a href="{{ url_for('dynamic.table_view',table_name='productos_inventario') }}"
+    <a href="{{ url_for('dynamic.table_view',table_name='ordenes_de_compra') }}"
         class="btn border text-primary border-transparent rounded-md transition-all duration-300 hover:text-white hover:bg-primary bg-primary/10">
-        Existencias
+        Órdenes de Compra
     </a>
 </div>
 {% endif %}

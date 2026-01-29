@@ -226,7 +226,7 @@ def get_estatus_options(table_name):
 def get_open_status(table_name):
     status = {
         # "ordenes_de_compra": ['En revisión', 'Aprobada', 'Recibida parcial', 'Recibida'],
-        # "productos_en_ordenes_de_compra": ['Pendiente', 'Recibida parcial'],
+        # "productos_en_ordenes_de_compra": ['Pendiente', 'Recibida parcial', 'Recibida'],
         "ordenes_de_compra": ['En revisión', 'Aprobada', 'Recibida parcial', 'Recibida'],
         "productos_en_ordenes_de_compra": ['Pendiente', 'Recibida parcial', 'Recibida'],
         # "productos_en_ordenes_de_compra": ['Recibida'],
@@ -284,7 +284,9 @@ def get_table_relationships(table_name):
         "productos_en_ordenes_de_compra": ["entrega_de_productos_en_ordenes_de_compra"],
         "gasto": ["pago"],
         "pago": ["pagos_gastos"],
-        'proveedores': ['resumen', 'ordenes_de_compra', 'gasto', 'productos']
+        'proveedores': ['resumen', 'ordenes_de_compra', 'gasto', 'productos'],
+        # Activamos la tabla para la relacion de transferencias de inventario al darle en el boton de ver registros relacionados
+        'transferencia_inventario': ['resumen', 'ordenes_de_compra', 'productos',]
     }
     relationships = relationships.get(table_name, [])
     if table_name not in ('archivos', 'usuarios', 'roles', 'logs_auditoria', 'rutas', 'categorias_de_reportes'):
@@ -371,6 +373,16 @@ def get_summary_data(table_name):
                 "logistica": ["dias_de_entrega", "estatus"]
             }
         },
+        'transferencia_inventario': {
+            'primary': ["id_visualizacion", "fecha", "estatus"],
+            # 'primary': ["id_visualizacion", "id_almacen_nombre", "id_almacen_destino_nombre", "fecha", "estatus"],
+            'data': {
+                # "informacion_general": ["id_visualizacion", "id_almacen_origen_nombre", "id_almacen_destino_nombre", "fecha", "estatus", "id_usuario", "fecha_de_creacion"],
+                "Informacion_de_la_transferencia": ["id_visualizacion", "fecha", "estatus", "fecha_de_actualizacion"],
+                # "informacion_origen": ["id_almacen_origen_nombre",  "estatus", "fecha_de_creacion"],
+                # "productos_transferidos": ["productos", "cantidad"],
+            }
+        },
     }
     data = data.get(table_name, '')
     return data
@@ -386,6 +398,13 @@ def get_summary_kpis(table_name, id_parent_record):
             "indicadores_operativos": {
                 "ordenes_de_compras_pendientes": get_kpi('proveedores', 'ordenes_activas', {"id_proveedor": id_parent_record}),
                 "cumplimiento_entregas": get_kpi('proveedores', 'cumplimiento_entregas', {"id_proveedor": id_parent_record})
+            }
+        },
+        'transferencia_inventario': {
+            "indicadores_transferencia": {
+                "productos_transferidos": get_kpi('transferencia_inventario', 'productos_transferidos', {"id_transferencia": id_parent_record}),
+                "total_cantidad_transferida": get_kpi('transferencia_inventario', 'total_cantidad_transferida', {"id_transferencia": id_parent_record}),
+                "ordenes_asociadas": get_kpi('transferencia_inventario', 'ordenes_asociadas', {"id_transferencia": id_parent_record})
             }
         }
     }
