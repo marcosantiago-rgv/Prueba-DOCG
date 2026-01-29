@@ -226,7 +226,7 @@ def get_estatus_options(table_name):
 def get_open_status(table_name):
     status = {
         # "ordenes_de_compra": ['En revisión', 'Aprobada', 'Recibida parcial', 'Recibida'],
-        # "productos_en_ordenes_de_compra": ['Pendiente', 'Recibida parcial'],
+        # "productos_en_ordenes_de_compra": ['Pendiente', 'Recibida parcial', 'Recibida'],
         "ordenes_de_compra": ['En revisión', 'Aprobada', 'Recibida parcial', 'Recibida'],
         "productos_en_ordenes_de_compra": ['Pendiente', 'Recibida parcial', 'Recibida'],
         # "productos_en_ordenes_de_compra": ['Recibida'],
@@ -286,7 +286,7 @@ def get_table_relationships(table_name):
         "pago": ["pagos_gastos"],
         'proveedores': ['resumen', 'ordenes_de_compra', 'gasto', 'productos'],
         # Activamos la tabla para la relacion de transferencias de inventario al darle en el boton de ver registros relacionados
-        'transferencia_inventario': ['resumen', 'detalle_transferencia_inventario', 'ordenes_de_compra', 'productos',]
+        'transferencia_inventario': ['resumen', 'ordenes_de_compra', 'productos',]
     }
     relationships = relationships.get(table_name, [])
     if table_name not in ('archivos', 'usuarios', 'roles', 'logs_auditoria', 'rutas', 'categorias_de_reportes'):
@@ -403,8 +403,8 @@ def get_summary_kpis(table_name, id_parent_record):
         'transferencia_inventario': {
             "indicadores_transferencia": {
                 "productos_transferidos": get_kpi('transferencia_inventario', 'productos_transferidos', {"id_transferencia": id_parent_record}),
-                # "total_cantidad_transferida": get_kpi('transferencia_inventario', 'total_cantidad_transferida', {"id_transferencia": id_parent_record}),
-                # "ordenes_asociadas": get_kpi('transferencia_inventario', 'ordenes_asociadas', {"id_transferencia": id_parent_record})
+                "total_cantidad_transferida": get_kpi('transferencia_inventario', 'total_cantidad_transferida', {"id_transferencia": id_parent_record}),
+                "ordenes_asociadas": get_kpi('transferencia_inventario', 'ordenes_asociadas', {"id_transferencia": id_parent_record})
             }
         }
     }
