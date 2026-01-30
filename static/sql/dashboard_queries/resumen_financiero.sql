@@ -6,8 +6,6 @@ WITH t_gastos AS (
   WHERE
     fecha >= :fecha_inicio
     AND fecha <= :fecha_fin
-    -- Quitamos 'Pendiente' si solo quieres ver lo que ya está validado,
-    -- o lo dejamos si quieres ver deuda proyectada.
     AND estatus IN ('Aprobado', 'Pagado', 'Pagado parcial', 'Pendiente')
 )
 , t_pagos AS (
@@ -20,8 +18,6 @@ WITH t_gastos AS (
   WHERE
     g.fecha >= :fecha_inicio
     AND g.fecha <= :fecha_fin
-    -- Eliminamos el JOIN con 'pago p' y su estatus para que cuente
-    -- el dinero en cuanto se aplica, no hasta que se aprueba el pago.
 )
 SELECT
   t_gastos.suma as total_gastos
