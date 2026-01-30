@@ -38,9 +38,19 @@ def pagar_rapido(id):
             flash('Gasto o Cuenta no encontrados', 'danger')
             return redirect(url_for('dynamic.table_view', table_name='gasto'))
 
+        total_pagado_anterior = db.session.query(func.sum(PagosGastos.monto_aplicado)).filter(
+            PagosGastos.id_gasto == gasto_obj.id
+        ).scalar() or 0
+        
+        saldo_pendiente = gasto_obj.monto - total_pagado_anterior
+
+        if saldo_pendiente <= 0:
+            flash('Este gasto ya está liquidado', 'info')
+            return redirect(url_for('dynamic.table_view', table_name='gasto'))
+
         nuevo_pago = Pago(
             id_cuenta=cuenta_obj.id,
-            monto=gasto_obj.monto,
+            monto=saldo_pendiente, 
             fecha=datetime.utcnow().date(),
             estatus="Pagado",
             id_visualizacion=generar_id_visual(Pago),
@@ -52,7 +62,7 @@ def pagar_rapido(id):
         nueva_relacion = PagosGastos(
             id_pago=nuevo_pago.id,
             id_gasto=gasto_obj.id,
-            monto_aplicado=gasto_obj.monto
+            monto_aplicado=saldo_pendiente
         )
         db.session.add(nueva_relacion)
         
@@ -61,8 +71,8 @@ def pagar_rapido(id):
         nuevo_movimiento = MovimientoBancario(
             id_cuenta=cuenta_obj.id,
             tipo='Egreso',
-            monto=gasto_obj.monto,
-            descripcion=f"Pago Rápido Gasto #{gasto_obj.id_visualizacion}",
+            monto=saldo_pendiente, 
+            descripcion=f"Pago Rápido Gasto #{gasto_obj.id_visualizacion} (Saldo final)",
             fecha=datetime.utcnow().date(),
             id_visualizacion=generar_id_visual(MovimientoBancario),
             id_usuario=session.get('id_usuario')
@@ -76,7 +86,7 @@ def pagar_rapido(id):
         )
         
         db.session.commit()
-        flash('Pago procesado correctamente', 'success')
+        flash(f'Gasto liquidado por ${saldo_pendiente}', 'success')
 
     except Exception as e:
         db.session.rollback()

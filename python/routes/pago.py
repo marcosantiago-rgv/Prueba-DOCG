@@ -58,7 +58,7 @@ def confirmar_pago(id):
                 )
             
             db.session.commit()
-            flash('Pago y gastos procesados con estatus real', 'success')
+            flash('Pago y gastos procesados', 'success')
         else:
             flash('El pago no está en estatus Aprobado o no existe', 'warning')
             

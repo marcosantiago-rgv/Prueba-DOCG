@@ -63,12 +63,11 @@ def add_record_double_table(main_table_name, second_table, id_main_record, id_re
     model = get_model_by_name(second_table)
     if main_table_name == 'ordenes_de_compra':
         orden = OrdenesDeCompra.query.get(id_main_record)
-        # Validar si ya existe el producto en la orden
         existe = model.query.filter_by(
             id_orden_de_compra=id_main_record, id_producto=id_record
         ).first()
         if existe:
-            return existe  # Ya existe, no crear duplicado
+            return existe 
         if not orden:
             raise Exception('Orden de compra no encontrada')
         new_record = model(
@@ -179,5 +178,22 @@ def on_update_double_table(table_name, id):
 def on_delete_double_table(table_name, id):
     if table_name == 'ejemplo':
         orden = OrdenesDeVenta.query.get(id)
-    if table_name == 'pago':
-        FinanzasService.recalcular_total_pago(id)
+    if table_name == 'pagos_gastos':
+        try:
+            relacion = PagosGastos.query.get(id)
+            
+            if relacion:
+                id_gasto = relacion.id_gasto
+                id_pago = relacion.id_pago
+                
+                FinanzasService.recalcular_total_pago(id_pago)
+                
+                gasto = Gasto.query.get(id_gasto)
+                if gasto:
+                    gasto.estatus = 'Aprobado' 
+                    db.session.add(gasto)
+                
+                db.session.flush()
+
+        except Exception as e:
+            print(f"Error en on_delete: {e}")
