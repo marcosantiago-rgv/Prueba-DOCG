@@ -25,9 +25,10 @@ class FinanzasService:
         return (saldo_inicial or 0) + ingresos - egresos
     @staticmethod
     def recalcular_total_pago(pago_id):
-        """Suma los montos de la tabla intermedia y actualiza la cabecera del Pago"""
+        """Suma los montos de la tabla intermedia y asegura el estatus de revisión"""
         db.session.flush() 
         
+        # Solo sumamos montos de pagos que no estén cancelados
         total = db.session.query(func.sum(PagosGastos.monto_aplicado)).filter(
             PagosGastos.id_pago == pago_id
         ).scalar() or 0
@@ -35,6 +36,10 @@ class FinanzasService:
         pago = Pago.query.get(pago_id)
         if pago:
             pago.monto = total
+            
+            if pago.estatus not in ['Pagado', 'Cancelado']:
+                pago.estatus = 'En revisión'
+                
             db.session.add(pago) 
         return total
     @staticmethod
@@ -42,12 +47,18 @@ class FinanzasService:
         db.session.flush() 
         
         gasto = Gasto.query.get(id_gasto)
-        total_pagado = db.session.query(func.sum(PagosGastos.monto_aplicado)).filter(
-            PagosGastos.id_gasto == id_gasto
-        ).scalar() or 0
+        if not gasto:
+            return
+
+        total_pagado = db.session.query(func.sum(PagosGastos.monto_aplicado))\
+            .join(Pago, PagosGastos.id_pago == Pago.id)\
+            .filter(
+                PagosGastos.id_gasto == id_gasto,
+                Pago.estatus != 'Cancelado' 
+            ).scalar() or 0
 
         if total_pagado <= 0:
-            gasto.estatus = 'Pendiente'
+            gasto.estatus = 'Aprobado' 
         elif total_pagado < gasto.monto:
             gasto.estatus = 'Pagado parcial'
         else:

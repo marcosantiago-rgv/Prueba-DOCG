@@ -32,7 +32,11 @@ def confirmar_pago(id):
         pago_id = uuid.UUID(id) if isinstance(id, str) else id
         pago_obj = Pago.query.get(pago_id)
         
-        if pago_obj and pago_obj.estatus == 'Aprobado':
+        if not pago_obj:
+            flash('Error: Pago no encontrado', 'danger')
+            return redirect(url_for('dynamic.table_view', table_name='pago'))
+
+        if pago_obj.estatus == 'Aprobado':
             pago_obj.estatus = "Pagado"
             
             for detalle in pago_obj.detalles_gastos:
@@ -58,13 +62,18 @@ def confirmar_pago(id):
                 )
             
             db.session.commit()
-            flash('Pago y gastos procesados', 'success')
-        else:
-            flash('El pago no está en estatus Aprobado o no existe', 'warning')
+            flash('Pago realizado éxito', 'success')
+        
+        elif pago_obj.estatus == 'En revisión':
             
+            flash('Pago registrado correctamente', 'success')
+            
+        else:
+            flash(f'El pago se encuentra en estatus: {pago_obj.estatus}', 'info')
+
     except Exception as e:
         db.session.rollback()
-        flash(f'Error al liquidar: {str(e)}', 'danger')
+        flash(f'Error al procesar: {str(e)}', 'danger')
         
     return redirect(url_for('dynamic.table_view', table_name='pago'))
 
@@ -75,13 +84,21 @@ def cancelar(id):
         if pago_obj:
             pago_obj.estatus = "Cancelado" 
             
+            gastos_ids = [detalle.id_gasto for detalle in pago_obj.detalles_gastos]
+
             for detalle in pago_obj.detalles_gastos:
-                if detalle.gasto:
-                    detalle.gasto.estatus = "Aprobado"
+                db.session.delete(detalle)
+            
+            db.session.flush()
+
+            for g_id in gastos_ids:
+                FinanzasService.actualizar_estatus_gasto(g_id)
             
             db.session.commit()
-            flash('Pago cancelado y gastos liberados.')
+            flash('Pago cancelado', 'success')
+            
     except Exception as e:
         db.session.rollback()
-        flash(f'Error: {str(e)}', 'danger')
+        flash(f'Error al cancelar pago: {str(e)}', 'danger')
+        
     return redirect(url_for('dynamic.table_view', table_name='pago'))

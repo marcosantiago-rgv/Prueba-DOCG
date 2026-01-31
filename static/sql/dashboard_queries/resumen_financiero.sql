@@ -6,7 +6,7 @@ WITH t_gastos AS (
   WHERE
     fecha >= :fecha_inicio
     AND fecha <= :fecha_fin
-    AND estatus IN ('Aprobado', 'Pagado', 'Pagado parcial', 'Pendiente')
+    AND estatus IN ('Aprobado', 'Pagado', 'Pagado parcial')
 )
 , t_pagos AS (
   SELECT
@@ -15,9 +15,12 @@ WITH t_gastos AS (
     pagos_gastos pg
     JOIN gasto g
   ON pg.id_gasto = g.id
+  JOIN pago p
+  ON pg.id_pago = p.id
   WHERE
     g.fecha >= :fecha_inicio
     AND g.fecha <= :fecha_fin
+    AND p.estatus = 'Pagado'
 )
 SELECT
   t_gastos.suma as total_gastos

@@ -101,24 +101,21 @@ def ir_a_pagos(id):
 
 @gasto_bp.route('/cancelar/<id>', methods=['GET', 'POST'])
 def cancelar(id):
-    """
-    Cancela el gasto 
-    """
     try:
         gasto_id = uuid.UUID(id) if isinstance(id, str) else id
         gasto_obj = Gasto.query.get(gasto_id)
         
         if gasto_obj:
-          
             gasto_obj.estatus = "Cancelado"
 
-        
-            pago_asociado = Pago.query.filter_by(id_gasto=gasto_obj.id).first()
-            if pago_asociado and pago_asociado.estatus != 'Pagado':
-                pago_asociado.estatus = "Cancelado"
+            for relacion in gasto_obj.pagos_asociados:
+                pago_asociado = relacion.pago 
+                
+                if pago_asociado and pago_asociado.estatus != 'Pagado':
+                    pago_asociado.estatus = "Cancelado"
             
             db.session.commit()
-            flash('Gasto cancelado correctamente')
+            flash('Gasto cancelado correctamente', 'success')
             
     except Exception as e:
         db.session.rollback()

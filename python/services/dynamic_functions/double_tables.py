@@ -36,7 +36,7 @@ def get_variables_double_table_view(table_name):
             "edit_fields": ['monto_aplicado'],
             "required_fields": ['monto_aplicado'],
             "details": ["id_visualizacion", "cuenta.nombre", "monto", "referencia"],
-            "url_confirm": "pago.aprobar"
+            "url_confirm": "pago.confirmar_pago"
         },
         "transferencia_inventario": {
             "columns_first_table": ["nombre", "cantidad", "unidad_de_medida", "fecha_de_creacion"],
@@ -87,9 +87,12 @@ def add_record_double_table(main_table_name, second_table, id_main_record, id_re
         if not gasto_original:
             raise Exception('Gasto no encontrado')
 
-        total_pagado_previo = db.session.query(func.sum(PagosGastos.monto_aplicado)).filter(
-            PagosGastos.id_gasto == id_record
-        ).scalar() or 0
+        total_pagado_previo = db.session.query(func.sum(PagosGastos.monto_aplicado))\
+            .join(Pago, PagosGastos.id_pago == Pago.id)\
+            .filter(
+                PagosGastos.id_gasto == id_record,
+                Pago.estatus != 'Cancelado' 
+            ).scalar() or 0
 
         saldo_pendiente = gasto_original.monto - total_pagado_previo
 
@@ -99,7 +102,6 @@ def add_record_double_table(main_table_name, second_table, id_main_record, id_re
         new_record = model(
             id_pago=id_main_record,
             id_gasto=id_record,
-
             monto_aplicado=saldo_pendiente,
             id_usuario=session['id_usuario']
         )
