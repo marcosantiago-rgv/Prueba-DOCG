@@ -33,7 +33,7 @@ async function destroyAllApexCharts() {
 }
 
 // funcion para hacer graficas con mas de una categoria
-function generar_grafica_categorias(nombre_grafica, tipo_grafica,x_key,y_key,z_key, path,options) {
+function generar_grafica_categorias(nombre_grafica, tipo_grafica, x_key, y_key, z_key, path, options) {
     fetch(path)
         .then(response => {
             if (!response.ok) throw new Error(`Network response was not ok: ${response.statusText}`);
@@ -47,7 +47,7 @@ function generar_grafica_categorias(nombre_grafica, tipo_grafica,x_key,y_key,z_k
                 return {
                     name: (typeof z === 'number' || (!isNaN(z) && z.trim && z.trim() !== ''))
                         ? String(z)
-                        : titleFormat(z),
+                        : capitalizeWords(z),
                     data: xValues.map(x => {
                         const match = data.find(d => d[x_key] === x && d[z_key] === z);
                         return match ? Number(match[y_key]) || 0 : 0;
@@ -60,7 +60,189 @@ function generar_grafica_categorias(nombre_grafica, tipo_grafica,x_key,y_key,z_k
             console.error("Error fetching or processing data:", error);
         });
 }
-function generar_grafica(nombre_grafica, tipo_grafica,dataXKey, dataYKey,path,options) {
+
+
+
+// funcion para hacer grafica de Transferencias de inventario por día
+// Mismo estilo visual que "Tendencias de Gastos Diarios"
+
+
+// Nueva función: gráfica de barras por almacén origen
+function cargar_transferencias_inventario_productos() {
+    const container = document.querySelector('#grafica_transferencias_producto');
+    if (container) {
+        container.innerHTML = '<div class="flex justify-center items-center h-64"><div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div></div>';
+    }
+
+    // Usar la consulta agregada por almacén origen
+    const path = '/dashboard_queries/transferencias_por_almacen_origen';
+    fetch(path)
+        .then(response => {
+            if (!response.ok) throw new Error(`Network response was not ok: ${response.statusText}`);
+            return response.json();
+        })
+        .then(data => {
+            const rows = Array.isArray(data) ? data : (data.items || []);
+            if (!rows.length) {
+                if (typeof mostrarSinDatos === 'function') mostrarSinDatos('#grafica_transferencias_producto');
+                return;
+            }
+            // Evitar duplicados y leyenda/colores de categorías
+            const almacenes = rows.map(row => row.almacen_origen);
+            const totales = rows.map(row => Number(row.total_transferido) || 0);
+            // Limpiar el contenedor antes de renderizar la gráfica para quitar el loading
+            if (container) container.innerHTML = '';
+            renderizar_grafica(
+                '#grafica_transferencias_producto',
+                'bar',
+                [{ name: '', data: totales }],
+                almacenes,
+                {
+                    colors: ['#267DFF'],
+                    legend: { show: false },
+                    plotOptions: { bar: { distributed: false } },
+                    yaxis: {
+                        title: { text: 'Total transferido', style: { color: '#7780A1', fontSize: '12px', fontWeight: 400 } }
+                    },
+                    xaxis: {
+                        categories: almacenes,
+                        labels: { rotate: -45 }
+                    },
+                    tooltip: {
+                        y: {
+                            formatter: val => `${val.toLocaleString('es-MX')} unidades`
+                        }
+                    }
+                }
+            );
+        })
+        .catch(error => {
+            console.error('Error cargando transferencias de inventario:', error);
+            if (typeof mostrarError === 'function') mostrarError('#grafica_transferencias_producto');
+        });
+}
+
+
+// funcion para hacer grafica de resumen de inventario (productos, almacenes, transferencias)
+// Espera que el endpoint devuelva una sola fila con
+// total_productos, total_almacenes, total_transferencias
+function cargar_total_inventario() {
+    const path = '/dashboard_queries/total_inventario';
+    const selector = '#grafica_total_inventario';
+    fetch(path)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Network response was not ok: ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            const rows = Array.isArray(data) ? data : (data.items || []);
+            if (!rows.length) {
+                console.warn('No hay datos para el resumen de inventario.');
+                return;
+            }
+
+            const row = rows[0];
+            const labels = [
+                'Productos activos',
+                'Almacenes activos',
+                'Transferencias mes actual',
+            ];
+            const values = [
+                Number(row.total_productos) || 0,
+                Number(row.total_almacenes) || 0,
+                Number(row.total_transferencias) || 0,
+            ];
+
+            // Misma idea visual que "Distribución de Gastos":
+            // gráfica de barras sencilla, color azul, sin eje Y visible.
+            const options = {
+                chart: {
+                    height: 300,
+                    type: "bar",
+                    fontFamily: "Inter, sans-serif",
+                    zoom: { enabled: false },
+                    toolbar: { show: false }
+                },
+                plotOptions: {
+                    bar: {
+                        horizontal: false,
+                        endingShape: "rounded",
+                        columnWidth: "50%",
+                        borderRadius: 5,
+                    },
+                },
+                stroke: {
+                    show: true,
+                    width: 4,
+                    colors: ["transparent"],
+                },
+                colors: ["#267DFF"],
+                dataLabels: {
+                    enabled: false,
+                },
+                legend: {
+                    show: false,
+                },
+                yaxis: {
+                    show: false,
+                },
+                grid: {
+                    borderColor: "#e0e6ed",
+                    strokeDashArray: 7,
+                    xaxis: {
+                        lines: {
+                            show: false,
+                        },
+                    },
+                    yaxis: {
+                        lines: {
+                            show: false,
+                        },
+                    },
+                    padding: {
+                        top: 0,
+                        right: 0,
+                        bottom: 0,
+                        left: 0,
+                    },
+                },
+                tooltip: {
+                    y: {
+                        formatter: function (val) {
+                            return `${val.toLocaleString()} registros`;
+                        }
+                    }
+                }
+            };
+
+            renderizar_grafica(
+                selector,
+                'bar',
+                [{ name: 'Inventario', data: values }],
+                labels,
+                options
+            );
+        })
+        .catch(error => {
+            console.error('Error cargando resumen de inventario:', error);
+        });
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+function generar_grafica(nombre_grafica, tipo_grafica, dataXKey, dataYKey, path, options) {
     fetch(path)
         .then(response => {
             if (!response.ok) {
@@ -75,13 +257,13 @@ function generar_grafica(nombre_grafica, tipo_grafica,dataXKey, dataYKey,path,op
             }
             const y = data.map(item => Number(item[dataYKey]));
             const x = data.map(item => item[dataXKey]);
-            if(tipo_grafica==='pie'){
-                renderizar_pie(nombre_grafica,y,x);
-            }else if(tipo_grafica==='avance'){
+            if (tipo_grafica === 'pie') {
+                renderizar_pie(nombre_grafica, y, x);
+            } else if (tipo_grafica === 'avance') {
                 y.push(1 - y[0]);  // Converts the result to a string before pushing
-                renderizar_avance(nombre_grafica, "bar", y, x, {valueType: valor_tipo});
-            }else{
-                renderizar_grafica(nombre_grafica, tipo_grafica, y, x,options);
+                renderizar_avance(nombre_grafica, "bar", y, x, { valueType: valor_tipo });
+            } else {
+                renderizar_grafica(nombre_grafica, tipo_grafica, y, x, options);
             }
         })
         .catch(error => {
@@ -124,7 +306,7 @@ function renderizar_grafica(selector, chartType, data_y, data_x, options = {}) {
     let isStacked;
     if (chartType === 'bar_stacked') {
         isStacked = true;
-        chartType='bar'
+        chartType = 'bar'
     } else {
         isStacked = false;
     }
@@ -134,10 +316,10 @@ function renderizar_grafica(selector, chartType, data_y, data_x, options = {}) {
     const totals = isStacked ? computeTotals(series) : [];
 
     const defaultOptions = {
-        series: 
+        series:
             Array.isArray(data_y) && data_y.length && typeof data_y[0] === "object" && "data" in data_y[0]
-            ? data_y
-            : [{ name: options.seriesName || "", data: data_y }],
+                ? data_y
+                : [{ name: options.seriesName || "", data: data_y }],
         chart: {
             height: options.height || 300,
             type: chartType || "bar",
@@ -145,9 +327,9 @@ function renderizar_grafica(selector, chartType, data_y, data_x, options = {}) {
             events: options.events || {},
             toolbar: { show: false },
             fontFamily: "Inter, sans-serif",
-            zoom: {enabled: false},        
+            zoom: { enabled: false },
             events: {
-                mounted: function(chartContext, config) {
+                mounted: function (chartContext, config) {
                     const el = chartContext.el;
                     // Let wheel/touch scroll events bubble up to the page
                     el.addEventListener('wheel', (e) => e.stopPropagation(), { capture: true });
@@ -159,7 +341,7 @@ function renderizar_grafica(selector, chartType, data_y, data_x, options = {}) {
             curve: 'smooth',
         },
         colors: options.colors || [
-            "#267DFF","#FF51A4","#FF7C51","#00D085","#FFC41F","#FF3232",
+            "#267DFF", "#FF51A4", "#FF7C51", "#00D085", "#FFC41F", "#FF3232",
         ],
         plotOptions: {
             bar: {
@@ -184,7 +366,7 @@ function renderizar_grafica(selector, chartType, data_y, data_x, options = {}) {
         dataLabels: {
             enabled: (isStacked && chartType === 'bar') ? true : false,
             formatter: (val, { seriesIndex, dataPointIndex }) => {
-                if ( isStacked) {
+                if (isStacked) {
                     const total = totals[dataPointIndex] || 0;
                     if (!total) return "0%";
                     const pct = (val / total) * 100;
@@ -253,7 +435,9 @@ function renderizar_grafica(selector, chartType, data_y, data_x, options = {}) {
     const mergedOptions = { ...defaultOptions, ...options };
 
     const chartKey = selector.replace(/[^a-zA-Z0-9]/g, "");
-    if (window[chartKey]) { window[chartKey].destroy() }
+    if (window[chartKey] && typeof window[chartKey].destroy === 'function') {
+        window[chartKey].destroy();
+    }
     window[chartKey] = new ApexCharts(document.querySelector(selector), mergedOptions);
     window[chartKey].render();
     registerChart(window[chartKey]);
@@ -277,18 +461,18 @@ function renderizar_pie(selector, data_y, data_x, options = {}) {
             type: "pie",
             width: "100%",  // 👈 make chart responsive
             toolbar: { show: false },
-            zoom: {enabled: false},        
+            zoom: { enabled: false },
             events: {
-                mounted: function(chartContext, config) {
+                mounted: function (chartContext, config) {
                     const el = chartContext.el;
                     // Let wheel/touch scroll events bubble up to the page
                     el.addEventListener('wheel', (e) => e.stopPropagation(), { capture: true });
                 }
-            },            
+            },
         },
         labels: data_x,
         colors: options.colors || [
-            "#267DFF","#FF51A4","#FF7C51","#00D085","#FFC41F","#FF3232",
+            "#267DFF", "#FF51A4", "#FF7C51", "#00D085", "#FFC41F", "#FF3232",
         ],
         dataLabels: {
             enabled: true,

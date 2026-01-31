@@ -11,34 +11,38 @@ import io
 from PIL import Image, ImageDraw, ImageFont
 
 
-dashboard_queries_bp = Blueprint("dashboard_queries", __name__, url_prefix="/dashboard_queries")
+dashboard_queries_bp = Blueprint(
+    "dashboard_queries", __name__, url_prefix="/dashboard_queries")
 
-@dashboard_queries_bp.route("/<string:dashboard>/<string:sql_name>", methods=["GET"])
+
+@dashboard_queries_bp.route("/<string:sql_name>", methods=["GET"])
 @login_required
 @roles_required()
-def sql_data(dashboard,sql_name):
-    path = f'./static/sql/dashboard_queries/{dashboard}/{sql_name}.sql'
+def sql_data(sql_name):
+    path = f'./static/sql/dashboard_queries/{sql_name}.sql'
     base_query = open(path, "r", encoding="utf-8").read()
     variables_query = extract_param_names(base_query)
-    variables_request = {k: v for k, v in request.values.items() if k in variables_query and v != ""}
-    query_variables={
-        "id_usuario":session['id_usuario']
-    }
+    variables_request = {
+        k: v for k, v in request.values.items() if k in variables_query and v != ""}
+    query_variables = {}
     for key in query_variables:
         if key in variables_query and query_variables[key] is not None and key not in variables_request:
             variables_request[key] = query_variables[key]
-    if variables_request['end_date']:
-        end_date = datetime.strptime(variables_request['end_date'], "%Y-%m-%d").date()
-        end_date = end_date + timedelta(days=1)
-        variables_request['end_date'] = end_date.strftime("%Y-%m-%d")
-    data=db.session.execute(text(base_query),variables_request).fetchall()
+    if variables_request.get('fecha_fin'):
+        fecha_fin = datetime.strptime(
+            variables_request['fecha_fin'], "%Y-%m-%d").date()
+        fecha_fin = fecha_fin + timedelta(days=1)
+        variables_request['fecha_fin'] = fecha_fin.strftime("%Y-%m-%d")
+    data = db.session.execute(text(base_query), variables_request).fetchall()
     data = [dict(row._mapping) for row in data]
     return jsonify(data)
 
-@dashboard_queries_bp.route("/<string:dashboard>/<string:sql_name>", methods=["GET"])
+
+@dashboard_queries_bp.route('/tables', methods=["GET"])
 @login_required
-def tables_queries(dashboard,sql_name):
-    path =f'./static/sql/dashboard_queries/{dashboard}/{sql_name}.sql'
+def tables_queries():
+    path = request.args.get("path", type=str)
+    path = f'./static/sql/dashboard_queries/{path}.sql'
     base_query = open(path, "r", encoding="utf-8").read()
 
     rows = db.session.execute(text(base_query)).mappings().all()

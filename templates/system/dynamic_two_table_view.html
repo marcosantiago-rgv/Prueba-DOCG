@@ -356,6 +356,7 @@
     const number_colums = {{ vars.number_colums | tojson }};
     const text_columns = {{ vars.text_columns | tojson }};
     const money_format_columns = {{ vars.money_format_columns | tojson }};
+    const percentage_format_columns = {{ vars.percentage_format_columns | tojson }};
     const csrfToken='{{ csrf_token() }}';
 
     document.addEventListener('alpine:init', () => {

@@ -1,3 +1,4 @@
+
 function titleFormat(value) {
   const replacements = title_formats;
   // Check for exact match
@@ -84,42 +85,37 @@ function render_dynamic_table(element_id, path) {
         .then(payload => {
             const { columns, data } = payload;
 
-            const container = document.getElementById(element_id);
-
             if (!data || data.length === 0) {
-                container.innerHTML = "<p class='text-gray-500 italic'>No data available</p>";
+                document.getElementById(element_id).innerHTML =
+                    "<p class='text-gray-500 italic'>No data available</p>";
                 return;
             }
+
+            const formatValue = (val) => {
+                if (val === null || val === undefined) return "";
+                // If it's a number OR a numeric string (e.g. "12345")
+                if (!isNaN(val) && val !== "" && val !== true && val !== false) {
+                    return Number(val).toLocaleString();
+                }
+                return val;
+            };
 
             let html = `
                 <table class="table-striped">
                     <thead class="text-left bg-white dark:bg-dark sticky top-0 z-5">
                         <tr class="text-center">
-                            ${columns.map(col => `<th>${titleFormat(col)}</th>`).join("")}
+                            ${columns.map(col => `<th>${capitalizeWords(col)}</th>`).join("")}
                         </tr>
                     </thead>
                     <tbody>
             `;
 
             data.forEach(row => {
-                html += `<tr>`;
-
-                columns.forEach(col => {
-                    let value = row[col];
-
-                    if (money_format_columns.includes(col) && !isNaN(value)) {
-                        value = formatCurrency(value);
-                    } else if (!isNaN(value) && 
-                               !col.includes("telefono") && 
-                               !col.includes("celular") && 
-                               !col.includes("periodo")) {
-                        value = formatNumber(value);
-                    }
-
-                    html += `<td style="white-space: normal">${value ?? ""}</td>`;
-                });
-
-                html += `</tr>`;
+                html += `
+                    <tr>
+                        ${columns.map(col => `<td style="white-space: normal">${formatValue(row[col])}</td>`).join("")}
+                    </tr>
+                `;
             });
 
             html += `
@@ -127,7 +123,7 @@ function render_dynamic_table(element_id, path) {
                 </table>
             `;
 
-            container.innerHTML = html;
+            document.getElementById(element_id).innerHTML = html;
         })
         .catch(err => {
             console.error("Error fetching or processing data:", err);
@@ -135,3 +131,10 @@ function render_dynamic_table(element_id, path) {
                 "<p class='text-red-500 italic'>Error loading data</p>";
         });
 }
+
+// capitaliza nombres
+function capitalizeWords(str) {
+    return str.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+
+

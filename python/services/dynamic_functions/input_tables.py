@@ -2,6 +2,8 @@ from datetime import timedelta
 from python.services.system.helper_functions import *
 from python.models.modelos import *
 from sqlalchemy import or_, and_, func
+from python.services.finanzas_service import FinanzasService
+
 
 ###############
 #  Table View Input
@@ -18,6 +20,16 @@ def get_variables_table_view_input(table_name):
             "required_fields":['cantidad_recibida'],
             "details":["id_visualizacion","proveedor",'importe_total'],            
             "url_confirm":"ordenes_de_compra.confirmar",
+        },
+        "pago": {
+            "columns": ["id_visualizacion", "descripcion", "monto_aplicado"],
+            "table_title": "Gastos en este Pago",
+            "query_table": "gastos_seleccionados",
+            "table_name": "gastos_disponibles",
+            "edit_fields": ['monto_aplicado'],
+            "required_fields": ['monto_aplicado'],
+            "details": ["id_visualizacion", "monto", "referencia"],
+            "url_confirm": "pago.aprobar",
         },
     }
     columns=columns.get(table_name,'')
@@ -67,18 +79,27 @@ def get_update_validation(table_name,record,column,value):
             )
         orden.descuentos=abs(record.importe_total-record.subtotal)
         validation['status']=1
-    elif table_name=='productos_en_ordenes_de_compra' and column=='cantidad_recibida':
-        cantidad_recibida_anteriormente=(
-                db.session.query(
-                    func.sum(EntregaDeProductosEnOrdenesDeCompra.cantidad_recibida)
-                )
-                .filter(EntregaDeProductosEnOrdenesDeCompra.id_producto_en_orden_de_compra == record.id)
-                .scalar()
-                or 0  
-            )
-        cantidad_restante=record.cantidad_ordenada-cantidad_recibida_anteriormente
-        if float(value)>cantidad_restante:
-            validation['status']=0
-            validation['message']="La cantidad recibida no puede ser mayor a la cantidad restante por entregar."
-            validation['value_warning']=cantidad_restante  
+    elif table_name == 'pagos_gastos' and column == 'monto_aplicado':
+        gasto_referencia = Gasto.query.get(record.id_gasto)
+        limite_del_recibo = gasto_referencia.monto
+        
+        if float(value) > limite_del_recibo:
+            validation['status'] = 0
+            validation['message'] = f"Error: No puedes aplicar ${value}. El recibo original es de ${limite_del_recibo}."
+            validation['value_warning'] = limite_del_recibo
+            return validation
+
+        record.monto_aplicado = float(value)
+        db.session.add(record)
+        
+        db.session.flush() 
+        
+        FinanzasService.recalcular_total_pago(record.id_pago)
+        
+        FinanzasService.actualizar_estatus_gasto(record.id_gasto)
+        
+        db.session.commit()
+        
+        validation['status'] = 1
+
     return validation

@@ -1,7 +1,7 @@
 from python.models.modelos import *
 from sqlalchemy import func
 from python.services.system.helper_functions import *
-from flask import  jsonify
+from flask import jsonify
 from datetime import timedelta
 from python.services.dynamic_functions.input_tables import *
 from python.services.dynamic_functions.double_tables import *
@@ -11,151 +11,313 @@ def get_joins():
     joins = {
         "id_usuario": (Usuarios, Usuarios.id, Usuarios.nombre),
         "id_rol": (Roles, Roles.id, Roles.nombre),
-        "id_categoria_de_reporte":(CategoriasDeReportes, CategoriasDeReportes.id, CategoriasDeReportes.nombre),
+        "id_categoria_de_reporte": (CategoriasDeReportes, CategoriasDeReportes.id, CategoriasDeReportes.nombre),
 
-        "id_producto":(Productos, Productos.id, Productos.nombre),
-        "id_proveedor":(Proveedores, Proveedores.id, Proveedores.nombre),
-        "id_orden_de_compra":(OrdenesDeCompra, OrdenesDeCompra.id, OrdenesDeCompra.id_visualizacion),
+        "id_producto": (Productos, Productos.id, Productos.nombre),
+        "id_proveedor": (Proveedores, Proveedores.id, Proveedores.nombre),
+        "id_orden_de_compra": (OrdenesDeCompra, OrdenesDeCompra.id, OrdenesDeCompra.id_visualizacion),
+        # cuando hagamos un join a la base de datos y queremos visualizar un campo en la tabla lo instanciamos
+        "id_almacen": (Almacen, Almacen.id, Almacen.nombre),
+        "id_almacen_origen": (Almacen, Almacen.id, Almacen.nombre),
+        "id_almacen_destino": (Almacen, Almacen.id, Almacen.nombre),
+        "id_gasto": (Gasto, Gasto.id, Gasto.descripcion),
+        "id_categoria": (CategoriaGasto, CategoriaGasto.id, CategoriaGasto.nombre),
+        "id_cuenta": (CuentaBanco, CuentaBanco.id, CuentaBanco.nombre),
+
+
     }
     return joins
 
-def get_columns(table_name,section):
-    columns={
+
+def get_columns(table_name, section):
+    columns = {
         "logs_auditoria": {
-            "main_page": ["tabla", "id_registro",'usuario','accion','datos_anteriores','datos_nuevos','fecha'],
-            "modal": {"informacion_general":["tabla","id_registro","usuario","accion","fecha"],"detalles":["datos_anteriores","datos_nuevos"]},
+            "main_page": ["tabla", "id_registro", 'usuario', 'accion', 'datos_anteriores', 'datos_nuevos', 'fecha'],
+            "modal": {"informacion_general": ["tabla", "id_registro", "usuario", "accion", "fecha"], "detalles": ["datos_anteriores", "datos_nuevos"]},
             "pdf": []
         },
         "rutas": {
-            "main_page": ['categoria', "nombre",'ruta'],
-            "modal": {"informacion_general":["id","categoria","nombre","ruta"],"sistema":["fecha_de_creacion","fecha_de_actualizacion"]},
+            "main_page": ['categoria', "nombre", 'ruta'],
+            "modal": {"informacion_general": ["id", "categoria", "nombre", "ruta"], "sistema": ["fecha_de_creacion", "fecha_de_actualizacion"]},
             "pdf": []
         },
         "roles": {
             "main_page": ["id_visualizacion", "nombre", "estatus"],
-            "modal": {"informacion_general":["id","id_visualizacion","nombre","estatus"],"sistema":["fecha_de_creacion","fecha_de_actualizacion"]},
+            "modal": {"informacion_general": ["id", "id_visualizacion", "nombre", "estatus"], "sistema": ["fecha_de_creacion", "fecha_de_actualizacion"]},
             "pdf": []
         },
         "usuarios": {
-            "main_page": ["id_visualizacion", "nombre", "correo_electronico",'intentos_de_inicio_de_sesion','ultima_sesion','ultimo_cambio_de_contrasena', "estatus"],
-            "modal": {"informacion_general":["id","id_visualizacion","nombre","correo_electronico","estatus"],"seguridad":["contrasena_api"],"sistema":["fecha_de_creacion","fecha_de_actualizacion"]},
+            "main_page": ["id_visualizacion", "nombre", "correo_electronico", 'intentos_de_inicio_de_sesion', 'ultima_sesion', 'ultimo_cambio_de_contrasena', "estatus"],
+            "modal": {"informacion_general": ["id", "id_visualizacion", "nombre", "correo_electronico", "estatus"], "seguridad": ["contrasena_api"], "sistema": ["fecha_de_creacion", "fecha_de_actualizacion"]},
             "pdf": []
         },
         "categorias_de_reportes": {
             "main_page": ["id_visualizacion", "nombre", "estatus"],
-            "modal": {"informacion_general":["id","id_visualizacion","nombre","estatus"],"sistema":["fecha_de_creacion","fecha_de_actualizacion"]},
+            "modal": {"informacion_general": ["id", "id_visualizacion", "nombre", "estatus"], "sistema": ["fecha_de_creacion", "fecha_de_actualizacion"]},
             "pdf": []
         },
         "reportes": {
             "main_page": ["id_visualizacion", "id_categoria_de_reporte_nombre", "nombre", "descripcion"],
-            "modal": {"informacion_general":["id","id_visualizacion","id_categoria_de_reporte_nombre","nombre","descripcion"],"sistema":["fecha_de_creacion","fecha_de_actualizacion"]},
+            "modal": {"informacion_general": ["id", "id_visualizacion", "id_categoria_de_reporte_nombre", "nombre", "descripcion"], "sistema": ["fecha_de_creacion", "fecha_de_actualizacion"]},
             "pdf": []
         },
         "archivos": {
-            "main_page": ["nombre","nombre_del_archivo"],
-            "modal": {"informacion_general":["id","tabla_origen","nombre"],"detalles":["nombre_del_archivo","ruta_s3"],"sistema":["fecha_de_creacion"]},
+            "main_page": ["nombre", "nombre_del_archivo"],
+            "modal": {"informacion_general": ["id", "tabla_origen", "nombre"], "detalles": ["nombre_del_archivo", "ruta_s3"], "sistema": ["fecha_de_creacion"]},
             "pdf": []
         },
+
+        "almacen": {
+            # Lo que se muestra en la tabla principal
+            "main_page": ["id_visualizacion", "nombre", "ubicacion", "descripcion", "estatus"],
+            # Campos que se ven en el modal
+            "modal": [
+                "id", "id_visualizacion", "nombre", "ubicacion", "descripcion", "estatus", "id_usuario", "fecha_de_creacion", "fecha_de_actualizacion",
+            ],
+            "pdf": ["nombre", "ubicacion", "descripcion", "estatus"],
+        },
+
+        # campo que viene de laque se muestra en la tabla principal, modal y pdf
+        "existencia": {
+            "main_page": ["id_visualizacion", "id_producto_nombre", "id_almacen_nombre", "cantidad",
+                          ],
+            "modal": ["id", "id_visualizacion", "id_producto_nombre", "id_almacen_nombre", "cantidad",
+                      # "id_usuario","fecha_de_creacion","fecha_de_actualizacion",
+                      ],
+            "pdf": ["id_producto_nombre", "id_almacen_nombre", "cantidad",
+                    ],
+        },
+
         "productos": {
-            "main_page": ["id_visualizacion", "nombre", "unidad_de_medida", "estatus","id_usuario_correo_electronico"],
-            "modal": {"informacion_general":["id","id_visualizacion","nombre","unidad_de_medida","numero_de_usos","codigo_de_barras","id_archivo_imagen","estatus"],"detalles":["descripcion"],"sistema":["id_usuario_correo_electronico","fecha_de_creacion","fecha_de_actualizacion"]},
+            "main_page": ["id_visualizacion", "nombre", "unidad_de_medida", "estatus", "id_usuario_correo_electronico"],
+            "modal": {"informacion_general": ["id", "id_visualizacion", "nombre", "unidad_de_medida", "numero_de_usos", "codigo_de_barras", "id_archivo_imagen", "estatus"], "detalles": ["descripcion"], "sistema": ["id_usuario_correo_electronico", "fecha_de_creacion", "fecha_de_actualizacion"]},
             "pdf": ["id_visualizacion", "nombre", "unidad_de_medida", "codigo_de_barras", "descripcion", "estatus", "id_usuario_correo_electronico", "fecha_de_creacion", "fecha_de_actualizacion"]
         },
+        "productos_inventario": {
+            "main_page": ["id_visualizacion", "nombre", "unidad_de_medida", "codigo_de_barras", "descripcion", "estatus", "id_usuario_correo_electronico", "proveedores",
+                          ],
+            "modal": ["id", "id_visualizacion", "nombre", "unidad_de_medida", "codigo_de_barras", "descripcion", "estatus", "id_usuario_correo_electronico", "proveedores", "fecha_de_creacion", "fecha_de_actualizacion",
+                      ],
+            "pdf": ["id_visualizacion", "nombre", "unidad_de_medida", "codigo_de_barras", "descripcion", "estatus", "id_usuario_correo_electronico", "proveedores",
+                    ],
+        },
+
         "proveedores": {
-            "main_page": ["id_visualizacion", "nombre", "razon_social", "persona_contacto", "telefono_contacto", "email_contacto", "estatus","id_producto","dias_de_entrega"],
-            "modal": {"informacion_general":["id","id_visualizacion","nombre","razon_social","rfc","direccion","codigo_postal","condiciones_pago","sitio_web","estatus"],"contacto":["telefono","email","persona_contacto","telefono_contacto","email_contacto"],"sistema":["id_usuario_correo_electronico","fecha_de_creacion","fecha_de_actualizacion"]},
+
+            "main_page": ["id_visualizacion", "nombre", "razon_social", "persona_contacto", "telefono_contacto", "email_contacto", "estatus", "id_producto", "dias_de_entrega"],
+            "modal": {"informacion_general": ["id", "id_visualizacion", "nombre", "razon_social", "rfc", "direccion", "codigo_postal", "condiciones_pago", "sitio_web", "estatus"], "contacto": ["telefono", "email", "persona_contacto", "telefono_contacto", "email_contacto"], "sistema": ["id_usuario_correo_electronico", "fecha_de_creacion", "fecha_de_actualizacion"]},
             "pdf": ["id_visualizacion", "nombre", "razon_social", "rfc", "direccion", "codigo_postal", "telefono", "email", "persona_contacto", "telefono_contacto", "email_contacto", "condiciones_pago", "sitio_web", "estatus", "id_usuario_correo_electronico", "fecha_de_creacion", "fecha_de_actualizacion"]
         },
+
+        "transferencia_inventario": {
+            # Vista a nivel cabecera (no por producto)
+            "main_page": ["id_visualizacion", "id_almacen_origen_nombre", "id_almacen_destino_nombre", "fecha", "estatus",
+                          ],
+            "modal": ["id", "id_visualizacion", "id_almacen_origen_nombre", "id_almacen_destino_nombre", "fecha", "estatus", "id_usuario", "fecha_de_creacion", "fecha_de_actualizacion",
+                      ],
+            "pdf": ["id_visualizacion", "id_almacen_origen_nombre", "id_almacen_destino_nombre", "fecha", "estatus",],
+        },
+
+
+
+
+
+
+
+
+
+
+
+
+
         "ordenes_de_compra": {
-            "main_page": ["id_visualizacion", "id_proveedor_nombre", "fecha_orden", "fecha_entrega_estimada", "fecha_entrega_real", "importe_total", "notas", "estatus"],
-            "modal": {"informacion_general":["id","id_visualizacion","id_proveedor_nombre","fecha_orden","fecha_entrega_estimada","fecha_entrega_real","estatus"],"financiero":["subtotal","descuentos","importe_total"],"detalles":["notas"],"sistema":["id_usuario_correo_electronico","fecha_de_creacion","fecha_de_actualizacion"]},
+            "main_page": ["id_almacen_nombre", "id_visualizacion", "id_proveedor_nombre", "fecha_orden", "fecha_entrega_estimada", "fecha_entrega_real", "importe_total", "notas", "estatus"],
+            "modal": {"informacion_general": ["id", "id_visualizacion", "id_proveedor_nombre", "fecha_orden", "fecha_entrega_estimada", "fecha_entrega_real", "estatus"], "financiero": ["subtotal", "descuentos", "importe_total"], "detalles": ["notas"], "sistema": ["id_usuario_correo_electronico", "fecha_de_creacion", "fecha_de_actualizacion"]},
             "pdf": ["id_visualizacion", "id_proveedor_nombre", "fecha_orden", "fecha_entrega_estimada", "fecha_entrega_real", "subtotal", "descuentos", "importe_total", "notas", "estatus", "id_usuario_correo_electronico", "fecha_de_creacion", "fecha_de_actualizacion"]
         },
         "productos_en_ordenes_de_compra": {
-            "main_page": ["id_orden_de_compra_id_visualizacion", "id_producto_nombre", "cantidad_ordenada", "cantidad_recibida", "precio_unitario", "subtotal", "descuento_porcentaje","importe_total", "fecha_entrega_estimada", "notas", "estatus"],
-            "modal": {"informacion_general":["id","id_orden_de_compra_id_visualizacion","id_producto_nombre","cantidad_ordenada","cantidad_recibida","fecha_entrega_estimada","estatus"],"financiero":["precio_unitario","subtotal","descuento_porcentaje","importe_total"],"detalles":["notas","archivo_cotizacion"],"sistema":["id_usuario_correo_electronico","fecha_de_creacion","fecha_de_actualizacion"]},
-            "pdf": [ "id_orden_de_compra", "id_producto_nombre", "cantidad_ordenada", "cantidad_recibida", "precio_unitario", "subtotal", "descuento_porcentaje","importe_total", "fecha_entrega_estimada", "notas", "estatus", "id_usuario_correo_electronico", "fecha_de_creacion", "fecha_de_actualizacion"]
+            "main_page": ["id_orden_de_compra_id_visualizacion", "id_producto_nombre", "cantidad_ordenada", "cantidad_recibida", "precio_unitario", "subtotal", "descuento_porcentaje", "importe_total", "fecha_entrega_estimada", "notas", "estatus",],
+            "modal": {"informacion_general": ["id", "id_orden_de_compra_id_visualizacion", "id_producto_nombre", "cantidad_ordenada", "cantidad_recibida", "fecha_entrega_estimada", "estatus"], "financiero": ["precio_unitario", "subtotal", "descuento_porcentaje", "importe_total"], "detalles": ["notas", "archivo_cotizacion"], "sistema": ["id_usuario_correo_electronico", "fecha_de_creacion", "fecha_de_actualizacion"]},
+            "pdf": ["id_orden_de_compra", "id_producto_nombre", "cantidad_ordenada", "cantidad_recibida", "precio_unitario", "subtotal", "descuento_porcentaje", "importe_total", "fecha_entrega_estimada", "notas", "estatus", "id_usuario_correo_electronico", "fecha_de_creacion", "fecha_de_actualizacion"]
         },
         "entrega_de_productos_en_ordenes_de_compra": {
             "main_page": ["cantidad_recibida", "fecha_entrega"],
-            "modal": {"informacion_general":["id","cantidad_recibida","fecha_entrega"],"sistema":["id_usuario_correo_electronico","fecha_de_creacion","fecha_de_actualizacion"]},
-            "pdf": [ "cantidad_recibida", "fecha_entrega" "id_usuario_correo_electronico", "fecha_de_creacion", "fecha_de_actualizacion"]
-        }
+            "modal": {"informacion_general": ["id", "cantidad_recibida", "fecha_entrega"], "sistema": ["id_usuario_correo_electronico", "fecha_de_creacion", "fecha_de_actualizacion"]},
+            "pdf": ["cantidad_recibida", "fecha_entrega" "id_usuario_correo_electronico", "fecha_de_creacion", "fecha_de_actualizacion"]
+        },
+
+
+        "inventario": {
+            "main_page": ["id_producto_nombre", "cantidad"],
+            "modal": ["id", "id_producto_nombre", "cantidad", "id_usuario_correo_electronico", "fecha_de_creacion", "fecha_de_actualizacion"],
+            "pdf": ["id_producto_nombre", "cantidad", "id_usuario_correo_electronico", "fecha_de_creacion", "fecha_de_actualizacion"]
+        },
+        "ubicaciones": {
+            "main_page": ["id_visualizacion", "nombre", "estatus"],
+            "modal": ["id", "nombre", "estatus", "id_usuario_correo_electronico", "fecha_de_creacion", "fecha_de_actualizacion"],
+            "pdf": ["nombre", "estatus", "id_usuario_correo_electronico", "fecha_de_creacion", "fecha_de_actualizacion"]
+        },
+        "cuenta_banco": {
+            "main_page": ["id_visualizacion", "nombre", "banco", "saldo_inicial", "saldo_actual", "estatus"],
+            "modal": ["id", "id_visualizacion", "nombre", "banco", "tipo_cuenta", "numero_cuenta", "clabe", "saldo_inicial",  "estatus", "fecha_de_creacion"],
+            "pdf": ["nombre", "banco", "saldo_actual", "moneda"]
+        },
+        "gasto": {
+            "main_page": ["id_visualizacion", "id_categoria_nombre", "id_proveedor_nombre", "descripcion", "monto", "fecha", "estatus"],
+            "modal": ["id", "id_visualizacion", "id_categoria_nombre", "id_proveedor_nombre", "descripcion", "monto", "fecha", "archivo_comprobante", "estatus"],
+            "pdf": ["id_visualizacion", "descripcion", "monto", "fecha"]
+        },
+        "categoria_gasto": {
+            "main_page": ["id_visualizacion", "nombre", "descripcion", "estatus"],
+            "modal": ["id", "id_visualizacion", "nombre", "descripcion", "estatus", "fecha_de_creacion"],
+            "pdf": ["nombre", "descripcion"]
+        },
+        "pago": {
+            "main_page": ["id_visualizacion", "id_cuenta_nombre", "monto", "fecha", "estatus"],
+            "modal": ["id", "id_visualizacion", "id_cuenta_nombre", "monto", "fecha", "referencia", "estatus"],
+        },
+        "pagos_gastos": {
+            "main_page": ["id_gasto_descripcion", "monto_aplicado"],
+            "modal": ["id", "id_pago", "id_gasto_descripcion", "monto_aplicado"],
+        },
+
     }
-    columns=columns.get(table_name).get(section)
+    # Si la tabla no está configurada en "columns", regresa None para que la
+    # lógica que llama a esta función pueda usar un fallback genérico.
+    table_config = columns.get(table_name)
+    if not table_config:
+        return None
+
+    # Si la sección (main_page, modal, pdf, etc.) no existe para esa tabla,
+    # también regresamos None y dejamos que el caller decida el comportamiento.
+    # columns = table_config.get(section)
+
+    columns = columns.get(table_name).get(section)
     return columns
+
 
 def get_table_buttons():
     buttons = {
-        "reportes":1,
-        "inventario":1
+        "reportes": 1,
+        "inventario": 1
     }
     return buttons
 
+
+# Esto funciona para cuando tenemos el flujo dentro de una tabla al darle click nos mostrara los  botones de los estatus que pueden cambiar
 def get_estatus_options(table_name):
     options = {
-        'ordenes_de_compra': ["En revisión","Aprobada",'Recibida parcial',"Recibida",'Finalizada',"Cancelada"],
-        "productos_en_ordenes_de_compra": ['Pendiente','Recibido parcial','Recibido']
+        'ordenes_de_compra': ["En revisión", "Aprobada", 'Recibida parcial', "Recibida", 'Finalizada', "Cancelada"],
+        "productos_en_ordenes_de_compra": ['Pendiente', 'Recibido parcial', 'Recibido'],
+        'gasto': ["En revisión", "Aprobado", "Pagado parcial", "Pagado", "Cancelado"],
+        'pago': ["En revisión", "Aprobado", "Pagado", "Cancelado"],
+        # flujo para transferencias de inventario
+        'transferencia_inventario': ["En revisión", "Aprobado", "Realizado"],
+        # Sin estatus para existencia (evita tabs de estatus que no aplican)
+        # 'existencia': [],
+
     }
-    options=options.get(table_name, ["Activo", "Inactivo"])
+    # en caso de que no esté definido, usamos estos por defecto
+    options = options.get(table_name, ["Activo", "Inactivo"])
     return options
 
+
+# estos son los estatus de la parte de arriba del front que indican registros en tipo de estatus dependiendo del modulo solo muestra no modifica   TABS
 def get_open_status(table_name):
-    status={
-        "ordenes_de_compra": ['En revisión','Aprobada','Recibida parcial','Recibida'],
-        "productos_en_ordenes_de_compra": ['Pendiente','Recibida parcial','Recibida']
+    status = {
+        # "ordenes_de_compra": ['En revisión', 'Aprobada', 'Recibida parcial', 'Recibida'],
+        # "productos_en_ordenes_de_compra": ['Pendiente', 'Recibida parcial', 'Recibida'],
+        "ordenes_de_compra": ['En revisión', 'Aprobada', 'Recibida parcial', 'Recibida'],
+        "productos_en_ordenes_de_compra": ['Pendiente', 'Recibida parcial', 'Recibida'],
+        # "productos_en_ordenes_de_compra": ['Recibida'],
+        "transferencia_inventario": ['En revisión', 'Aprobado'],
+
     }
-    status=status.get(table_name,'')
+    status = status.get(table_name, '')
     return status
+
+# Sirve para decirle a la plantilla que parte del sidebar está activa dependiendo de la tabla en la que estemos
+
 
 def get_breadcrumbs(table_name):
     # [modulo,active_menu]
-    breadcrumbs={
-        "usuarios":['Permisos','permisos'],
-        "roles":['Permisos','permisos'],
-        "logs_auditoria":['Auditoría','auditoria'],
-        "reportes":['Reportes','reportes'],
-        "categorias_de_reportes":['Reportes','reportes'],
-        "archivos":[session['tabla_origen'].replace('_',' ').capitalize(),session['tabla_origen']],
+    breadcrumbs = {
+        "usuarios": ['Permisos', 'permisos'],
+        "roles": ['Permisos', 'permisos'],
+        "logs_auditoria": ['Auditoría', 'auditoria'],
+        "reportes": ['Reportes', 'reportes'],
+        "categorias_de_reportes": ['Reportes', 'reportes'],
+        "archivos": [session['tabla_origen'].replace('_', ' ').capitalize(), session['tabla_origen']],
 
-        "productos":['Cátalogos','catalogos'],
+        "productos": ['Cátalogos', 'catalogos'],
+        # "ubicaciones": ['Cátalogos', 'catalogos'],
+        "proveedores": ['Cátalogos', 'catalogos'],
+        "ordenes_de_compra": ['Compras', 'compras'],
+        "productos_en_ordenes_de_compra": ['Compras', 'compras'],
+        # "ubicaciones": ['Cátalogos', 'catalogos'],
 
-        "proveedores":['Cátalogos','catalogos'],
-        "ordenes_de_compra":['Compras','compras'],
-        "productos_en_ordenes_de_compra":['Compras','compras'],
+        # almacen,existencia,productos_inventario,transferencia_inventario es la seccion del modulo que se muestra en el breadcrumb Inventario y 'inventario' es el menú que se marca como activo
+        "almacen": ['Inventario', 'inventario'],
+        "existencia": ['Inventario', 'inventario'],
+        "productos_inventario": ['Inventario', 'inventario'],
+        "transferencia_inventario": ['Inventario', 'inventario'],
 
-        "inventario":['Compras','compras']
+        # "ordenes_de_compra": ['Compras', 'ordenes_de_compras'],
+        # "productos_en_ordenes_de_compra": ['Compras', 'ordenes_de_compras'],
+        "entrega_de_productos_en_ordenes_de_compra": ['Compras', 'ordenes_de_compras'],
+        # cuenta_banco es el nombre de la tabla 'Finanzas' es el módulo que se muestra en el breadcrumb 'finanzas' es el menú que se marca como activo
+        "cuenta_banco": ['Finanzas', 'finanzas'],
+        "gasto": ['Finanzas', 'finanzas'],
+        "pago": ['Finanzas', 'finanzas'],
+        "categoria_gasto": ['Finanzas', 'finanzas'],
+        "inventario": ['Compras', 'compras']
     }
-    breadcrumbs=breadcrumbs.get(table_name,['Bases de datos','bases_de_datos'])
-    return breadcrumbs[0],breadcrumbs[1]
+    breadcrumbs = breadcrumbs.get(
+        table_name, ['Bases de datos', 'bases_de_datos'])
+    return breadcrumbs[0], breadcrumbs[1]
 
+
+# Funciona para que en el modal aparezcan los botones de las tablas relacionadas y poder navegar entre ellas con la opcion quie dice "ver registros relacionados"
 def get_table_relationships(table_name):
-    relationships={
-        "ordenes_de_compra":["productos_en_ordenes_de_compra"],
-        "productos_en_ordenes_de_compra":["entrega_de_productos_en_ordenes_de_compra"],
+    relationships = {
+        "ordenes_de_compra": ["productos_en_ordenes_de_compra"],
+        "productos_en_ordenes_de_compra": ["entrega_de_productos_en_ordenes_de_compra"],
+        "gasto": ["pago"],
+        "pago": ["pagos_gastos"],
+        'proveedores': ['resumen', 'ordenes_de_compra', 'gasto', 'productos'],
+        # Activamos la tabla para la relacion de transferencias de inventario al darle en el boton de ver registros relacionados
+        'transferencia_inventario': ['resumen', 'ordenes_de_compra', 'productos',]
     }
     relationships = relationships.get(table_name, [])
-    if table_name not in ('archivos','usuarios','roles','logs_auditoria','rutas','categorias_de_reportes'):
+    if table_name not in ('archivos', 'usuarios', 'roles', 'logs_auditoria', 'rutas', 'categorias_de_reportes'):
         relationships.append('archivos')
     return relationships
 
+
 def get_calendar_date_variable(table_name):
-    date_variable={
-        "ordenes_de_compra":"fecha_orden"
+    date_variable = {
+        "ordenes_de_compra": "fecha_orden"
     }
-    date_variable=date_variable.get(table_name,'')
+    date_variable = date_variable.get(table_name, '')
     return date_variable
+
+# que variable se usa para hacer los tabs dinámicos en la parte superior de la tabla
+
 
 def get_variable_tabs(table_name):
     tabs = {
-        "gastos": "estatus"
+        "gasto": "estatus",
+        # Para existencia no usamos estatus; agrupamos, por ejemplo, por producto
+        "existencia": "id_producto",
     }
-    tabs=tabs.get(table_name,'estatus')
+    tabs = tabs.get(table_name, 'estatus')
     return tabs
 
-def get_data_tabs(table_name,parent_table,id_parent_record):
-    column_tabs=get_variable_tabs(table_name)
-    tabs=get_estatus_options(table_name)
+
+# contador automatizado de los tabs en la parte superior de la tabla dependiendo del estatus o variable que se haya definido NO TOCAR
+def get_data_tabs(table_name, parent_table, id_parent_record):
+    column_tabs = get_variable_tabs(table_name)
+    tabs = get_estatus_options(table_name)
     model = get_model_by_name(table_name)
     column = getattr(model, column_tabs, None)
     count_col = func.count().label("count")
@@ -178,34 +340,73 @@ def get_data_tabs(table_name,parent_table,id_parent_record):
     ]
     return results
 
+
 def get_date_fields():
-    date_fields=["fecha_orden"]
+    # date_fields = ["fecha_orden", "fecha_gasto", "fecha_pago", "fecha"]
+    date_fields = ["fecha_orden"]
     return date_fields
+
+# muestra los checkbox en las tablas que lo requieran cuando estemos enun modulo especifico
+
 
 def get_checkbox(table_name):
     checkbox = {
-        'table_name':True,
+        'ordenes_de_compra': True,
+        # 'gasto': True
+        # 'table_name': True,
     }
-    checkbox=checkbox.get(table_name, False)
+    checkbox = checkbox.get(table_name, False)
     return checkbox
 
+
 def get_summary_data(table_name):
-    data={
+    data = {
         'table_name': {
-                        'primary':["column_name"],
-                        'data':{"section_name":["column_name"],"section_name":["variacolumn_namebles"]}
-                        },
+            'primary': ["column_name"],
+            'data': {"section_name": ["column_name"], "section_name": ["variacolumn_namebles"]}
+        },
+        'proveedores': {
+            'primary': ["nombre", "razon_social", "rfc", "email"],
+            'data': {
+                "informacion_general": ["razon_social", "rfc", "condiciones_pago", "sitio_web"],
+                "contacto_principal": ["persona_contacto", "email_contacto", "telefono_contacto"],
+                "logistica": ["dias_de_entrega", "estatus"]
+            }
+        },
+        'transferencia_inventario': {
+            'primary': ["id_visualizacion", "fecha", "estatus"],
+            # 'primary': ["id_visualizacion", "id_almacen_nombre", "id_almacen_destino_nombre", "fecha", "estatus"],
+            'data': {
+                # "informacion_general": ["id_visualizacion", "id_almacen_origen_nombre", "id_almacen_destino_nombre", "fecha", "estatus", "id_usuario", "fecha_de_creacion"],
+                "Informacion_de_la_transferencia": ["id_visualizacion", "fecha", "estatus", "fecha_de_actualizacion"],
+                # "informacion_origen": ["id_almacen_origen_nombre",  "estatus", "fecha_de_creacion"],
+                # "productos_transferidos": ["productos", "cantidad"],
+            }
+        },
     }
-    data=data.get(table_name,'')
+    data = data.get(table_name, '')
     return data
 
-def get_summary_kpis(table_name,id_parent_record):
+
+def get_summary_kpis(table_name, id_parent_record):
     data = {
-        "table_name": {
-            "section_name": {
-                "kp_name": get_kpi(table_name,"sql_name",{"variable": id_parent_record})
+        'proveedores': {
+            "indicadores_financieros": {
+                "total_facturado": get_kpi('proveedores', 'total_gastos', {"id_proveedor": id_parent_record}),
+                "saldo_por_pagar": get_kpi('proveedores', 'pagos_pendientes', {"id_proveedor": id_parent_record})
             },
+            "indicadores_operativos": {
+                "ordenes_de_compras_pendientes": get_kpi('proveedores', 'ordenes_activas', {"id_proveedor": id_parent_record}),
+                "cumplimiento_entregas": get_kpi('proveedores', 'cumplimiento_entregas', {"id_proveedor": id_parent_record})
+            }
+        },
+        'transferencia_inventario': {
+            "indicadores_transferencia": {
+                "productos_transferidos": get_kpi('transferencia_inventario', 'productos_transferidos', {"id_transferencia": id_parent_record}),
+                "total_cantidad_transferida": get_kpi('transferencia_inventario', 'total_cantidad_transferida', {"id_transferencia": id_parent_record}),
+                "ordenes_asociadas": get_kpi('transferencia_inventario', 'ordenes_asociadas', {"id_transferencia": id_parent_record})
+            }
         }
     }
-    data=data.get(table_name,'')
+    data = data.get(table_name, '')
     return data
