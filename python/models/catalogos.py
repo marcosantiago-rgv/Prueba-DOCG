@@ -49,6 +49,9 @@ class Proveedores(db.Model, BaseMixin, AuditMixin):
     # id_producto = db.relationship(
     #     'Productos', secondary=productos_proveedores, backref=db.backref('proveedores', lazy='dynamic'))
 
+    def __str__(self):
+        return self.nombre or str(self.id)
+
 
 class Ubicaciones(db.Model, BaseMixin, AuditMixin):
     nombre = db.Column(db.String(255), nullable=False)
